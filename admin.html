@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GA — Admin</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080a0c;--bg2:#0e1116;--bg3:#141820;
+  --line:#1e2840;--line2:#2a3850;
+  --green:#00e87a;--gbg:rgba(0,232,122,.07);--gbr:rgba(0,232,122,.18);
+  --red:#ff3c3c;--rbg:rgba(255,60,60,.07);
+  --amber:#ffaa00;--abg:rgba(255,170,0,.07);
+  --blue:#3d9eff;--bbg:rgba(61,158,255,.07);
+  --purple:#a066ff;--pbg:rgba(160,102,255,.07);
+  --text:#dde4ee;--t2:#7a8fa8;--t3:#3a4f68;
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:2px}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--line);background:var(--bg2);position:sticky;top:0;z-index:100}
+.logo{font-family:var(--mono);font-size:10px;letter-spacing:3px;color:var(--green);text-transform:uppercase}
+.logo em{color:var(--t3);font-style:normal}
+.tabs{display:flex;gap:3px}
+.tb{font-family:var(--mono);font-size:9px;letter-spacing:2px;padding:5px 14px;border:1px solid transparent;border-radius:2px;cursor:pointer;text-transform:uppercase;transition:all .15s;background:transparent;color:var(--t3)}
+.tb:hover{color:var(--t2);border-color:var(--line2)}.tb.on{color:var(--green);border-color:var(--green);background:var(--gbg)}
+.page{padding:20px;max-width:1440px;margin:0 auto}
+.panel{background:var(--bg2);border:1px solid var(--line);border-radius:4px;margin-bottom:14px}
+.ph{padding:11px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.pt{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--t2)}
+.pb{padding:14px 16px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.g7{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+.sc{background:var(--bg3);border:1px solid var(--line);border-radius:3px;padding:13px 15px}
+.sl{font-family:var(--mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--t3);margin-bottom:5px}
+.sv{font-family:var(--mono);font-size:24px;font-weight:300;line-height:1}
+.ss{font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:2px}
+.btn{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;padding:6px 14px;border-radius:2px;cursor:pointer;border:1px solid;transition:all .12s;white-space:nowrap}
+.bg{color:var(--green);border-color:var(--green);background:var(--gbg)}.bg:hover{background:var(--gbr)}.bg:disabled{opacity:.3;cursor:not-allowed}
+.br{color:var(--red);border-color:var(--red);background:var(--rbg)}
+.ba{color:var(--amber);border-color:var(--amber);background:var(--abg)}.ba:hover{background:rgba(255,170,0,.14)}
+.bx{color:var(--t2);border-color:var(--line2);background:transparent}.bx:hover{color:var(--text);border-color:var(--t2)}
+.sm{padding:4px 9px;font-size:8px}
+input,select{background:var(--bg3);border:1px solid var(--line);border-radius:2px;color:var(--text);font-family:var(--mono);font-size:11px;padding:7px 10px;width:100%;outline:none;transition:border-color .15s}
+input:focus,select:focus{border-color:var(--green)}
+label{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3);display:block;margin-bottom:4px}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-family:var(--mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--t3);padding:8px 11px;text-align:left;border-bottom:1px solid var(--line)}
+.tbl td{padding:8px 11px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:10px;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}.tbl tr:hover td{background:var(--bg3)}
+.badge{display:inline-block;font-family:var(--mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;padding:2px 6px;border-radius:2px}
+.bg-g{color:var(--green);background:var(--gbg);border:1px solid rgba(0,232,122,.18)}
+.bg-r{color:var(--red);background:var(--rbg);border:1px solid rgba(255,60,60,.18)}
+.bg-a{color:var(--amber);background:var(--abg);border:1px solid rgba(255,170,0,.18)}
+.bg-b{color:var(--blue);background:var(--bbg);border:1px solid rgba(61,158,255,.18)}
+.bg-p{color:var(--purple);background:var(--pbg);border:1px solid rgba(160,102,255,.18)}
+.bg-x{color:var(--t2);background:var(--bg3);border:1px solid var(--line)}
+.scard{background:var(--bg3);border:1px solid var(--line);border-radius:4px;padding:11px}
+.scard.act{border-color:var(--green);background:var(--gbg)}
+.scard.full{border-color:var(--red);background:var(--rbg)}
+.scard.buf{border-color:rgba(255,170,0,.4);background:var(--abg)}
+.sname{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;color:var(--t2);margin-bottom:3px;text-transform:uppercase}
+.socc{font-family:var(--mono);font-size:22px;font-weight:300;line-height:1}
+.scap{font-family:var(--mono);font-size:9px;color:var(--t3)}
+.pbar{height:2px;background:var(--line);border-radius:1px;overflow:hidden;margin-top:7px}
+.pfill{height:100%;border-radius:1px}
+.tbar{height:2px;background:var(--line);border-radius:1px;overflow:hidden;margin-top:5px}
+.tfill{height:100%;border-radius:1px}
+.tlabel{font-family:var(--mono);font-size:8px;color:var(--t3);margin-top:2px;display:flex;justify-content:space-between}
+.wslot{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--bg3);border:1px solid var(--line);border-radius:3px;margin-bottom:5px;gap:8px;flex-wrap:wrap}
+.notif{padding:9px 12px;background:var(--bg3);border-left:2px solid var(--amber);border-radius:0 3px 3px 0;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.ntxt{font-family:var(--mono);font-size:9px;color:var(--t2);line-height:1.5}
+/* STATION INTERFACE */
+.sif{min-height:100vh;background:#050709;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px}
+.sif-hd{font-family:var(--mono);font-size:8px;letter-spacing:3px;color:#1a2535;text-transform:uppercase;margin-bottom:36px;text-align:center}
+.sif-name{font-family:var(--mono);font-size:28px;font-weight:300;color:#dde4ee;margin-bottom:3px;text-align:center}
+.sif-cap{font-family:var(--mono);font-size:9px;color:#1e3044;text-align:center;letter-spacing:2px;margin-bottom:6px}
+.sif-occ{font-family:var(--mono);font-size:48px;font-weight:300;text-align:center;margin:16px 0 3px}
+.sif-timer{font-family:var(--mono);font-size:13px;text-align:center;letter-spacing:3px;margin-bottom:6px}
+.sif-tbar{width:200px;height:2px;background:#0e1822;border-radius:1px;overflow:hidden;margin:0 auto 20px}
+.sif-tfill{height:100%;border-radius:1px}
+.sif-plist{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:22px;min-height:28px}
+.sif-act{width:100%;max-width:300px;display:flex;flex-direction:column;gap:10px}
+.sif-btn{width:100%;padding:16px;font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;border-radius:3px;cursor:pointer;border:1px solid;transition:all .15s}
+.sif-fn{color:#ff3c3c;border-color:#ff3c3c;background:rgba(255,60,60,.06)}.sif-fn:hover{background:rgba(255,60,60,.14)}.sif-fn:disabled{opacity:.3;cursor:not-allowed}
+.sif-back{background:none;border:none;color:#1a2535;font-family:var(--mono);font-size:8px;letter-spacing:2px;cursor:pointer;text-transform:uppercase;margin-bottom:28px}
+/* QR MODAL */
+.qr-modal{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:200;padding:24px}
+.qr-box{background:var(--bg2);border:1px solid var(--line2);border-radius:6px;padding:28px;text-align:center;max-width:300px;width:100%}
+.qr-title{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--t2);margin-bottom:16px}
+.qr-id{font-family:var(--mono);font-size:16px;letter-spacing:4px;color:var(--green);margin-top:16px}
+.qr-url{font-family:var(--mono);font-size:8px;color:var(--t3);margin-top:6px;word-break:break-all;line-height:1.4}
+/* SCANNER AREA */
+.scanner-area{background:var(--bg3);border:1px solid var(--line);border-radius:4px;padding:20px;text-align:center;margin-bottom:14px}
+.scan-result{font-family:var(--mono);font-size:11px;color:var(--green);margin-top:10px;min-height:18px}
+/* TOASTS */
+.toasts{position:fixed;top:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:10px 16px;background:var(--bg2);border:1px solid var(--line2);border-radius:3px;color:var(--t2);animation:tIn .25s ease}
+.toast.ok{border-left:2px solid var(--green)}.toast.warn{border-left:2px solid var(--amber)}.toast.err{border-left:2px solid var(--red)}
+@keyframes tIn{from{transform:translateX(24px);opacity:0}to{transform:translateX(0);opacity:1}}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.row-b{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}.mb20{margin-bottom:20px}
+.scroll{max-height:360px;overflow-y:auto}.dim{color:var(--t3);font-family:var(--mono);font-size:9px}
+@media(max-width:800px){.g4{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}.g7{grid-template-columns:repeat(4,1fr)}.page{padding:12px}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const {useState,useEffect,useCallback,useRef} = React;
+
+/* ── FIREBASE ──────────────────────────────────────────────────────── */
+firebase.initializeApp({
+  apiKey: "AIzaSyBzo6qVmam_u-H2asl3GIPRU_JBbMCPN9g",
+  authDomain: "general-anesthesia-cf511.firebaseapp.com",
+  databaseURL: "https://general-anesthesia-cf511-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "general-anesthesia-cf511",
+  storageBucket: "general-anesthesia-cf511.firebasestorage.app",
+  messagingSenderId: "839292271507",
+  appId: "1:839292271507:web:42a6028e0ff992afb50666"
+});
+const fdb = firebase.database();
+
+/* ── CONSTANTS ─────────────────────────────────────────────────────── */
+const PARTICIPANT_URL = 'https://YOUR-GITHUB.github.io/ga-flow/participant.html';
+// ↑ Change this to your actual GitHub Pages URL after deploying
+
+const STATIONS = {
+  s1:{id:'s1',num:1,name:'Station 01',cap:1, solo:true, dur:240},
+  s2:{id:'s2',num:2,name:'Station 02',cap:1, solo:true, dur:300},
+  s3:{id:'s3',num:3,name:'Poczekalnia',cap:10,isWaiting:true,dur:0},
+  s4:{id:'s4',num:4,name:'Station 04',cap:4, group:true,dur:240},
+  s5:{id:'s5',num:5,name:'Station 05',cap:4, group:true,dur:240},
+  s6:{id:'s6',num:6,name:'Station 06',cap:15,group:true,dur:360},
+  s7:{id:'s7',num:7,name:'Station 07',cap:30,group:true,isFinal:true,dur:0},
+};
+const TRANSIT={
+  's3-s1':45,'s3-s2':45,'s3-s4':120,'s3-s5':120,
+  's1-s2':60,'s1-s6':120,'s2-s4':120,'s2-s5':120,
+  's4-s5':180,'s4-s6':120,'s5-s1':120,'s5-s6':120,'s6-s7':60,
+};
+const getT=(a,b)=>TRANSIT[`${a}-${b}`]||TRANSIT[`${b}-${a}`]||90;
+const PATHS={
+  A:{label:'A',seq:['s3','s1','s2','s4','s5','s6','s7'],badge:'bg-b'},
+  B:{label:'B',seq:['s3','s4','s2','s5','s1','s6','s7'],badge:'bg-p'},
+  C:{label:'C',seq:['s3','s5','s1','s2','s4','s6','s7'],badge:'bg-a'},
+};
+const assignPath=n=>n<=10?'A':n<=20?'B':'C';
+const st=id=>STATIONS[id];
+const now=()=>Date.now();
+const fmtSec=s=>{s=Math.max(0,Math.round(s));const m=Math.floor(s/60),r=s%60;return`${m}:${String(r).padStart(2,'0')}`;};
+
+// Path equalization
+function pathTimeToS6(k){
+  const seq=PATHS[k].seq;let t=0;
+  for(let i=1;i<seq.length;i++){const sid=seq[i];if(sid==='s7')break;t+=getT(seq[i-1],seq[i]);if(sid!=='s6')t+=STATIONS[sid].dur||0;if(sid==='s6')break;}
+  return t;
+}
+const PATH_TO_S6={A:pathTimeToS6('A'),B:pathTimeToS6('B'),C:pathTimeToS6('C')};
+const MAX_S6=Math.max(...Object.values(PATH_TO_S6));
+const BASE_DELAY={A:Math.round(MAX_S6-PATH_TO_S6.A),B:Math.round(MAX_S6-PATH_TO_S6.B),C:Math.round(MAX_S6-PATH_TO_S6.C)};
+
+/* ── FIREBASE DB HELPERS ───────────────────────────────────────────── */
+const dbSet=(path,val)=>fdb.ref(path).set(val);
+const dbUpdate=(path,val)=>fdb.ref(path).update(val);
+const dbGet=path=>fdb.ref(path).once('value').then(s=>s.val());
+
+/* ── DISPATCH ENGINE (writes to Firebase) ──────────────────────────── */
+async function dispatchFromS3(pid, forced=false){
+  const p=await dbGet('/participants/'+pid);
+  if(!p||(p.status!=='waiting_s3'&&p.status!=='s3_holding')) return;
+
+  const path=PATHS[p.path];
+  const nextIdx=(p.stepIndex??0)+1;
+  if(nextIdx>=path.seq.length) return;
+
+  const fromSid='s3';
+  const toSid=path.seq[nextIdx];
+  const toSt=st(toSid);
+  const tDur=getT(fromSid,toSid);
+
+  // Rule 1: path delay
+  if(!forced){
+    const earliest=(p.registeredAt||now())+BASE_DELAY[p.path]*1000;
+    if(now()<earliest){
+      const waitMs=earliest-now();
+      await dbUpdate('/participants/'+pid,{status:'s3_holding',holdUntil:earliest});
+      setTimeout(()=>dispatchFromS3(pid,true),waitMs+100);
+      return;
+    }
+  }
+
+  // Rule 2: solo anti-queue
+  if(toSt.solo||toSt.cap===1){
+    const soloFreeAt=(await dbGet('/soloFreeAt/'+toSid))||0;
+    const arrivalTime=now()+tDur*1000;
+    if(!forced&&arrivalTime<soloFreeAt-5000){
+      const waitMs=soloFreeAt-tDur*1000-now();
+      await dbUpdate('/participants/'+pid,{status:'s3_holding',holdUntil:soloFreeAt-tDur*1000});
+      setTimeout(()=>dispatchFromS3(pid,true),Math.max(0,waitMs)+100);
+      return;
+    }
+    // Reserve
+    await dbSet('/soloFreeAt/'+toSid,arrivalTime+toSt.dur*1000);
+  }
+
+  // Decrement S3
+  const s3occ=await dbGet('/occupancy/s3')||0;
+  await dbSet('/occupancy/s3',Math.max(0,s3occ-1));
+
+  // Send to transit
+  await dbUpdate('/participants/'+pid,{
+    status:'transit',
+    transitStartedAt:now(),
+    transitDur:tDur,
+    transitTo:toSid,
+    stepIndex:nextIdx,
+    currentStation:null,
+    stationStartedAt:null,
+    stationCap:toSt.cap,
+    holdUntil:null,
+  });
+
+  // Schedule arrival
+  setTimeout(()=>handleArrival(pid,toSid),tDur*1000+200);
+}
+
+async function handleArrival(pid, sid){
+  const p=await dbGet('/participants/'+pid);
+  if(!p||p.transitTo!==sid) return; // state changed
+  const s=st(sid);
+
+  if(s.group&&s.cap>1){
+    // Add to group buffer, mark as buffering
+    await dbUpdate('/participants/'+pid,{
+      status:'buffering',
+      currentStation:sid,
+      transitTo:null,
+      transitStartedAt:null,
+      transitDur:null,
+    });
+    const occNow=(await dbGet('/occupancy/'+sid))||0;
+    await dbSet('/occupancy/'+sid,occNow+1);
+    // Check if group complete
+    await checkGroupLaunch(sid);
+  } else {
+    // Solo: arrive directly
+    const occNow=(await dbGet('/occupancy/'+sid))||0;
+    await dbSet('/occupancy/'+sid,occNow+1);
+    await dbUpdate('/participants/'+pid,{
+      status:'active',
+      currentStation:sid,
+      transitTo:null,
+      transitStartedAt:null,
+      transitDur:null,
+      stationStartedAt:now(),
+    });
+    // Schedule notification when session ends
+    if(s.dur>0){
+      setTimeout(()=>addNotif(pid,`${pid} — czas minął · ${s.name}`,'warn'),s.dur*1000);
+    }
+  }
+}
+
+async function checkGroupLaunch(sid){
+  const s=st(sid);
+  const allP=await dbGet('/participants')||{};
+  const buffering=Object.values(allP).filter(p=>p.status==='buffering'&&p.currentStation===sid);
+
+  let needed=s.cap;
+  if(sid==='s6') needed=15;
+  if(sid==='s7') needed=30;
+
+  if(buffering.length>=needed){
+    const group=buffering.slice(0,needed);
+    const t=now();
+    for(const p of group){
+      await dbUpdate('/participants/'+p.id,{status:'active',stationStartedAt:t});
+    }
+    if(s.dur>0){
+      setTimeout(async()=>{
+        for(const p of group) await addNotif(p.id,`${p.id} — czas minął · ${s.name}`,'warn');
+      },s.dur*1000);
+    }
+  }
+}
+
+async function advanceParticipant(pid){
+  const p=await dbGet('/participants/'+pid);
+  if(!p||p.status==='done') return;
+
+  const path=PATHS[p.path];
+  const curIdx=p.stepIndex??0;
+  const nextIdx=curIdx+1;
+
+  // Leave station
+  if(p.currentStation){
+    const occ=(await dbGet('/occupancy/'+p.currentStation))||0;
+    await dbSet('/occupancy/'+p.currentStation,Math.max(0,occ-1));
+  }
+
+  if(nextIdx>=path.seq.length){
+    await dbUpdate('/participants/'+pid,{status:'done',currentStation:null,stationStartedAt:null});
+    return;
+  }
+
+  const fromSid=path.seq[curIdx];
+  const toSid=path.seq[nextIdx];
+  const toSt=st(toSid);
+  const tDur=getT(fromSid,toSid);
+
+  // Solo anti-queue from non-S3
+  if(toSt.solo||toSt.cap===1){
+    const soloFreeAt=(await dbGet('/soloFreeAt/'+toSid))||0;
+    const arrivalTime=now()+tDur*1000;
+    if(arrivalTime<soloFreeAt-5000){
+      // Bounce to S3
+      const s3occ=(await dbGet('/occupancy/s3'))||0;
+      if(s3occ<10){
+        await dbSet('/occupancy/s3',s3occ+1);
+        await dbUpdate('/participants/'+pid,{
+          status:'s3_holding',currentStation:'s3',stationStartedAt:null,
+          stepIndex:curIdx,holdUntil:soloFreeAt-tDur*1000,transitTo:null,
+        });
+        setTimeout(()=>dispatchFromS3(pid,true),Math.max(100,soloFreeAt-tDur*1000-now()));
+        await addNotif(pid,`${pid} → S3 (S${toSt.num} zajęta)`,'warn');
+        return;
+      }
+    }
+    await dbSet('/soloFreeAt/'+toSid,now()+tDur*1000+toSt.dur*1000);
+  }
+
+  await dbUpdate('/participants/'+pid,{
+    status:'transit',transitStartedAt:now(),transitDur:tDur,
+    transitTo:toSid,stepIndex:nextIdx,currentStation:null,stationStartedAt:null,
+    stationCap:toSt.cap,
+  });
+  setTimeout(()=>handleArrival(pid,toSid),tDur*1000+200);
+}
+
+async function addNotif(pid,msg,type='info'){
+  const id=now()+Math.random();
+  await dbSet('/notifications/'+id,{id,pid,msg,time:now(),type});
+}
+
+/* ── REACT HOOKS ───────────────────────────────────────────────────── */
+function useFirebase(path){
+  const [val,setVal]=useState(null);
+  useEffect(()=>{
+    const ref=fdb.ref(path);
+    ref.on('value',snap=>setVal(snap.val()));
+    return()=>ref.off();
+  },[path]);
+  return val;
+}
+
+function useToast(){
+  const [ts,setTs]=useState([]);
+  const add=useCallback((msg,type='ok')=>{
+    const id=now();
+    setTs(t=>[...t,{id,msg,type}]);
+    setTimeout(()=>setTs(t=>t.filter(x=>x.id!==id)),3400);
+  },[]);
+  return{ts,add};
+}
+
+/* ── QR MODAL ──────────────────────────────────────────────────────── */
+function QRModal({pid,onClose}){
+  const ref=useRef(null);
+  const url=PARTICIPANT_URL+'?id='+pid;
+
+  useEffect(()=>{
+    if(!ref.current) return;
+    ref.current.innerHTML='';
+    try{
+      new QRCode(ref.current,{
+        text:url,width:180,height:180,
+        colorDark:'#00e87a',colorLight:'#000000',
+        correctLevel:QRCode.CorrectLevel.M
+      });
+    }catch(e){
+      ref.current.innerHTML=`<div style="color:var(--t3);font-size:9px;padding:20px;word-break:break-all">${url}</div>`;
+    }
+  },[pid]);
+
+  return(
+    <div className="qr-modal" onClick={onClose}>
+      <div className="qr-box" onClick={e=>e.stopPropagation()}>
+        <div className="qr-title">QR Code — {pid}</div>
+        <div ref={ref} style={{display:'flex',justifyContent:'center',background:'#000',padding:10,borderRadius:4}}/>
+        <div className="qr-id">{pid}</div>
+        <div className="qr-url">{url}</div>
+        <button className="btn bx sm" style={{marginTop:16,width:'100%'}} onClick={onClose}>Zamknij</button>
+      </div>
+    </div>
+  );
+}
+
+/* ── TIMER BAR ─────────────────────────────────────────────────────── */
+function TimerBar({startedAt,dur}){
+  const [,setT]=useState(0);
+  useEffect(()=>{const t=setInterval(()=>setT(x=>x+1),1000);return()=>clearInterval(t);},[]);
+  if(!startedAt||!dur) return null;
+  const el=Math.floor((now()-startedAt)/1000);
+  const pct=Math.min(100,(el/dur)*100);
+  const rem=Math.max(0,dur-el);
+  const over=el>dur;
+  const col=over?'var(--red)':pct>80?'var(--amber)':'var(--green)';
+  return(
+    <div>
+      <div className="tbar"><div className="tfill" style={{width:pct+'%',background:col}}/></div>
+      <div className="tlabel"><span style={{color:col}}>{over?'+':''}{fmtSec(el)}</span><span style={{color:rem<30?'var(--red)':undefined}}>{fmtSec(rem)}</span></div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   ADMIN APP
+════════════════════════════════════════════════════════════════════ */
+function App(){
+  const [view,setView]=useState('admin');
+  const toast=useToast();
+  return(
+    <div>
+      <div className="toasts">{toast.ts.map(t=><div key={t.id} className={`toast ${t.type}`}>{t.msg}</div>)}</div>
+      <nav className="nav">
+        <div className="logo">General<em>/</em>Anesthesia<em> — </em>Flow</div>
+        <div className="tabs">
+          <button className={`tb ${view==='admin'?'on':''}`} onClick={()=>setView('admin')}>Admin</button>
+          <button className={`tb ${view==='station'?'on':''}`} onClick={()=>setView('station')}>Stacja</button>
+        </div>
+      </nav>
+      {view==='admin'&&<AdminDashboard toast={toast}/>}
+      {view==='station'&&<StationInterface toast={toast}/>}
+    </div>
+  );
+}
+
+function AdminDashboard({toast}){
+  const [tab,setTab]=useState('overview');
+  const [regId,setRegId]=useState('');
+  const [qrPid,setQrPid]=useState(null);
+  const [,setT]=useState(0);
+  useEffect(()=>{const t=setInterval(()=>setT(x=>x+1),1000);return()=>clearInterval(t);},[]);
+
+  const participants=useFirebase('/participants')||{};
+  const occupancy=useFirebase('/occupancy')||{};
+  const notifications=useFirebase('/notifications')||{};
+  const showStarted=useFirebase('/showStarted');
+
+  const pList=Object.values(participants);
+  const notifList=Object.values(notifications).filter(Boolean).sort((a,b)=>b.time-a.time);
+
+  const register=async()=>{
+    const id=regId.trim().toUpperCase();
+    if(!id){toast.add('Wpisz ID','err');return;}
+    if(participants[id]){toast.add(`${id} już istnieje`,'warn');return;}
+    const count=pList.length;
+    if(count>=30){toast.add('Max 30','err');return;}
+    const num=count+1;
+    const path=assignPath(num);
+    await dbSet('/participants/'+id,{
+      id,num,path,status:'waiting_s3',currentStation:'s3',stepIndex:0,
+      registeredAt:now(),stationStartedAt:null,transitStartedAt:null,
+      transitDur:null,transitTo:null,holdUntil:null,stationCap:null,
+    });
+    const s3occ=(await dbGet('/occupancy/s3'))||0;
+    await dbSet('/occupancy/s3',s3occ+1);
+    toast.add(`${id} → Ścieżka ${path}`,'ok');
+    setRegId('');
+    setQrPid(id); // auto-show QR
+  };
+
+  const clearNotif=nid=>fdb.ref('/notifications/'+nid).remove();
+
+  const finishAndAdvance=async(pid)=>{
+    await advanceParticipant(pid);
+    toast.add(`${pid} → dalej`,'ok');
+  };
+
+  const startShow=async()=>{
+    await dbSet('/showStarted',true);
+    await dbSet('/showStartAt',now());
+    toast.add('Show started','ok');
+  };
+
+  const active=pList.filter(p=>p.status==='active').length;
+  const inTransit=pList.filter(p=>p.status==='transit').length;
+  const waiting=pList.filter(p=>p.status==='waiting_s3'||p.status==='s3_holding'||p.status==='buffering').length;
+  const done=pList.filter(p=>p.status==='done').length;
+
+  return(
+    <div className="page">
+      {qrPid&&<QRModal pid={qrPid} onClose={()=>setQrPid(null)}/>}
+      <div className="row-b mb20">
+        <div>
+          <div className="dim mb8">Control Room · Firebase Live</div>
+          <div style={{fontFamily:'var(--mono)',fontSize:18,fontWeight:300}}>Master Dashboard</div>
+        </div>
+        <div className="row">
+          {!showStarted&&<button className="btn bg" onClick={startShow}>▶ Start Show</button>}
+          {showStarted&&<span className="badge bg-g">LIVE</span>}
+        </div>
+      </div>
+
+      <div className="g4 mb16">
+        <div className="sc"><div className="sl">Zarejestrowani</div><div className="sv">{pList.length}<span style={{fontSize:13,color:'var(--t3)'}}>/30</span></div></div>
+        <div className="sc"><div className="sl">Na stacjach</div><div className="sv" style={{color:'var(--green)'}}>{active}</div></div>
+        <div className="sc"><div className="sl">W drodze</div><div className="sv" style={{color:'var(--blue)'}}>{inTransit}</div></div>
+        <div className="sc"><div className="sl">Czekający</div><div className="sv" style={{color:'var(--amber)'}}>{waiting}</div></div>
+      </div>
+
+      <div className="row mb16">
+        {['overview','participants','config'].map(t=>(
+          <button key={t} className={`tb ${tab===t?'on':''}`} onClick={()=>setTab(t)}>{t}</button>
+        ))}
+      </div>
+
+      {tab==='overview'&&<OverviewTab pList={pList} occupancy={occupancy} notifList={notifList} finishAndAdvance={finishAndAdvance} clearNotif={clearNotif} regId={regId} setRegId={setRegId} register={register} setQrPid={setQrPid} toast={toast}/>}
+      {tab==='participants'&&<ParticipantsTab pList={pList} finishAndAdvance={finishAndAdvance} setQrPid={setQrPid} toast={toast}/>}
+      {tab==='config'&&<ConfigTab/>}
+    </div>
+  );
+}
+
+function OverviewTab({pList,occupancy,notifList,finishAndAdvance,clearNotif,regId,setRegId,register,setQrPid,toast}){
+  const [,setT]=useState(0);
+  useEffect(()=>{const t=setInterval(()=>setT(x=>x+1),1000);return()=>clearInterval(t);},[]);
+
+  const s3ppl=pList.filter(p=>p.status==='waiting_s3'||p.status==='s3_holding');
+
+  return(
+    <div className="g2">
+      <div>
+        {/* STATION MAP */}
+        <div className="panel mb14">
+          <div className="ph"><span className="pt">Stacje · live</span></div>
+          <div className="pb">
+            <div className="g7">
+              {Object.values(STATIONS).map(station=>{
+                const occ=occupancy[station.id]||0;
+                const buffering=pList.filter(p=>p.status==='buffering'&&p.currentStation===station.id).length;
+                const full=occ>=station.cap;
+                const stPpl=pList.filter(p=>p.currentStation===station.id&&p.status==='active');
+                return(
+                  <div key={station.id} className={`scard ${full?'full':occ>0?'act':''}`}>
+                    <div className="sname">S{station.num}</div>
+                    <div className="socc" style={{color:full?'var(--red)':occ>0?'var(--green)':'var(--t3)'}}>{occ}</div>
+                    <div className="scap">/{station.cap}</div>
+                    {buffering>0&&<div style={{fontFamily:'var(--mono)',fontSize:8,color:'var(--amber)',marginTop:2}}>{buffering}⏳</div>}
+                    <div className="pbar"><div className="pfill" style={{width:`${Math.min(100,(occ/station.cap)*100)}%`,background:full?'var(--red)':'var(--green)'}}/></div>
+                    {stPpl[0]?.stationStartedAt&&station.dur>0&&<TimerBar startedAt={stPpl[0].stationStartedAt} dur={station.dur}/>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* S3 */}
+        <div className="panel mb14">
+          <div className="ph">
+            <span className="pt">S3 Poczekalnia ({s3ppl.length}/10)</span>
+            <span className="dim">delays A:{fmtSec(BASE_DELAY.A)} B:{fmtSec(BASE_DELAY.B)} C:{fmtSec(BASE_DELAY.C)}</span>
+          </div>
+          <div className="pb">
+            {s3ppl.length===0&&<div className="dim" style={{textAlign:'center',padding:'10px 0'}}>Pusta</div>}
+            {s3ppl.map(p=>{
+              const path=PATHS[p.path];
+              const nextSid=path.seq[(p.stepIndex??0)+1];
+              const nextSt=nextSid?st(nextSid):null;
+              const isHolding=p.status==='s3_holding';
+              const rem=isHolding&&p.holdUntil?Math.max(0,Math.round((p.holdUntil-now())/1000)):0;
+              return(
+                <div key={p.id} className="wslot">
+                  <div className="row">
+                    <span style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--text)'}}>{p.id}</span>
+                    <span className={`badge ${path.badge}`}>{p.path}</span>
+                    {nextSt&&<span className="dim">→S{nextSt.num}</span>}
+                    {isHolding&&rem>0&&<span style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--amber)'}}>⏳{fmtSec(rem)}</span>}
+                  </div>
+                  <div className="row" style={{gap:5}}>
+                    <button className="btn bx sm" onClick={()=>setQrPid(p.id)}>QR</button>
+                    {isHolding?<button className="btn ba sm" onClick={()=>{dispatchFromS3(p.id,true);toast.add(p.id+' forced','ok');}}>Force →</button>
+                    :<button className="btn bg sm" onClick={()=>{dispatchFromS3(p.id);toast.add(p.id+' dispatched','ok');}}>Wyślij →</button>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        {/* REGISTER */}
+        <div className="panel mb14">
+          <div className="ph"><span className="pt">Rejestracja uczestnika</span></div>
+          <div className="pb">
+            <div className="mb8">
+              <label>ID uczestnika</label>
+              <div className="row">
+                <input value={regId} onChange={e=>setRegId(e.target.value.toUpperCase())} onKeyDown={e=>e.key==='Enter'&&register()} placeholder="np. 40R3J11" maxLength={16}/>
+                <button className="btn bg" onClick={register}>+ Dodaj</button>
+              </div>
+            </div>
+            <div className="dim">Po rejestracji automatycznie pojawi się QR kod · A:1–10 B:11–20 C:21–30</div>
+          </div>
+        </div>
+
+        {/* NOTIFICATIONS */}
+        <div className="panel">
+          <div className="ph">
+            <span className="pt" style={{color:notifList.some(n=>n.type==='warn')?'var(--amber)':undefined}}>
+              Powiadomienia {notifList.length>0&&`(${notifList.length})`}
+            </span>
+            {notifList.length>0&&<button className="btn bx sm" onClick={()=>fdb.ref('/notifications').remove()}>Wyczyść</button>}
+          </div>
+          <div className="pb scroll">
+            {notifList.length===0&&<div className="dim" style={{textAlign:'center',padding:'12px 0'}}>Brak</div>}
+            {notifList.map(n=>{
+              const p=n.pid?null:null;
+              return(
+                <div key={n.id} className="notif">
+                  <div><div className="ntxt">{n.msg}</div><div className="dim">{new Date(n.time).toLocaleTimeString('pl')}</div></div>
+                  <div className="row" style={{gap:5}}>
+                    {n.type==='warn'&&n.pid&&<button className="btn bg sm" onClick={()=>{finishAndAdvance(n.pid);clearNotif(n.id);}}>→ Dalej</button>}
+                    <button className="btn bx sm" onClick={()=>clearNotif(n.id)}>✕</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ParticipantsTab({pList,finishAndAdvance,setQrPid,toast}){
+  const [filter,setFilter]=useState('all');
+  const [,setT]=useState(0);
+  useEffect(()=>{const t=setInterval(()=>setT(x=>x+1),1000);return()=>clearInterval(t);},[]);
+
+  const filtered=pList.filter(p=>filter==='all'||p.status===filter||p.path===filter);
+  const sorted=[...filtered].sort((a,b)=>a.num-b.num);
+  const sBadge={active:'bg-g',waiting_s3:'bg-a',s3_holding:'bg-a',transit:'bg-b',buffering:'bg-p',done:'bg-x'};
+  const sLabel={active:'aktywny',waiting_s3:'S3',s3_holding:'S3 hold',transit:'tranzyt',buffering:'buforing',done:'koniec'};
+
+  return(
+    <div>
+      <div className="row-b mb12">
+        <div className="row" style={{gap:3}}>
+          {['all','active','transit','waiting_s3','buffering','done','A','B','C'].map(f=>(
+            <button key={f} className={`tb ${filter===f?'on':''}`} onClick={()=>setFilter(f)} style={{fontSize:8,padding:'3px 9px'}}>
+              {f==='waiting_s3'?'S3':f==='all'?'wszyscy':f}
+            </button>
+          ))}
+        </div>
+        <span className="dim">{filtered.length}</span>
+      </div>
+      <div className="panel"><div className="scroll">
+        <table className="tbl">
+          <thead><tr><th>ID</th><th>Nr</th><th>Ścieżka</th><th>Status</th><th>Stacja</th><th>Krok</th><th>Timer</th><th>Tranzyt</th><th>Akcja</th></tr></thead>
+          <tbody>
+            {sorted.map(p=>{
+              const path=PATHS[p.path];
+              const curSt=p.currentStation?st(p.currentStation):null;
+              const el=p.stationStartedAt?Math.floor((now()-p.stationStartedAt)/1000):0;
+              const dur=curSt?.dur||0;
+              const over=dur>0&&el>dur;
+              const trEl=p.transitStartedAt?Math.floor((now()-p.transitStartedAt)/1000):0;
+              const trRem=Math.max(0,(p.transitDur||0)-trEl);
+              const destSt=p.transitTo?st(p.transitTo):null;
+              const holdRem=p.holdUntil?Math.max(0,Math.round((p.holdUntil-now())/1000)):0;
+              return(
+                <tr key={p.id}>
+                  <td style={{color:'var(--text)',fontWeight:500}}>{p.id}</td>
+                  <td className="dim">{p.num}</td>
+                  <td><span className={`badge ${path.badge}`}>{p.path}</span></td>
+                  <td><span className={`badge ${sBadge[p.status]||'bg-x'}`}>{sLabel[p.status]||p.status}</span></td>
+                  <td style={{color:'var(--t2)',fontSize:9}}>{curSt&&!curSt.isWaiting?curSt.name:destSt?`→${destSt.name}`:curSt?.name||'—'}</td>
+                  <td className="dim">{p.stepIndex??0}/{path.seq.length-1}</td>
+                  <td>{p.status==='active'&&dur>0&&<span style={{fontFamily:'var(--mono)',fontSize:9,color:over?'var(--red)':'var(--green)'}}>{over?'+':''}{fmtSec(el)}/{fmtSec(dur)}</span>}</td>
+                  <td>
+                    {p.status==='transit'&&<span style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--blue)'}}>✈{fmtSec(trRem)}</span>}
+                    {p.status==='s3_holding'&&holdRem>0&&<span style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--amber)'}}>⏳{fmtSec(holdRem)}</span>}
+                  </td>
+                  <td>
+                    <div className="row" style={{gap:4}}>
+                      <button className="btn bx sm" onClick={()=>setQrPid(p.id)}>QR</button>
+                      {p.status==='active'&&<button className="btn ba sm" onClick={()=>finishAndAdvance(p.id)}>→</button>}
+                      {p.status==='waiting_s3'&&<button className="btn bg sm" onClick={()=>{dispatchFromS3(p.id);toast.add(p.id,'ok');}}>Wyślij</button>}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+            {sorted.length===0&&<tr><td colSpan={9} style={{textAlign:'center',padding:'20px',color:'var(--t3)'}}>Brak</td></tr>}
+          </tbody>
+        </table>
+      </div></div>
+    </div>
+  );
+}
+
+function ConfigTab(){
+  return(
+    <div>
+      <div className="panel mb14">
+        <div className="ph"><span className="pt">Participant URL</span></div>
+        <div className="pb">
+          <div style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--t2)',marginBottom:8}}>
+            Ustaw URL aplikacji uczestnika po wdrożeniu na GitHub Pages:
+          </div>
+          <div style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--green)',background:'var(--bg3)',padding:'8px 12px',borderRadius:3,wordBreak:'break-all'}}>
+            {PARTICIPANT_URL}
+          </div>
+          <div className="dim" style={{marginTop:6}}>Zmień stałą PARTICIPANT_URL w kodzie na swój adres GitHub Pages</div>
+        </div>
+      </div>
+      <div className="panel mb14">
+        <div className="ph"><span className="pt">Smart dispatch — path delays</span></div>
+        <div className="pb">
+          {Object.entries(PATH_TO_S6).map(([k,v])=>(
+            <div key={k} style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--t2)',marginBottom:6}}>
+              Ścieżka <span style={{color:PATHS[k].badge==='bg-b'?'var(--blue)':PATHS[k].badge==='bg-p'?'var(--purple)':'var(--amber)'}}>{k}</span>:
+              czas do S6 = <span style={{color:'var(--text)'}}>{fmtSec(v)}</span> · delay = <span style={{color:'var(--amber)'}}>{fmtSec(BASE_DELAY[k])}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="panel">
+        <div className="ph"><span className="pt">Ścieżki</span></div>
+        <div className="pb">
+          {Object.entries(PATHS).map(([key,path])=>(
+            <div key={key} className="mb16">
+              <div className="row mb8"><span className={`badge ${path.badge}`}>{key}</span></div>
+              <div style={{display:'flex',alignItems:'center',gap:4,flexWrap:'wrap'}}>
+                {path.seq.map((sid,i)=>{
+                  const s_=STATIONS[sid];const isLast=i===path.seq.length-1;
+                  const tSec=!isLast?getT(sid,path.seq[i+1]):0;
+                  return(<React.Fragment key={sid}>
+                    <div style={{fontFamily:'var(--mono)',fontSize:9,background:'var(--bg3)',border:'1px solid var(--line)',padding:'3px 8px',borderRadius:2,textAlign:'center'}}>
+                      <div style={{color:'var(--text)'}}>S{s_.num}</div>
+                      <div style={{fontSize:7,color:'var(--t3)'}}>{s_.dur?fmtSec(s_.dur):'∞'}</div>
+                    </div>
+                    {!isLast&&<span style={{fontSize:8,color:'var(--t3)'}}>{fmtSec(tSec)}→</span>}
+                  </React.Fragment>);
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── STATION INTERFACE ─────────────────────────────────────────────── */
+function StationInterface({toast}){
+  const [sel,setSel]=useState(null);
+  const [scanResult,setScanResult]=useState('');
+  const [,setT]=useState(0);
+  useEffect(()=>{const t=setInterval(()=>setT(x=>x+1),1000);return()=>clearInterval(t);},[]);
+
+  const occupancy=useFirebase('/occupancy')||{};
+  const participants=useFirebase('/participants')||{};
+  const pList=Object.values(participants);
+
+  // Handle QR scan — extracts ?id= from URL
+  const handleScan=(val)=>{
+    const match=val.match(/[?&]id=([^&]+)/i);
+    const id=match?match[1].toUpperCase():val.trim().toUpperCase();
+    setScanResult(id);
+    toast.add('Zeskanowano: '+id,'ok');
+  };
+
+  if(!sel){
+    return(
+      <div className="sif">
+        <div className="sif-hd">Wybierz stację</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(120px,1fr))',gap:9,maxWidth:520,width:'100%'}}>
+          {Object.values(STATIONS).filter(x=>!x.isWaiting).map(station=>{
+            const occ=occupancy[station.id]||0;const full=occ>=station.cap;
+            return(
+              <button key={station.id} onClick={()=>setSel(station.id)} style={{background:'var(--bg3)',border:`1px solid ${full?'var(--red)':occ>0?'var(--green)':'var(--line)'}`,borderRadius:4,padding:16,cursor:'pointer',fontFamily:'var(--mono)',color:'var(--text)',textAlign:'center'}}>
+                <div style={{fontSize:8,color:'var(--t2)',marginBottom:5,letterSpacing:2,textTransform:'uppercase'}}>{station.name}</div>
+                <div style={{fontSize:26,color:full?'var(--red)':occ>0?'var(--green)':'var(--t3)',fontWeight:300}}>{occ}</div>
+                <div style={{fontSize:8,color:'var(--t3)'}}>/{station.cap}</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  const station=STATIONS[sel];
+  const occ=occupancy[sel]||0;
+  const full=occ>=station.cap;
+  const stPpl=pList.filter(p=>p.currentStation===sel&&(p.status==='active'||p.status==='buffering'));
+  const elapsed=stPpl[0]?.stationStartedAt?Math.floor((now()-stPpl[0].stationStartedAt)/1000):0;
+  const pct=station.dur>0?Math.min(100,(elapsed/station.dur)*100):0;
+  const over=station.dur>0&&elapsed>station.dur;
+
+  const endSession=async()=>{
+    const activePpl=stPpl.filter(p=>p.status==='active');
+    if(activePpl.length===0){toast.add('Nikt tu nie jest','err');return;}
+    for(const p of activePpl) await addNotif(p.id,`${p.id} skończyła ${station.name}`,'warn');
+    if('vibrate' in navigator) navigator.vibrate([200,100,200]);
+    toast.add('Admin powiadomiony','ok');
+  };
+
+  // QR scan input
+  const scanInput=useRef(null);
+
+  return(
+    <div className="sif">
+      <button className="sif-back" onClick={()=>setSel(null)}>← Zmień stację</button>
+      <div className="sif-hd">Performer Interface</div>
+      <div className="sif-name">{station.name}</div>
+      <div className="sif-cap">{station.cap===1?'solo':station.isFinal?`finał ${station.cap}`:`grupa ${station.cap}`}</div>
+      <div className="sif-occ" style={{color:full?'var(--red)':occ>0?'var(--green)':'var(--t3)'}}>{occ}</div>
+      {station.dur>0&&stPpl.length>0&&(
+        <>
+          <div className="sif-timer" style={{color:over?'var(--red)':pct>80?'var(--amber)':'var(--green)'}}>
+            {over?'+':''}{fmtSec(elapsed)} / {fmtSec(station.dur)}
+          </div>
+          <div className="sif-tbar"><div className="sif-tfill" style={{width:pct+'%',background:over?'var(--red)':pct>80?'var(--amber)':'var(--green)'}}/></div>
+        </>
+      )}
+      <div className="sif-plist">
+        {stPpl.map(p=><span key={p.id} className="badge bg-g">{p.id}</span>)}
+        {stPpl.length===0&&<span className="dim">brak uczestników</span>}
+      </div>
+
+      {/* QR SCAN AREA */}
+      <div style={{width:'100%',maxWidth:280,marginBottom:16}}>
+        <div style={{fontFamily:'var(--mono)',fontSize:8,letterSpacing:2,color:'#1a2535',textTransform:'uppercase',marginBottom:6,textAlign:'center'}}>Skanuj QR uczestnika</div>
+        <input
+          ref={scanInput}
+          style={{background:'#050709',border:'1px solid #0e1822',color:'#dde4ee',textAlign:'center',fontSize:12,letterSpacing:2,padding:10,fontFamily:'var(--mono)',borderRadius:2}}
+          placeholder="ID lub zeskanuj QR"
+          value={scanResult}
+          onChange={e=>setScanResult(e.target.value.toUpperCase())}
+          onKeyDown={e=>{if(e.key==='Enter')handleScan(scanResult);}}
+          onPaste={e=>{
+            const txt=e.clipboardData.getData('text');
+            e.preventDefault();
+            handleScan(txt);
+          }}
+        />
+        {scanResult&&<div style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--green)',textAlign:'center',marginTop:6}}>{scanResult} ✓</div>}
+      </div>
+
+      <div className="sif-act">
+        <button className="sif-btn sif-fn" onClick={endSession} disabled={occ===0}>
+          ✕ Koniec sceny · Powiadom admina
+        </button>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

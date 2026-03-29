@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#000000">
+<title>General Anesthesia</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#dde4ee;font-family:'IBM Plex Mono',monospace}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;background:#000;transition:opacity .4s}
+.screen.hidden{opacity:0;pointer-events:none}
+
+/* LOGIN */
+#screen-login .title{font-size:9px;letter-spacing:4px;color:#1a2535;text-transform:uppercase;margin-bottom:48px;text-align:center}
+#screen-login input{background:#050709;border:1px solid #0e1822;color:#dde4ee;text-align:center;font-size:20px;letter-spacing:4px;padding:14px;font-family:'IBM Plex Mono',monospace;border-radius:2px;width:100%;max-width:260px;outline:none}
+#screen-login input:focus{border-color:#00e87a}
+#screen-login .enter-btn{margin-top:12px;background:none;border:1px solid #0e1822;color:#1a2535;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;padding:12px;cursor:pointer;border-radius:2px;width:100%;max-width:260px;transition:all .2s}
+#screen-login .enter-btn:hover{border-color:#1a2535;color:#2a3545}
+#screen-login .err{font-size:9px;color:#ff3c3c;text-align:center;margin-top:10px;min-height:16px;letter-spacing:1px}
+
+/* WAITING */
+#screen-waiting .pid{font-size:9px;letter-spacing:4px;color:#1a2535;text-transform:uppercase;margin-bottom:48px}
+.pulse-dot{width:6px;height:6px;background:#152030;border-radius:50%;animation:pulse 2.5s infinite;margin:0 auto}
+@keyframes pulse{0%,100%{opacity:.2;transform:scale(1)}50%{opacity:.7;transform:scale(1.4)}}
+#screen-waiting .wait-txt{font-size:11px;color:#152030;letter-spacing:3px;text-align:center;text-transform:uppercase;margin-top:28px;line-height:1.8}
+.path-tag{position:absolute;bottom:24px;left:0;right:0;text-align:center;font-size:8px;letter-spacing:3px;color:#0a1520;text-transform:uppercase}
+
+/* TRANSIT */
+#screen-transit{background:#000}
+#screen-transit .pre{font-size:8px;letter-spacing:3px;color:#1e3044;text-transform:uppercase;margin-bottom:12px;text-align:center}
+#screen-transit .dest-num{font-size:80px;font-weight:300;color:#ffaa00;line-height:1;text-align:center;animation:fadeup .4s ease}
+#screen-transit .dest-name{font-size:10px;letter-spacing:3px;color:#1a2e44;text-transform:uppercase;margin-bottom:28px;text-align:center;margin-top:4px}
+#screen-transit .timer{font-size:32px;font-weight:300;color:#1e3a55;text-align:center;letter-spacing:4px;margin-bottom:12px}
+#screen-transit .tbar{width:200px;height:2px;background:#0a1520;border-radius:1px;overflow:hidden;margin:0 auto}
+#screen-transit .tbar-fill{height:100%;background:#ffaa00;border-radius:1px;transition:width 1s linear}
+
+/* ACTIVE */
+#screen-active .pre{font-size:8px;letter-spacing:3px;color:#1e3044;text-transform:uppercase;margin-bottom:18px;text-align:center}
+#screen-active .st-num{font-size:88px;font-weight:300;color:#00e87a;line-height:1;text-align:center;animation:fadeup .4s ease}
+#screen-active .st-name{font-size:10px;letter-spacing:3px;color:#1e3550;text-transform:uppercase;margin-bottom:24px;text-align:center;margin-top:4px}
+#screen-active .msg{font-size:12px;color:#2a4060;line-height:1.8;text-align:center}
+
+/* BUFFERING */
+#screen-buffering .pre{font-size:8px;letter-spacing:3px;color:#1e3044;text-transform:uppercase;margin-bottom:12px;text-align:center}
+#screen-buffering .st-num{font-size:80px;font-weight:300;color:#ffaa00;line-height:1;text-align:center}
+#screen-buffering .st-name{font-size:10px;letter-spacing:3px;color:#1a2e44;text-transform:uppercase;margin-bottom:28px;text-align:center;margin-top:4px}
+#screen-buffering .wait-txt{font-size:11px;color:#152030;letter-spacing:2px;text-align:center;text-transform:uppercase;margin-top:24px;line-height:1.8}
+
+/* DONE */
+#screen-done .check{font-size:64px;color:#00e87a;text-align:center;margin-bottom:16px}
+#screen-done .msg{font-size:10px;color:#1e3550;letter-spacing:2px;text-align:center;line-height:1.8;text-transform:uppercase}
+
+/* QR SCREEN */
+#screen-qr{background:#000}
+#screen-qr .pid{font-size:9px;letter-spacing:4px;color:#1a2535;text-transform:uppercase;margin-bottom:32px}
+#screen-qr #qr-canvas{border:1px solid #0e1822;border-radius:4px}
+#screen-qr .qr-id{font-size:14px;letter-spacing:4px;color:#334;margin-top:20px}
+#screen-qr .qr-hint{font-size:8px;letter-spacing:2px;color:#0e1822;text-transform:uppercase;margin-top:8px;text-align:center}
+#screen-qr .continue-btn{margin-top:28px;background:none;border:1px solid #0e1822;color:#1a2535;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;padding:10px 24px;cursor:pointer;border-radius:2px}
+
+@keyframes fadeup{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="screen" id="screen-login">
+  <div class="title">General Anesthesia</div>
+  <input id="id-input" placeholder="TWOJE ID" maxlength="16" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"/>
+  <button class="enter-btn" onclick="doLogin()">Wejdź</button>
+  <div class="err" id="login-err"></div>
+</div>
+
+<!-- QR CODE (shown once after login) -->
+<div class="screen hidden" id="screen-qr">
+  <div class="pid" id="qr-pid"></div>
+  <canvas id="qr-canvas" width="200" height="200"></canvas>
+  <div class="qr-id" id="qr-id-label"></div>
+  <div class="qr-hint">Pokaż performerowi przy każdej stacji</div>
+  <button class="continue-btn" onclick="showCurrentScreen()">Kontynuuj →</button>
+</div>
+
+<!-- WAITING IN S3 -->
+<div class="screen hidden" id="screen-waiting">
+  <div class="pid" id="waiting-pid"></div>
+  <div class="pulse-dot"></div>
+  <div class="wait-txt">Poczekaj.<br/>Instrukcje wkrótce.</div>
+  <div class="path-tag" id="waiting-tag"></div>
+</div>
+
+<!-- TRANSIT -->
+<div class="screen hidden" id="screen-transit">
+  <div class="pid" id="transit-pid"></div>
+  <div class="pre">Idź do</div>
+  <div class="dest-num" id="transit-num"></div>
+  <div class="dest-name" id="transit-name"></div>
+  <div class="timer" id="transit-timer">0:00</div>
+  <div class="tbar"><div class="tbar-fill" id="transit-bar"></div></div>
+  <div class="path-tag" id="transit-tag"></div>
+</div>
+
+<!-- BUFFERING (arrived, waiting for group) -->
+<div class="screen hidden" id="screen-buffering">
+  <div class="pid" id="buffering-pid"></div>
+  <div class="pre">Jesteś w</div>
+  <div class="st-num" id="buffering-num"></div>
+  <div class="st-name" id="buffering-name"></div>
+  <div class="pulse-dot"></div>
+  <div class="wait-txt">Czekasz na grupę.</div>
+  <div class="path-tag" id="buffering-tag"></div>
+</div>
+
+<!-- ACTIVE -->
+<div class="screen hidden" id="screen-active">
+  <div class="pid" id="active-pid"></div>
+  <div class="pre">Jesteś w</div>
+  <div class="st-num" id="active-num"></div>
+  <div class="st-name" id="active-name"></div>
+  <div class="msg" id="active-msg"></div>
+  <div class="path-tag" id="active-tag"></div>
+</div>
+
+<!-- DONE -->
+<div class="screen hidden" id="screen-done">
+  <div class="pid" id="done-pid"></div>
+  <div class="check">✓</div>
+  <div class="msg">Twoje doświadczenie<br/>dobiegło końca.<br/><br/>Pozostań na miejscu.</div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// ── FIREBASE ──────────────────────────────────────────────────────────
+firebase.initializeApp({
+  apiKey: "AIzaSyBzo6qVmam_u-H2asl3GIPRU_JBbMCPN9g",
+  authDomain: "general-anesthesia-cf511.firebaseapp.com",
+  databaseURL: "https://general-anesthesia-cf511-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "general-anesthesia-cf511",
+  storageBucket: "general-anesthesia-cf511.firebasestorage.app",
+  messagingSenderId: "839292271507",
+  appId: "1:839292271507:web:42a6028e0ff992afb50666"
+});
+const db = firebase.database();
+
+// ── STATIONS ─────────────────────────────────────────────────────────
+const STATIONS = {
+  s1:{num:1,name:'Station 01'},s2:{num:2,name:'Station 02'},
+  s3:{num:3,name:'Poczekalnia'},s4:{num:4,name:'Station 04'},
+  s5:{num:5,name:'Station 05'},s6:{num:6,name:'Station 06'},
+  s7:{num:7,name:'Station 07'},
+};
+const stMsg = cap => cap===1?'Doświadczenie solo.':cap<=4?'Doświadczenie grupowe.':cap>=15?'Doświadczenie zbiorowe.':'';
+
+// ── STATE ─────────────────────────────────────────────────────────────
+let pid = null;
+let currentData = null;
+let timerInterval = null;
+let prevStatus = null;
+let prevStation = null;
+let qrShown = false;
+
+// ── LOGIN ─────────────────────────────────────────────────────────────
+// Check URL param first
+const urlId = new URLSearchParams(location.search).get('id');
+if(urlId) {
+  document.getElementById('id-input').value = urlId.toUpperCase();
+  setTimeout(doLogin, 300);
+}
+
+document.getElementById('id-input').addEventListener('keydown', e => {
+  if(e.key === 'Enter') doLogin();
+});
+
+function doLogin() {
+  const val = document.getElementById('id-input').value.trim().toUpperCase();
+  if(!val) return;
+  const errEl = document.getElementById('login-err');
+  errEl.textContent = '';
+
+  db.ref('/participants/' + val).once('value').then(snap => {
+    if(!snap.exists()) {
+      errEl.textContent = 'ID nieznane — skontaktuj się z obsługą';
+      return;
+    }
+    pid = val;
+    // Show QR first (once per session)
+    showQR(val);
+    // Subscribe to live updates
+    db.ref('/participants/' + pid).on('value', snap => {
+      if(!snap.exists()) return;
+      const data = snap.val();
+      handleUpdate(data);
+    });
+  }).catch(() => {
+    errEl.textContent = 'Błąd połączenia — spróbuj ponownie';
+  });
+}
+
+// ── QR CODE ───────────────────────────────────────────────────────────
+function showQR(id) {
+  const pageUrl = location.origin + location.pathname + '?id=' + id;
+  document.getElementById('qr-pid').textContent = id;
+  document.getElementById('qr-id-label').textContent = id;
+
+  // Draw QR manually using canvas
+  const canvas = document.getElementById('qr-canvas');
+  drawQR(canvas, pageUrl);
+
+  show('qr');
+  qrShown = true;
+}
+
+// Simple QR code using qrcode library via canvas
+function drawQR(canvas, text) {
+  // Use QRCode library if loaded, otherwise fallback
+  try {
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0,0,200,200);
+    // Use qrcodejs
+    const div = document.createElement('div');
+    new QRCode(div, {
+      text: text,
+      width: 180,
+      height: 180,
+      colorDark: '#00e87a',
+      colorLight: '#000000',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    setTimeout(() => {
+      const img = div.querySelector('img') || div.querySelector('canvas');
+      if(img) {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0,0,200,200);
+        ctx.drawImage(img, 10, 10, 180, 180);
+      }
+    }, 200);
+  } catch(e) {
+    // Fallback: just show text
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#0a1520';
+    ctx.fillRect(0,0,200,200);
+    ctx.fillStyle = '#1e3550';
+    ctx.font = '10px IBM Plex Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText('QR: ' + text.split('?id=')[1], 100, 100);
+  }
+}
+
+// ── SCREEN MANAGER ────────────────────────────────────────────────────
+function show(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  const el = document.getElementById('screen-' + name);
+  if(el) el.classList.remove('hidden');
+}
+
+function showCurrentScreen() {
+  if(!currentData) { show('waiting'); return; }
+  handleUpdate(currentData);
+}
+
+// ── HANDLE FIREBASE UPDATE ────────────────────────────────────────────
+function handleUpdate(data) {
+  currentData = data;
+  const status = data.status;
+  const stationChanged = data.currentStation !== prevStation || data.transitTo !== prevStation;
+  const statusChanged = status !== prevStatus;
+
+  // Vibrate on meaningful changes
+  if(statusChanged && prevStatus !== null) {
+    if(status === 'transit') vibrate([300,120,300,120,400]);
+    if(status === 'active') vibrate([100,50,100,50,200]);
+    if(status === 'buffering') vibrate([200]);
+    if(status === 'done') vibrate([500,200,500]);
+  }
+  prevStatus = status;
+  prevStation = data.currentStation || data.transitTo;
+
+  if(qrShown && document.getElementById('screen-qr').classList.contains('hidden') === false) {
+    // Still showing QR — don't switch yet
+    return;
+  }
+
+  renderStatus(data);
+}
+
+function renderStatus(data) {
+  const status = data.status;
+  const pathLabel = data.path || '';
+  const pid = data.id;
+
+  if(status === 'waiting_s3' || status === 's3_holding') {
+    setText('waiting-pid', pid);
+    setText('waiting-tag', 'Ścieżka ' + pathLabel + ' · Poczekalnia');
+    show('waiting');
+    return;
+  }
+
+  if(status === 'transit') {
+    const dest = STATIONS[data.transitTo] || {};
+    const elapsed = data.transitStartedAt ? Math.floor((Date.now() - data.transitStartedAt) / 1000) : 0;
+    const dur = data.transitDur || 90;
+    setText('transit-pid', pid);
+    setText('transit-num', dest.num || '?');
+    setText('transit-name', dest.name || '');
+    setText('transit-tag', 'Ścieżka ' + pathLabel + ' · Krok ' + (data.stepIndex||0) + '/' + 6);
+    startTransitTimer(data.transitStartedAt, dur);
+    show('transit');
+    return;
+  }
+
+  if(status === 'buffering') {
+    const s = STATIONS[data.currentStation] || {};
+    setText('buffering-pid', pid);
+    setText('buffering-num', s.num || '?');
+    setText('buffering-name', s.name || '');
+    setText('buffering-tag', 'Ścieżka ' + pathLabel);
+    show('buffering');
+    return;
+  }
+
+  if(status === 'active') {
+    const s = STATIONS[data.currentStation] || {};
+    setText('active-pid', pid);
+    setText('active-num', s.num || '?');
+    setText('active-name', s.name || '');
+    setText('active-msg', stMsg(data.stationCap || 1));
+    setText('active-tag', 'Ścieżka ' + pathLabel + ' · Krok ' + (data.stepIndex||0) + '/' + 6);
+    show('active');
+    return;
+  }
+
+  if(status === 'done') {
+    setText('done-pid', pid);
+    show('done');
+    return;
+  }
+
+  show('waiting');
+}
+
+// ── TRANSIT TIMER ─────────────────────────────────────────────────────
+function startTransitTimer(startedAt, dur) {
+  if(timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    const elapsed = startedAt ? Math.floor((Date.now() - startedAt) / 1000) : 0;
+    const rem = Math.max(0, dur - elapsed);
+    const pct = Math.min(100, (elapsed / dur) * 100);
+    const m = Math.floor(rem/60), s = rem%60;
+    setText('transit-timer', m + ':' + String(s).padStart(2,'0'));
+    const bar = document.getElementById('transit-bar');
+    if(bar) bar.style.width = pct + '%';
+    if(rem === 0) clearInterval(timerInterval);
+  }, 1000);
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if(el) el.textContent = val;
+}
+
+function vibrate(pattern) {
+  if('vibrate' in navigator) {
+    try { navigator.vibrate(pattern); } catch(e) {}
+  }
+}
+</script>
+</body>
+</html>
