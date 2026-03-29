@@ -9,7 +9,6 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -46,7 +45,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 .ss{font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:2px}
 .btn{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;padding:6px 14px;border-radius:2px;cursor:pointer;border:1px solid;transition:all .12s;white-space:nowrap}
 .bg{color:var(--green);border-color:var(--green);background:var(--gbg)}.bg:hover{background:var(--gbr)}.bg:disabled{opacity:.3;cursor:not-allowed}
-.br{color:var(--red);border-color:var(--red);background:var(--rbg)}
 .ba{color:var(--amber);border-color:var(--amber);background:var(--abg)}.ba:hover{background:rgba(255,170,0,.14)}
 .bx{color:var(--t2);border-color:var(--line2);background:transparent}.bx:hover{color:var(--text);border-color:var(--t2)}
 .sm{padding:4px 9px;font-size:8px}
@@ -67,7 +65,6 @@ label{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;text-transform:
 .scard{background:var(--bg3);border:1px solid var(--line);border-radius:4px;padding:11px}
 .scard.act{border-color:var(--green);background:var(--gbg)}
 .scard.full{border-color:var(--red);background:var(--rbg)}
-.scard.buf{border-color:rgba(255,170,0,.4);background:var(--abg)}
 .sname{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;color:var(--t2);margin-bottom:3px;text-transform:uppercase}
 .socc{font-family:var(--mono);font-size:22px;font-weight:300;line-height:1}
 .scap{font-family:var(--mono);font-size:9px;color:var(--t3)}
@@ -93,16 +90,6 @@ label{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;text-transform:
 .sif-btn{width:100%;padding:16px;font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;border-radius:3px;cursor:pointer;border:1px solid;transition:all .15s}
 .sif-fn{color:#ff3c3c;border-color:#ff3c3c;background:rgba(255,60,60,.06)}.sif-fn:hover{background:rgba(255,60,60,.14)}.sif-fn:disabled{opacity:.3;cursor:not-allowed}
 .sif-back{background:none;border:none;color:#1a2535;font-family:var(--mono);font-size:8px;letter-spacing:2px;cursor:pointer;text-transform:uppercase;margin-bottom:28px}
-/* QR MODAL */
-.qr-modal{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:200;padding:24px}
-.qr-box{background:var(--bg2);border:1px solid var(--line2);border-radius:6px;padding:28px;text-align:center;max-width:300px;width:100%}
-.qr-title{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--t2);margin-bottom:16px}
-.qr-id{font-family:var(--mono);font-size:16px;letter-spacing:4px;color:var(--green);margin-top:16px}
-.qr-url{font-family:var(--mono);font-size:8px;color:var(--t3);margin-top:6px;word-break:break-all;line-height:1.4}
-/* SCANNER AREA */
-.scanner-area{background:var(--bg3);border:1px solid var(--line);border-radius:4px;padding:20px;text-align:center;margin-bottom:14px}
-.scan-result{font-family:var(--mono);font-size:11px;color:var(--green);margin-top:10px;min-height:18px}
-/* TOASTS */
 .toasts{position:fixed;top:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
 .toast{font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:10px 16px;background:var(--bg2);border:1px solid var(--line2);border-radius:3px;color:var(--t2);animation:tIn .25s ease}
 .toast.ok{border-left:2px solid var(--green)}.toast.warn{border-left:2px solid var(--amber)}.toast.err{border-left:2px solid var(--red)}
@@ -116,7 +103,6 @@ label{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;text-transform:
 </head>
 <body>
 <div id="root"></div>
-
 <script type="text/babel">
 const {useState,useEffect,useCallback,useRef} = React;
 
@@ -133,9 +119,6 @@ firebase.initializeApp({
 const fdb = firebase.database();
 
 /* ── CONSTANTS ─────────────────────────────────────────────────────── */
-const PARTICIPANT_URL = 'https://tymoschodo.github.io/ga-flow/participant.html';
-// ↑ Change this to your actual GitHub Pages URL after deploying
-
 const STATIONS = {
   s1:{id:'s1',num:1,name:'Station 01',cap:1, solo:true, dur:240},
   s2:{id:'s2',num:2,name:'Station 02',cap:1, solo:true, dur:300},
@@ -171,105 +154,61 @@ const PATH_TO_S6={A:pathTimeToS6('A'),B:pathTimeToS6('B'),C:pathTimeToS6('C')};
 const MAX_S6=Math.max(...Object.values(PATH_TO_S6));
 const BASE_DELAY={A:Math.round(MAX_S6-PATH_TO_S6.A),B:Math.round(MAX_S6-PATH_TO_S6.B),C:Math.round(MAX_S6-PATH_TO_S6.C)};
 
-/* ── FIREBASE DB HELPERS ───────────────────────────────────────────── */
+/* ── FIREBASE HELPERS ──────────────────────────────────────────────── */
 const dbSet=(path,val)=>fdb.ref(path).set(val);
 const dbUpdate=(path,val)=>fdb.ref(path).update(val);
 const dbGet=path=>fdb.ref(path).once('value').then(s=>s.val());
 
-/* ── DISPATCH ENGINE (writes to Firebase) ──────────────────────────── */
+/* ── DISPATCH ENGINE ───────────────────────────────────────────────── */
 async function dispatchFromS3(pid, forced=false){
   const p=await dbGet('/participants/'+pid);
   if(!p||(p.status!=='waiting_s3'&&p.status!=='s3_holding')) return;
-
   const path=PATHS[p.path];
   const nextIdx=(p.stepIndex??0)+1;
   if(nextIdx>=path.seq.length) return;
+  const fromSid='s3', toSid=path.seq[nextIdx], toSt=st(toSid), tDur=getT(fromSid,toSid);
 
-  const fromSid='s3';
-  const toSid=path.seq[nextIdx];
-  const toSt=st(toSid);
-  const tDur=getT(fromSid,toSid);
-
-  // Rule 1: path delay
   if(!forced){
     const earliest=(p.registeredAt||now())+BASE_DELAY[p.path]*1000;
     if(now()<earliest){
-      const waitMs=earliest-now();
       await dbUpdate('/participants/'+pid,{status:'s3_holding',holdUntil:earliest});
-      setTimeout(()=>dispatchFromS3(pid,true),waitMs+100);
+      setTimeout(()=>dispatchFromS3(pid,true),earliest-now()+100);
       return;
     }
   }
-
-  // Rule 2: solo anti-queue
   if(toSt.solo||toSt.cap===1){
     const soloFreeAt=(await dbGet('/soloFreeAt/'+toSid))||0;
     const arrivalTime=now()+tDur*1000;
     if(!forced&&arrivalTime<soloFreeAt-5000){
-      const waitMs=soloFreeAt-tDur*1000-now();
       await dbUpdate('/participants/'+pid,{status:'s3_holding',holdUntil:soloFreeAt-tDur*1000});
-      setTimeout(()=>dispatchFromS3(pid,true),Math.max(0,waitMs)+100);
+      setTimeout(()=>dispatchFromS3(pid,true),Math.max(100,soloFreeAt-tDur*1000-now()));
       return;
     }
-    // Reserve
     await dbSet('/soloFreeAt/'+toSid,arrivalTime+toSt.dur*1000);
   }
-
-  // Decrement S3
-  const s3occ=await dbGet('/occupancy/s3')||0;
+  const s3occ=(await dbGet('/occupancy/s3'))||0;
   await dbSet('/occupancy/s3',Math.max(0,s3occ-1));
-
-  // Send to transit
   await dbUpdate('/participants/'+pid,{
-    status:'transit',
-    transitStartedAt:now(),
-    transitDur:tDur,
-    transitTo:toSid,
-    stepIndex:nextIdx,
-    currentStation:null,
-    stationStartedAt:null,
-    stationCap:toSt.cap,
-    holdUntil:null,
+    status:'transit',transitStartedAt:now(),transitDur:tDur,transitTo:toSid,
+    stepIndex:nextIdx,currentStation:null,stationStartedAt:null,stationCap:toSt.cap,holdUntil:null,
   });
-
-  // Schedule arrival
   setTimeout(()=>handleArrival(pid,toSid),tDur*1000+200);
 }
 
 async function handleArrival(pid, sid){
   const p=await dbGet('/participants/'+pid);
-  if(!p||p.transitTo!==sid) return; // state changed
+  if(!p||p.transitTo!==sid) return;
   const s=st(sid);
-
   if(s.group&&s.cap>1){
-    // Add to group buffer, mark as buffering
-    await dbUpdate('/participants/'+pid,{
-      status:'buffering',
-      currentStation:sid,
-      transitTo:null,
-      transitStartedAt:null,
-      transitDur:null,
-    });
+    await dbUpdate('/participants/'+pid,{status:'buffering',currentStation:sid,transitTo:null,transitStartedAt:null,transitDur:null});
     const occNow=(await dbGet('/occupancy/'+sid))||0;
     await dbSet('/occupancy/'+sid,occNow+1);
-    // Check if group complete
     await checkGroupLaunch(sid);
   } else {
-    // Solo: arrive directly
     const occNow=(await dbGet('/occupancy/'+sid))||0;
     await dbSet('/occupancy/'+sid,occNow+1);
-    await dbUpdate('/participants/'+pid,{
-      status:'active',
-      currentStation:sid,
-      transitTo:null,
-      transitStartedAt:null,
-      transitDur:null,
-      stationStartedAt:now(),
-    });
-    // Schedule notification when session ends
-    if(s.dur>0){
-      setTimeout(()=>addNotif(pid,`${pid} — czas minął · ${s.name}`,'warn'),s.dur*1000);
-    }
+    await dbUpdate('/participants/'+pid,{status:'active',currentStation:sid,transitTo:null,transitStartedAt:null,transitDur:null,stationStartedAt:now()});
+    if(s.dur>0) setTimeout(()=>addNotif(pid,`${pid} — czas minął · ${s.name}`,'warn'),s.dur*1000);
   }
 }
 
@@ -277,62 +216,37 @@ async function checkGroupLaunch(sid){
   const s=st(sid);
   const allP=await dbGet('/participants')||{};
   const buffering=Object.values(allP).filter(p=>p.status==='buffering'&&p.currentStation===sid);
-
-  let needed=s.cap;
-  if(sid==='s6') needed=15;
-  if(sid==='s7') needed=30;
-
+  const needed=sid==='s6'?15:sid==='s7'?30:s.cap;
   if(buffering.length>=needed){
     const group=buffering.slice(0,needed);
     const t=now();
-    for(const p of group){
-      await dbUpdate('/participants/'+p.id,{status:'active',stationStartedAt:t});
-    }
-    if(s.dur>0){
-      setTimeout(async()=>{
-        for(const p of group) await addNotif(p.id,`${p.id} — czas minął · ${s.name}`,'warn');
-      },s.dur*1000);
-    }
+    for(const p of group) await dbUpdate('/participants/'+p.id,{status:'active',stationStartedAt:t});
+    if(s.dur>0) setTimeout(async()=>{for(const p of group) await addNotif(p.id,`${p.id} — czas minął · ${s.name}`,'warn');},s.dur*1000);
   }
 }
 
 async function advanceParticipant(pid){
   const p=await dbGet('/participants/'+pid);
   if(!p||p.status==='done') return;
-
   const path=PATHS[p.path];
-  const curIdx=p.stepIndex??0;
-  const nextIdx=curIdx+1;
-
-  // Leave station
+  const curIdx=p.stepIndex??0, nextIdx=curIdx+1;
   if(p.currentStation){
     const occ=(await dbGet('/occupancy/'+p.currentStation))||0;
     await dbSet('/occupancy/'+p.currentStation,Math.max(0,occ-1));
   }
-
   if(nextIdx>=path.seq.length){
     await dbUpdate('/participants/'+pid,{status:'done',currentStation:null,stationStartedAt:null});
     return;
   }
-
-  const fromSid=path.seq[curIdx];
-  const toSid=path.seq[nextIdx];
-  const toSt=st(toSid);
-  const tDur=getT(fromSid,toSid);
-
-  // Solo anti-queue from non-S3
+  const fromSid=path.seq[curIdx], toSid=path.seq[nextIdx], toSt=st(toSid), tDur=getT(fromSid,toSid);
   if(toSt.solo||toSt.cap===1){
     const soloFreeAt=(await dbGet('/soloFreeAt/'+toSid))||0;
     const arrivalTime=now()+tDur*1000;
     if(arrivalTime<soloFreeAt-5000){
-      // Bounce to S3
       const s3occ=(await dbGet('/occupancy/s3'))||0;
       if(s3occ<10){
         await dbSet('/occupancy/s3',s3occ+1);
-        await dbUpdate('/participants/'+pid,{
-          status:'s3_holding',currentStation:'s3',stationStartedAt:null,
-          stepIndex:curIdx,holdUntil:soloFreeAt-tDur*1000,transitTo:null,
-        });
+        await dbUpdate('/participants/'+pid,{status:'s3_holding',currentStation:'s3',stationStartedAt:null,stepIndex:curIdx,holdUntil:soloFreeAt-tDur*1000,transitTo:null});
         setTimeout(()=>dispatchFromS3(pid,true),Math.max(100,soloFreeAt-tDur*1000-now()));
         await addNotif(pid,`${pid} → S3 (S${toSt.num} zajęta)`,'warn');
         return;
@@ -340,21 +254,15 @@ async function advanceParticipant(pid){
     }
     await dbSet('/soloFreeAt/'+toSid,now()+tDur*1000+toSt.dur*1000);
   }
-
-  await dbUpdate('/participants/'+pid,{
-    status:'transit',transitStartedAt:now(),transitDur:tDur,
-    transitTo:toSid,stepIndex:nextIdx,currentStation:null,stationStartedAt:null,
-    stationCap:toSt.cap,
-  });
+  await dbUpdate('/participants/'+pid,{status:'transit',transitStartedAt:now(),transitDur:tDur,transitTo:toSid,stepIndex:nextIdx,currentStation:null,stationStartedAt:null,stationCap:toSt.cap});
   setTimeout(()=>handleArrival(pid,toSid),tDur*1000+200);
 }
 
 async function addNotif(pid,msg,type='info'){
-  const id=now()+Math.random();
-  await dbSet('/notifications/'+id,{id,pid,msg,time:now(),type});
+  await fdb.ref('/notifications/'+now()+Math.random()).set({pid,msg,time:now(),type});
 }
 
-/* ── REACT HOOKS ───────────────────────────────────────────────────── */
+/* ── HOOKS ─────────────────────────────────────────────────────────── */
 function useFirebase(path){
   const [val,setVal]=useState(null);
   useEffect(()=>{
@@ -364,47 +272,13 @@ function useFirebase(path){
   },[path]);
   return val;
 }
-
 function useToast(){
   const [ts,setTs]=useState([]);
   const add=useCallback((msg,type='ok')=>{
-    const id=now();
-    setTs(t=>[...t,{id,msg,type}]);
+    const id=now();setTs(t=>[...t,{id,msg,type}]);
     setTimeout(()=>setTs(t=>t.filter(x=>x.id!==id)),3400);
   },[]);
   return{ts,add};
-}
-
-/* ── QR MODAL ──────────────────────────────────────────────────────── */
-function QRModal({pid,onClose}){
-  const ref=useRef(null);
-  const url=PARTICIPANT_URL+'?id='+pid;
-
-  useEffect(()=>{
-    if(!ref.current) return;
-    ref.current.innerHTML='';
-    try{
-      new QRCode(ref.current,{
-        text:url,width:180,height:180,
-        colorDark:'#00e87a',colorLight:'#000000',
-        correctLevel:QRCode.CorrectLevel.M
-      });
-    }catch(e){
-      ref.current.innerHTML=`<div style="color:var(--t3);font-size:9px;padding:20px;word-break:break-all">${url}</div>`;
-    }
-  },[pid]);
-
-  return(
-    <div className="qr-modal" onClick={onClose}>
-      <div className="qr-box" onClick={e=>e.stopPropagation()}>
-        <div className="qr-title">QR Code — {pid}</div>
-        <div ref={ref} style={{display:'flex',justifyContent:'center',background:'#000',padding:10,borderRadius:4}}/>
-        <div className="qr-id">{pid}</div>
-        <div className="qr-url">{url}</div>
-        <button className="btn bx sm" style={{marginTop:16,width:'100%'}} onClick={onClose}>Zamknij</button>
-      </div>
-    </div>
-  );
 }
 
 /* ── TIMER BAR ─────────────────────────────────────────────────────── */
@@ -426,7 +300,7 @@ function TimerBar({startedAt,dur}){
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   ADMIN APP
+   APP
 ════════════════════════════════════════════════════════════════════ */
 function App(){
   const [view,setView]=useState('admin');
@@ -447,10 +321,10 @@ function App(){
   );
 }
 
+/* ── ADMIN DASHBOARD ───────────────────────────────────────────────── */
 function AdminDashboard({toast}){
   const [tab,setTab]=useState('overview');
   const [regId,setRegId]=useState('');
-  const [qrPid,setQrPid]=useState(null);
   const [,setT]=useState(0);
   useEffect(()=>{const t=setInterval(()=>setT(x=>x+1),1000);return()=>clearInterval(t);},[]);
 
@@ -466,10 +340,8 @@ function AdminDashboard({toast}){
     const id=regId.trim().toUpperCase();
     if(!id){toast.add('Wpisz ID','err');return;}
     if(participants[id]){toast.add(`${id} już istnieje`,'warn');return;}
-    const count=pList.length;
-    if(count>=30){toast.add('Max 30','err');return;}
-    const num=count+1;
-    const path=assignPath(num);
+    if(pList.length>=30){toast.add('Max 30','err');return;}
+    const num=pList.length+1, path=assignPath(num);
     await dbSet('/participants/'+id,{
       id,num,path,status:'waiting_s3',currentStation:'s3',stepIndex:0,
       registeredAt:now(),stationStartedAt:null,transitStartedAt:null,
@@ -477,32 +349,20 @@ function AdminDashboard({toast}){
     });
     const s3occ=(await dbGet('/occupancy/s3'))||0;
     await dbSet('/occupancy/s3',s3occ+1);
-    toast.add(`${id} → Ścieżka ${path}`,'ok');
+    toast.add(`${id} zarejestrowany → Ścieżka ${path}`,'ok');
     setRegId('');
-    setQrPid(id); // auto-show QR
   };
 
   const clearNotif=nid=>fdb.ref('/notifications/'+nid).remove();
-
-  const finishAndAdvance=async(pid)=>{
-    await advanceParticipant(pid);
-    toast.add(`${pid} → dalej`,'ok');
-  };
-
-  const startShow=async()=>{
-    await dbSet('/showStarted',true);
-    await dbSet('/showStartAt',now());
-    toast.add('Show started','ok');
-  };
+  const finishAndAdvance=async(pid)=>{await advanceParticipant(pid);toast.add(`${pid} → dalej`,'ok');};
+  const startShow=async()=>{await dbSet('/showStarted',true);await dbSet('/showStartAt',now());toast.add('Show started','ok');};
 
   const active=pList.filter(p=>p.status==='active').length;
   const inTransit=pList.filter(p=>p.status==='transit').length;
   const waiting=pList.filter(p=>p.status==='waiting_s3'||p.status==='s3_holding'||p.status==='buffering').length;
-  const done=pList.filter(p=>p.status==='done').length;
 
   return(
     <div className="page">
-      {qrPid&&<QRModal pid={qrPid} onClose={()=>setQrPid(null)}/>}
       <div className="row-b mb20">
         <div>
           <div className="dim mb8">Control Room · Firebase Live</div>
@@ -513,37 +373,32 @@ function AdminDashboard({toast}){
           {showStarted&&<span className="badge bg-g">LIVE</span>}
         </div>
       </div>
-
       <div className="g4 mb16">
         <div className="sc"><div className="sl">Zarejestrowani</div><div className="sv">{pList.length}<span style={{fontSize:13,color:'var(--t3)'}}>/30</span></div></div>
         <div className="sc"><div className="sl">Na stacjach</div><div className="sv" style={{color:'var(--green)'}}>{active}</div></div>
         <div className="sc"><div className="sl">W drodze</div><div className="sv" style={{color:'var(--blue)'}}>{inTransit}</div></div>
         <div className="sc"><div className="sl">Czekający</div><div className="sv" style={{color:'var(--amber)'}}>{waiting}</div></div>
       </div>
-
       <div className="row mb16">
         {['overview','participants','config'].map(t=>(
           <button key={t} className={`tb ${tab===t?'on':''}`} onClick={()=>setTab(t)}>{t}</button>
         ))}
       </div>
-
-      {tab==='overview'&&<OverviewTab pList={pList} occupancy={occupancy} notifList={notifList} finishAndAdvance={finishAndAdvance} clearNotif={clearNotif} regId={regId} setRegId={setRegId} register={register} setQrPid={setQrPid} toast={toast}/>}
-      {tab==='participants'&&<ParticipantsTab pList={pList} finishAndAdvance={finishAndAdvance} setQrPid={setQrPid} toast={toast}/>}
+      {tab==='overview'&&<OverviewTab pList={pList} occupancy={occupancy} notifList={notifList} finishAndAdvance={finishAndAdvance} clearNotif={clearNotif} regId={regId} setRegId={setRegId} register={register} toast={toast}/>}
+      {tab==='participants'&&<ParticipantsTab pList={pList} finishAndAdvance={finishAndAdvance} toast={toast}/>}
       {tab==='config'&&<ConfigTab/>}
     </div>
   );
 }
 
-function OverviewTab({pList,occupancy,notifList,finishAndAdvance,clearNotif,regId,setRegId,register,setQrPid,toast}){
+/* ── OVERVIEW TAB ──────────────────────────────────────────────────── */
+function OverviewTab({pList,occupancy,notifList,finishAndAdvance,clearNotif,regId,setRegId,register,toast}){
   const [,setT]=useState(0);
   useEffect(()=>{const t=setInterval(()=>setT(x=>x+1),1000);return()=>clearInterval(t);},[]);
-
   const s3ppl=pList.filter(p=>p.status==='waiting_s3'||p.status==='s3_holding');
-
   return(
     <div className="g2">
       <div>
-        {/* STATION MAP */}
         <div className="panel mb14">
           <div className="ph"><span className="pt">Stacje · live</span></div>
           <div className="pb">
@@ -568,11 +423,10 @@ function OverviewTab({pList,occupancy,notifList,finishAndAdvance,clearNotif,regI
           </div>
         </div>
 
-        {/* S3 */}
         <div className="panel mb14">
           <div className="ph">
             <span className="pt">S3 Poczekalnia ({s3ppl.length}/10)</span>
-            <span className="dim">delays A:{fmtSec(BASE_DELAY.A)} B:{fmtSec(BASE_DELAY.B)} C:{fmtSec(BASE_DELAY.C)}</span>
+            <span className="dim">delay A:{fmtSec(BASE_DELAY.A)} B:{fmtSec(BASE_DELAY.B)} C:{fmtSec(BASE_DELAY.C)}</span>
           </div>
           <div className="pb">
             {s3ppl.length===0&&<div className="dim" style={{textAlign:'center',padding:'10px 0'}}>Pusta</div>}
@@ -590,20 +444,46 @@ function OverviewTab({pList,occupancy,notifList,finishAndAdvance,clearNotif,regI
                     {nextSt&&<span className="dim">→S{nextSt.num}</span>}
                     {isHolding&&rem>0&&<span style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--amber)'}}>⏳{fmtSec(rem)}</span>}
                   </div>
-                  <div className="row" style={{gap:5}}>
-                    <button className="btn bx sm" onClick={()=>setQrPid(p.id)}>QR</button>
-                    {isHolding?<button className="btn ba sm" onClick={()=>{dispatchFromS3(p.id,true);toast.add(p.id+' forced','ok');}}>Force →</button>
-                    :<button className="btn bg sm" onClick={()=>{dispatchFromS3(p.id);toast.add(p.id+' dispatched','ok');}}>Wyślij →</button>}
-                  </div>
+                  {isHolding
+                    ?<button className="btn ba sm" onClick={()=>{dispatchFromS3(p.id,true);toast.add(p.id+' forced','ok');}}>Force →</button>
+                    :<button className="btn bg sm" onClick={()=>{dispatchFromS3(p.id);toast.add(p.id+' dispatched','ok');}}>Wyślij →</button>
+                  }
                 </div>
               );
             })}
           </div>
         </div>
+
+        {/* GROUP BUFFERS */}
+        {['s4','s5','s6','s7'].map(sid=>{
+          const s_=st(sid);
+          const buffering=pList.filter(p=>p.status==='buffering'&&p.currentStation===sid);
+          const inTransit=pList.filter(p=>p.status==='transit'&&p.transitTo===sid);
+          if(buffering.length===0&&inTransit.length===0) return null;
+          const needed=sid==='s6'?15:sid==='s7'?30:s_.cap;
+          return(
+            <div key={sid} className="panel mb14" style={{borderColor:'rgba(255,170,0,.25)'}}>
+              <div className="ph">
+                <span className="pt" style={{color:'var(--amber)'}}>{s_.name} · {buffering.length}/{needed}</span>
+                <span className="dim">{inTransit.length} w drodze</span>
+              </div>
+              <div className="pb">
+                <div className="row" style={{gap:5,flexWrap:'wrap',marginBottom:6}}>
+                  {buffering.map(p=><span key={p.id} className="badge bg-g">{p.id} ✓</span>)}
+                  {inTransit.map(p=>{
+                    const rem=p.transitStartedAt?Math.max(0,p.transitDur-Math.floor((now()-p.transitStartedAt)/1000)):0;
+                    return<span key={p.id} className="badge bg-a">{p.id} ✈{fmtSec(rem)}</span>;
+                  })}
+                  {Array.from({length:Math.max(0,needed-buffering.length-inTransit.length)}).map((_,i)=><span key={i} className="badge bg-x">—</span>)}
+                </div>
+                <div className="dim">Brakuje {Math.max(0,needed-buffering.length-inTransit.length)} osób</div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <div>
-        {/* REGISTER */}
         <div className="panel mb14">
           <div className="ph"><span className="pt">Rejestracja uczestnika</span></div>
           <div className="pb">
@@ -614,11 +494,10 @@ function OverviewTab({pList,occupancy,notifList,finishAndAdvance,clearNotif,regI
                 <button className="btn bg" onClick={register}>+ Dodaj</button>
               </div>
             </div>
-            <div className="dim">Po rejestracji automatycznie pojawi się QR kod · A:1–10 B:11–20 C:21–30</div>
+            <div className="dim">Uczestnik wpisuje to samo ID na: tymoschodo.github.io/ga-flow/participant.html</div>
           </div>
         </div>
 
-        {/* NOTIFICATIONS */}
         <div className="panel">
           <div className="ph">
             <span className="pt" style={{color:notifList.some(n=>n.type==='warn')?'var(--amber)':undefined}}>
@@ -628,18 +507,15 @@ function OverviewTab({pList,occupancy,notifList,finishAndAdvance,clearNotif,regI
           </div>
           <div className="pb scroll">
             {notifList.length===0&&<div className="dim" style={{textAlign:'center',padding:'12px 0'}}>Brak</div>}
-            {notifList.map(n=>{
-              const p=n.pid?null:null;
-              return(
-                <div key={n.id} className="notif">
-                  <div><div className="ntxt">{n.msg}</div><div className="dim">{new Date(n.time).toLocaleTimeString('pl')}</div></div>
-                  <div className="row" style={{gap:5}}>
-                    {n.type==='warn'&&n.pid&&<button className="btn bg sm" onClick={()=>{finishAndAdvance(n.pid);clearNotif(n.id);}}>→ Dalej</button>}
-                    <button className="btn bx sm" onClick={()=>clearNotif(n.id)}>✕</button>
-                  </div>
+            {notifList.map(n=>(
+              <div key={n.id} className="notif">
+                <div><div className="ntxt">{n.msg}</div><div className="dim">{new Date(n.time).toLocaleTimeString('pl')}</div></div>
+                <div className="row" style={{gap:5}}>
+                  {n.type==='warn'&&n.pid&&<button className="btn bg sm" onClick={()=>{finishAndAdvance(n.pid);clearNotif(n.id);}}>→ Dalej</button>}
+                  <button className="btn bx sm" onClick={()=>clearNotif(n.id)}>✕</button>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -647,16 +523,15 @@ function OverviewTab({pList,occupancy,notifList,finishAndAdvance,clearNotif,regI
   );
 }
 
-function ParticipantsTab({pList,finishAndAdvance,setQrPid,toast}){
+/* ── PARTICIPANTS TAB ───────────────────────────────────────────────── */
+function ParticipantsTab({pList,finishAndAdvance,toast}){
   const [filter,setFilter]=useState('all');
   const [,setT]=useState(0);
   useEffect(()=>{const t=setInterval(()=>setT(x=>x+1),1000);return()=>clearInterval(t);},[]);
-
   const filtered=pList.filter(p=>filter==='all'||p.status===filter||p.path===filter);
   const sorted=[...filtered].sort((a,b)=>a.num-b.num);
   const sBadge={active:'bg-g',waiting_s3:'bg-a',s3_holding:'bg-a',transit:'bg-b',buffering:'bg-p',done:'bg-x'};
-  const sLabel={active:'aktywny',waiting_s3:'S3',s3_holding:'S3 hold',transit:'tranzyt',buffering:'buforing',done:'koniec'};
-
+  const sLabel={active:'aktywny',waiting_s3:'S3',s3_holding:'S3 hold',transit:'tranzyt',buffering:'bufor',done:'koniec'};
   return(
     <div>
       <div className="row-b mb12">
@@ -677,8 +552,7 @@ function ParticipantsTab({pList,finishAndAdvance,setQrPid,toast}){
               const path=PATHS[p.path];
               const curSt=p.currentStation?st(p.currentStation):null;
               const el=p.stationStartedAt?Math.floor((now()-p.stationStartedAt)/1000):0;
-              const dur=curSt?.dur||0;
-              const over=dur>0&&el>dur;
+              const dur=curSt?.dur||0; const over=dur>0&&el>dur;
               const trEl=p.transitStartedAt?Math.floor((now()-p.transitStartedAt)/1000):0;
               const trRem=Math.max(0,(p.transitDur||0)-trEl);
               const destSt=p.transitTo?st(p.transitTo):null;
@@ -697,11 +571,9 @@ function ParticipantsTab({pList,finishAndAdvance,setQrPid,toast}){
                     {p.status==='s3_holding'&&holdRem>0&&<span style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--amber)'}}>⏳{fmtSec(holdRem)}</span>}
                   </td>
                   <td>
-                    <div className="row" style={{gap:4}}>
-                      <button className="btn bx sm" onClick={()=>setQrPid(p.id)}>QR</button>
-                      {p.status==='active'&&<button className="btn ba sm" onClick={()=>finishAndAdvance(p.id)}>→</button>}
-                      {p.status==='waiting_s3'&&<button className="btn bg sm" onClick={()=>{dispatchFromS3(p.id);toast.add(p.id,'ok');}}>Wyślij</button>}
-                    </div>
+                    {p.status==='waiting_s3'&&<button className="btn bg sm" onClick={()=>{dispatchFromS3(p.id);toast.add(p.id,'ok');}}>Wyślij</button>}
+                    {p.status==='s3_holding'&&<button className="btn ba sm" onClick={()=>{dispatchFromS3(p.id,true);toast.add(p.id+' forced','ok');}}>Force</button>}
+                    {p.status==='active'&&<button className="btn ba sm" onClick={()=>finishAndAdvance(p.id)}>Koniec→</button>}
                   </td>
                 </tr>
               );
@@ -714,19 +586,20 @@ function ParticipantsTab({pList,finishAndAdvance,setQrPid,toast}){
   );
 }
 
+/* ── CONFIG TAB ────────────────────────────────────────────────────── */
 function ConfigTab(){
   return(
     <div>
       <div className="panel mb14">
-        <div className="ph"><span className="pt">Participant URL</span></div>
+        <div className="ph"><span className="pt">Instrukcja dla uczestników</span></div>
         <div className="pb">
-          <div style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--t2)',marginBottom:8}}>
-            Ustaw URL aplikacji uczestnika po wdrożeniu na GitHub Pages:
+          <div style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--t2)',lineHeight:2,background:'var(--bg3)',padding:'12px 16px',borderRadius:3}}>
+            1. Zeskanuj QR kod na wejściu (lub wejdź na link)<br/>
+            2. Otwórz: <span style={{color:'var(--green)'}}>tymoschodo.github.io/ga-flow/participant.html</span><br/>
+            3. Wpisz swoje ID otrzymane przy rejestracji<br/>
+            4. Trzymaj telefon odblokowany przez cały spektakl<br/>
+            5. Reaguj na wibracje i instrukcje na ekranie
           </div>
-          <div style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--green)',background:'var(--bg3)',padding:'8px 12px',borderRadius:3,wordBreak:'break-all'}}>
-            {PARTICIPANT_URL}
-          </div>
-          <div className="dim" style={{marginTop:6}}>Zmień stałą PARTICIPANT_URL w kodzie na swój adres GitHub Pages</div>
         </div>
       </div>
       <div className="panel mb14">
@@ -745,7 +618,7 @@ function ConfigTab(){
         <div className="pb">
           {Object.entries(PATHS).map(([key,path])=>(
             <div key={key} className="mb16">
-              <div className="row mb8"><span className={`badge ${path.badge}`}>{key}</span></div>
+              <div className="row mb8"><span className={`badge ${path.badge}`}>{key}</span><span className="dim">{key==='A'?'nr 1–10':key==='B'?'nr 11–20':'nr 21–30'}</span></div>
               <div style={{display:'flex',alignItems:'center',gap:4,flexWrap:'wrap'}}>
                 {path.seq.map((sid,i)=>{
                   const s_=STATIONS[sid];const isLast=i===path.seq.length-1;
@@ -770,21 +643,13 @@ function ConfigTab(){
 /* ── STATION INTERFACE ─────────────────────────────────────────────── */
 function StationInterface({toast}){
   const [sel,setSel]=useState(null);
-  const [scanResult,setScanResult]=useState('');
+  const [scanVal,setScanVal]=useState('');
   const [,setT]=useState(0);
   useEffect(()=>{const t=setInterval(()=>setT(x=>x+1),1000);return()=>clearInterval(t);},[]);
 
   const occupancy=useFirebase('/occupancy')||{};
   const participants=useFirebase('/participants')||{};
   const pList=Object.values(participants);
-
-  // Handle QR scan — extracts ?id= from URL
-  const handleScan=(val)=>{
-    const match=val.match(/[?&]id=([^&]+)/i);
-    const id=match?match[1].toUpperCase():val.trim().toUpperCase();
-    setScanResult(id);
-    toast.add('Zeskanowano: '+id,'ok');
-  };
 
   if(!sel){
     return(
@@ -822,8 +687,14 @@ function StationInterface({toast}){
     toast.add('Admin powiadomiony','ok');
   };
 
-  // QR scan input
-  const scanInput=useRef(null);
+  // Handle scan — QR code will contain just the ID or URL with ?id=
+  const handleScan=()=>{
+    const raw=scanVal.trim();
+    const match=raw.match(/[?&]id=([^&\s]+)/i);
+    const id=match?match[1].toUpperCase():raw.toUpperCase();
+    if(id) toast.add('ID: '+id,'ok');
+    setScanVal('');
+  };
 
   return(
     <div className="sif">
@@ -845,23 +716,18 @@ function StationInterface({toast}){
         {stPpl.length===0&&<span className="dim">brak uczestników</span>}
       </div>
 
-      {/* QR SCAN AREA */}
-      <div style={{width:'100%',maxWidth:280,marginBottom:16}}>
-        <div style={{fontFamily:'var(--mono)',fontSize:8,letterSpacing:2,color:'#1a2535',textTransform:'uppercase',marginBottom:6,textAlign:'center'}}>Skanuj QR uczestnika</div>
+      {/* ID INPUT — works with QR scanner (USB/Bluetooth) or manual */}
+      <div style={{width:'100%',maxWidth:280,marginBottom:14}}>
+        <div style={{fontFamily:'var(--mono)',fontSize:8,letterSpacing:2,color:'#1a2535',textTransform:'uppercase',marginBottom:5,textAlign:'center'}}>Skanuj QR lub wpisz ID</div>
         <input
-          ref={scanInput}
-          style={{background:'#050709',border:'1px solid #0e1822',color:'#dde4ee',textAlign:'center',fontSize:12,letterSpacing:2,padding:10,fontFamily:'var(--mono)',borderRadius:2}}
-          placeholder="ID lub zeskanuj QR"
-          value={scanResult}
-          onChange={e=>setScanResult(e.target.value.toUpperCase())}
-          onKeyDown={e=>{if(e.key==='Enter')handleScan(scanResult);}}
-          onPaste={e=>{
-            const txt=e.clipboardData.getData('text');
-            e.preventDefault();
-            handleScan(txt);
-          }}
+          style={{background:'#050709',border:'1px solid #0e1822',color:'#dde4ee',textAlign:'center',fontSize:13,letterSpacing:2,padding:10,fontFamily:'var(--mono)',borderRadius:2}}
+          placeholder="ID uczestnika"
+          value={scanVal}
+          onChange={e=>setScanVal(e.target.value.toUpperCase())}
+          onKeyDown={e=>{if(e.key==='Enter')handleScan();}}
+          onPaste={e=>{setTimeout(()=>handleScan(),50);}}
+          autoComplete="off"
         />
-        {scanResult&&<div style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--green)',textAlign:'center',marginTop:6}}>{scanResult} ✓</div>}
       </div>
 
       <div className="sif-act">
