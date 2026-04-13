@@ -82,22 +82,22 @@ label{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;text-transform:
 .inst-status{font-family:var(--mono);font-size:9px;color:var(--t3)}
 /* STATION INTERFACE */
 .sif{min-height:100vh;background:#050709;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px}
-.sif-hd{font-family:var(--mono);font-size:8px;letter-spacing:3px;color:#1a2535;text-transform:uppercase;margin-bottom:36px;text-align:center}
+.sif-hd{font-family:var(--mono);font-size:8px;letter-spacing:3px;color:#4a6a88;text-transform:uppercase;margin-bottom:36px;text-align:center}
 .sif-name{font-family:var(--mono);font-size:28px;font-weight:300;color:#dde4ee;margin-bottom:3px;text-align:center}
-.sif-cap{font-family:var(--mono);font-size:9px;color:#1e3044;text-align:center;letter-spacing:2px;margin-bottom:6px}
+.sif-cap{font-family:var(--mono);font-size:9px;color:#6a8aa8;text-align:center;letter-spacing:2px;margin-bottom:6px}
 .sif-occ{font-family:var(--mono);font-size:48px;font-weight:300;text-align:center;margin:16px 0 3px}
 .sif-timer{font-family:var(--mono);font-size:13px;text-align:center;letter-spacing:3px;margin-bottom:6px}
-.sif-tbar{width:200px;height:2px;background:#0e1822;border-radius:1px;overflow:hidden;margin:0 auto 20px}
+.sif-tbar{width:200px;height:2px;background:#1e3050;border-radius:1px;overflow:hidden;margin:0 auto 20px}
 .sif-tfill{height:100%;border-radius:1px}
 .sif-plist{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:22px;min-height:28px}
 .sif-act{width:100%;max-width:300px;display:flex;flex-direction:column;gap:10px}
 .sif-btn{width:100%;padding:16px;font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;border-radius:3px;cursor:pointer;border:1px solid;transition:all .15s}
 .sif-fn{color:#ff3c3c;border-color:#ff3c3c;background:rgba(255,60,60,.06)}.sif-fn:hover{background:rgba(255,60,60,.14)}.sif-fn:disabled{opacity:.3;cursor:not-allowed}
-.sif-back{background:none;border:none;color:#1a2535;font-family:var(--mono);font-size:8px;letter-spacing:2px;cursor:pointer;text-transform:uppercase;margin-bottom:28px}
+.sif-back{background:none;border:none;color:#4a6a88;font-family:var(--mono);font-size:8px;letter-spacing:2px;cursor:pointer;text-transform:uppercase;margin-bottom:28px}
 /* SCANNER */
 .scanner-wrap{width:100%;max-width:280px;margin-bottom:16px}
-.scanner-label{font-family:var(--mono);font-size:8px;letter-spacing:2px;color:#1a2535;text-transform:uppercase;margin-bottom:6px;text-align:center}
-#scanner-video{width:100%;border-radius:4px;border:1px solid #0e1822;display:none;background:#000}
+.scanner-label{font-family:var(--mono);font-size:8px;letter-spacing:2px;color:#4a6a88;text-transform:uppercase;margin-bottom:6px;text-align:center}
+#scanner-video{width:100%;border-radius:4px;border:1px solid #1e3050;display:none;background:#000}
 #scanner-result{font-family:var(--mono);font-size:10px;color:var(--green);text-align:center;margin-top:6px;min-height:16px}
 /* TOASTS */
 .toasts{position:fixed;top:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
@@ -772,7 +772,7 @@ function StationInterface({toast}){
       {/* QR SCANNER */}
       <div className="scanner-wrap">
         <div className="scanner-label">Scan participant QR</div>
-        <video ref={videoRef} style={{display:'none',width:'100%',borderRadius:4,border:'1px solid #0e1822'}} playsInline muted/>
+        <video ref={videoRef} style={{display:'none',width:'100%',borderRadius:4,border:'1px solid #1e3050'}} playsInline muted/>
         {scannedId&&<div style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--green)',textAlign:'center',marginTop:6,letterSpacing:2}}>{scannedId} ✓</div>}
         <div className="row" style={{gap:6,marginTop:8}}>
           {!scanning
