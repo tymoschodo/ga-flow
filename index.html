@@ -12,243 +12,235 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',monospace;color:#dde4ee;overflow:hidden}
+html,body{width:100%;min-height:100%;background:#000;color:#dde4ee;font-family:'IBM Plex Mono',monospace;-webkit-font-smoothing:antialiased}
 
-.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;background:#000;transition:opacity .35s}
-.screen.hidden{opacity:0;pointer-events:none}
+.page{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 32px;text-align:center}
 
-/* LOGIN */
-#screen-login .title{font-size:9px;letter-spacing:4px;color:#4a6a88;text-transform:uppercase;margin-bottom:52px;text-align:center}
-#screen-login .field{width:100%;max-width:260px;display:flex;flex-direction:column;gap:10px}
-#screen-login label{font-size:8px;letter-spacing:3px;color:#4a6a88;text-transform:uppercase;text-align:center}
-#screen-login input{background:#050709;border:1px solid #1e3050;color:#dde4ee;text-align:center;font-size:22px;letter-spacing:5px;padding:14px;font-family:'IBM Plex Mono',monospace;border-radius:2px;outline:none;text-transform:uppercase}
-#screen-login input:focus{border-color:#7a9ab8}
-#screen-login .btn{background:none;border:1px solid #1e3050;color:#4a6a88;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;padding:12px;cursor:pointer;border-radius:2px}
-#screen-login .err{font-size:9px;color:#ff3c3c;text-align:center;min-height:14px;letter-spacing:1px;margin-top:4px}
+/* HEADER */
+.header-label{font-size:8px;letter-spacing:4px;color:#3a5068;text-transform:uppercase;margin-bottom:12px}
+.title{font-size:11px;letter-spacing:6px;color:#dde4ee;text-transform:uppercase;margin-bottom:64px;line-height:1.8}
 
-/* MAIN SCREEN — shown after login, always visible */
-#screen-main{justify-content:space-between;padding:48px 32px 40px}
+/* ALREADY INSTALLED */
+.already{font-size:9px;letter-spacing:2px;color:#3a5068;text-transform:uppercase;margin-bottom:48px;display:none}
 
-/* TOP: participant ID */
-.main-id{font-size:9px;letter-spacing:4px;color:#4a6a88;text-transform:uppercase;text-align:center}
+/* STEPS */
+.steps{width:100%;max-width:320px;margin-bottom:48px}
+.step{display:flex;align-items:flex-start;gap:16px;margin-bottom:28px;text-align:left;opacity:0;animation:fadeup .5s ease forwards}
+.step:nth-child(1){animation-delay:.1s}
+.step:nth-child(2){animation-delay:.25s}
+.step:nth-child(3){animation-delay:.4s}
+.step:nth-child(4){animation-delay:.55s}
+.step-num{font-size:9px;color:#7a9ab8;min-width:20px;margin-top:2px;letter-spacing:1px}
+.step-body{}
+.step-action{font-size:12px;color:#dde4ee;margin-bottom:4px;line-height:1.5}
+.step-detail{font-size:9px;color:#7a9ab8;letter-spacing:1px;line-height:1.6}
 
-/* MIDDLE: instruction block */
-.instruction-block{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:320px;text-align:center}
-.instruction-label{font-size:8px;letter-spacing:3px;color:#4a6a88;text-transform:uppercase;margin-bottom:20px}
-.instruction-text{font-size:15px;color:#7a9ab8;line-height:1.9;letter-spacing:.5px;transition:color .5s}
-.instruction-text.active{color:#dde4ee}
-.instruction-text.new{color:#dde4ee;animation:pulse-text .6s ease}
-@keyframes pulse-text{0%{opacity:0;transform:translateY(6px) scale(.97)}60%{opacity:1;transform:translateY(-1px) scale(1.01)}100%{opacity:1;transform:translateY(0) scale(1)}}
-#flash-overlay{transition:opacity .1s ease-in, opacity .2s ease-out}
+/* ICON DEMO */
+.icon-demo{width:52px;height:52px;border-radius:12px;background:#000;border:1px solid #1e3050;display:inline-flex;align-items:center;justify-content:center;margin-bottom:4px}
+.icon-demo svg{width:28px;height:28px}
 
-/* Status indicator — subtle */
-.status-dot{width:4px;height:4px;border-radius:50%;margin:24px auto 0;background:#4a6a88}
-.status-dot.waiting{animation:blink 2.5s infinite}
-.status-dot.active{background:#00e87a}
-.status-dot.transit{background:#ffaa00;animation:blink .8s infinite}
-@keyframes blink{0%,100%{opacity:.2}50%{opacity:.7}}
+/* SHARE ICON */
+.share-icon{display:inline-block;width:20px;height:20px;vertical-align:middle;margin:0 3px;position:relative;top:-1px}
 
-/* BOTTOM: QR code */
-.qr-section{display:flex;flex-direction:column;align-items:center;gap:10px}
-.qr-label{font-size:7px;letter-spacing:3px;color:#3a5068;text-transform:uppercase}
-#qr-container{background:#000;padding:8px;border:1px solid #1e3050;border-radius:3px}
-#qr-container canvas,#qr-container img{display:block}
-.qr-id{font-size:10px;letter-spacing:3px;color:#4a6a88;text-align:center}
+/* OPEN BUTTON */
+.open-btn{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;padding:14px 32px;border:1px solid #00e87a;color:#00e87a;background:rgba(0,232,122,.07);border-radius:2px;cursor:pointer;text-decoration:none;margin-bottom:48px;transition:background .2s;-webkit-appearance:none}
+.open-btn:active{background:rgba(0,232,122,.18)}
 
-/* DONE */
-#screen-done{background:#000}
-.done-mark{font-size:56px;color:#00e87a;text-align:center;margin-bottom:20px}
-.done-msg{font-size:10px;color:#4a6a88;letter-spacing:2px;text-align:center;line-height:2;text-transform:uppercase}
+/* ANDROID INSTALL BTN */
+.install-btn{display:none;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;padding:14px 32px;border:1px solid #00e87a;color:#00e87a;background:rgba(0,232,122,.07);border-radius:2px;cursor:pointer;margin-bottom:48px;transition:background .2s;width:100%;max-width:280px}
+.install-btn:active{background:rgba(0,232,122,.18)}
+
+/* FOOTER */
+.footer{font-size:7px;letter-spacing:3px;color:#7a9ab8;text-transform:uppercase;line-height:2}
+
+/* DIVIDER */
+.div{width:40px;height:1px;background:#3a5068;margin:0 auto 48px}
+
+@keyframes fadeup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* If already installed as PWA */
+@media(display-mode:standalone){
+  .install-section{display:none}
+  .already{display:block}
+  .open-btn{display:inline-block!important}
+}
 </style>
 </head>
 <body>
+<div class="page">
 
-<!-- LOGIN -->
-<div class="screen" id="screen-login">
-  <div class="title">General Anesthesia</div>
-  <div id="install-hint" style="display:none;font-size:8px;letter-spacing:2px;color:#2a4060;text-transform:uppercase;text-align:center;margin-bottom:24px;line-height:1.8"></div>
-  <div class="field">
-    <label>Your ID</label>
-    <input id="id-input" placeholder="XXXXXXX" maxlength="16"
-      autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"/>
-    <button class="btn" onclick="doLogin()">Enter</button>
-    <div class="err" id="err"></div>
-  </div>
-</div>
+  <div class="header-label">Welcome</div>
+  <div class="title">General<br/>Anesthesia</div>
 
-<!-- MAIN (post-login) -->
-<div class="screen hidden" id="screen-main">
-  <div class="main-id" id="main-id"></div>
+  <div class="already">App installed. Tap below to open.</div>
 
-  <div class="instruction-block">
-    <div class="instruction-label">Instructions</div>
-    <div class="instruction-text" id="instruction-text">Stand by.</div>
-    <div class="status-dot waiting" id="status-dot"></div>
+  <!-- INSTALL SECTION — shown based on device -->
+  <div class="install-section" id="install-section">
+    <div class="steps" id="steps-container"></div>
+    <div class="div"></div>
   </div>
 
-  <div class="qr-section">
-    <div class="qr-label">Show this to performers</div>
-    <div id="qr-container"></div>
-    <div class="qr-id" id="qr-id-label"></div>
+  <!-- ANDROID: native install button -->
+  <button class="install-btn" id="install-btn" onclick="doInstall()">
+    Install App
+  </button>
+
+  <!-- OPEN LINK (always available) -->
+  <a class="open-btn" href="participant.html" id="open-btn">
+    Open App →
+  </a>
+
+  <div class="footer">
+    tymoschodo.github.io/ga-flow<br/>
+    Keep your screen unlocked during the performance
   </div>
+
 </div>
 
-<!-- DONE -->
-<div class="screen hidden" id="screen-done">
-  <div class="done-mark">✓</div>
-  <div class="done-msg">Your experience<br/>has concluded.<br/><br/>Please remain<br/>in place.</div>
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
-firebase.initializeApp({
-  apiKey: "AIzaSyBzo6qVmam_u-H2asl3GIPRU_JBbMCPN9g",
-  authDomain: "general-anesthesia-cf511.firebaseapp.com",
-  databaseURL: "https://general-anesthesia-cf511-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "general-anesthesia-cf511",
-  storageBucket: "general-anesthesia-cf511.firebasestorage.app",
-  messagingSenderId: "839292271507",
-  appId: "1:839292271507:web:42a6028e0ff992afb50666"
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isAndroid = /android/i.test(navigator.userAgent);
+const isStandalone = window.navigator.standalone === true ||
+                     window.matchMedia('(display-mode: standalone)').matches;
+
+let deferredPrompt = null;
+
+// Android: catch install prompt
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const btn = document.getElementById('install-btn');
+  if(btn) btn.style.display = 'block';
 });
-const db = firebase.database();
 
-const STATION_NAMES = {s1:'Station 01',s2:'Station 02',s3:'Waiting Room',s4:'Station 04',s5:'Station 05',s6:'Station 06',s7:'Station 07'};
-
-let pid = null;
-let prevInstruction = null;
-let prevStatus = null;
-let qrGenerated = false;
-
-// Auto-fill from URL
-// Show install prompt if not already installed as PWA
-if(window.navigator.standalone === false || window.matchMedia('(display-mode: browser)').matches){
-  const hint = document.getElementById('install-hint');
-  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  if(hint){
-    hint.style.display = 'block';
-    hint.textContent = ios
-      ? 'Tip: tap Share → Add to Home Screen for best experience'
-      : 'Tip: tap ⋮ → Add to Home Screen for best experience';
-  }
-}
-const urlId = new URLSearchParams(location.search).get('id');
-if(urlId){
-  document.getElementById('id-input').value = urlId.toUpperCase();
-  setTimeout(doLogin, 300);
+function doInstall(){
+  if(!deferredPrompt) { window.location.href = 'participant.html'; return; }
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(result => {
+    deferredPrompt = null;
+    if(result.outcome === 'accepted'){
+      document.getElementById('install-btn').style.display = 'none';
+    }
+    window.location.href = 'participant.html';
+  });
 }
 
-document.getElementById('id-input').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
-document.getElementById('id-input').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase(); });
+// Build step instructions based on device
+function buildSteps(){
+  const container = document.getElementById('steps-container');
+  if(!container) return;
 
-function doLogin(){
-  const val = document.getElementById('id-input').value.trim().toUpperCase();
-  if(!val) return;
-  const errEl = document.getElementById('err');
-  errEl.textContent = 'Connecting...';
+  let steps = [];
 
-  db.ref('/participants/'+val).once('value').then(snap => {
-    if(!snap.exists()){ errEl.textContent = 'ID not found — ask staff'; return; }
-    pid = val;
-    errEl.textContent = '';
-    generateQR(val);
-    show('main');
   if(isIOS){
-    const hint=document.getElementById('ios-hint');
-    if(hint){hint.style.display='block';hint.textContent='Screen flashes on new instructions';}
+    steps = [
+      {
+        num: '01',
+        action: 'Tap the Share button',
+        detail: 'The square icon with an arrow at the bottom of Safari',
+        icon: 'share'
+      },
+      {
+        num: '02',
+        action: 'Tap "Add to Home Screen"',
+        detail: 'Scroll down in the share menu until you see it',
+        icon: null
+      },
+      {
+        num: '03',
+        action: 'Tap "Add"',
+        detail: 'The app icon will appear on your home screen',
+        icon: null
+      },
+      {
+        num: '04',
+        action: 'Open from your home screen',
+        detail: 'Find the GA icon and open it — then enter your ID',
+        icon: 'app'
+      }
+    ];
+  } else if(isAndroid){
+    steps = [
+      {
+        num: '01',
+        action: 'Tap "Install App" below',
+        detail: 'Or tap ⋮ in Chrome and select "Add to Home Screen"',
+        icon: null
+      },
+      {
+        num: '02',
+        action: 'Tap "Install" when prompted',
+        detail: 'The app will be added to your home screen',
+        icon: null
+      },
+      {
+        num: '03',
+        action: 'Open from your home screen',
+        detail: 'Find the GA icon and open it — then enter your ID',
+        icon: 'app'
+      }
+    ];
+  } else {
+    // Desktop — show both options
+    steps = [
+      {
+        num: '01',
+        action: 'Tap the menu in your browser',
+        detail: 'Look for ⋮ or Share button',
+        icon: null
+      },
+      {
+        num: '02',
+        action: 'Tap "Add to Home Screen"',
+        detail: 'Then open the app from your home screen and enter your ID',
+        icon: 'app'
+      }
+    ];
   }
-    db.ref('/participants/'+pid).on('value', snap => { if(snap.exists()) render(snap.val()); });
-  }).catch(() => { errEl.textContent = 'Connection error — check internet'; });
+
+  container.innerHTML = steps.map(s => `
+    <div class="step">
+      <div class="step-num">${s.num}</div>
+      <div class="step-body">
+        <div class="step-action">${s.action}${s.icon === 'share' ? ` ${shareIconSVG()}` : ''}</div>
+        <div class="step-detail">${s.detail}</div>
+        ${s.icon === 'app' ? appIconHTML() : ''}
+      </div>
+    </div>
+  `).join('');
 }
 
-function generateQR(id){
-  if(qrGenerated) return;
-  qrGenerated = true;
-  document.getElementById('qr-id-label').textContent = id;
-  document.getElementById('main-id').textContent = id;
-  const container = document.getElementById('qr-container');
-  container.innerHTML = '';
-  try {
-    new QRCode(container, {
-      text: id,
-      width: 140, height: 140,
-      colorDark: '#dde4ee',
-      colorLight: '#000000',
-      correctLevel: QRCode.CorrectLevel.M
-    });
-  } catch(e) {
-    container.innerHTML = '<div style="width:140px;height:140px;display:flex;align-items:center;justify-content:center;font-size:18px;letter-spacing:4px;color:#7a9ab8">'+id+'</div>';
-  }
+function shareIconSVG(){
+  return `<svg class="share-icon" viewBox="0 0 24 24" fill="none" stroke="#7a9ab8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 12H8.01M12 8V3l5 5-5 5V8z"/>
+    <path d="M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2v-7"/>
+  </svg>`;
 }
 
-function render(data){
-  const status = data.status;
-  const instruction = data.instruction || defaultInstruction(status, data);
-  const dot = document.getElementById('status-dot');
-  const itxt = document.getElementById('instruction-text');
-
-  // Vibrate + update on new instruction
-  if(instruction !== prevInstruction && prevInstruction !== null){
-    vib([300,100,300,100,500]);
-    itxt.classList.remove('new');
-    void itxt.offsetWidth; // reflow
-    itxt.classList.add('new');
-  }
-  prevInstruction = instruction;
-  prevStatus = status;
-
-  // Update instruction text
-  itxt.textContent = instruction;
-
-  // Update status dot
-  dot.className = 'status-dot';
-  if(status === 'active') { dot.classList.add('active'); itxt.classList.add('active'); }
-  else if(status === 'transit') { dot.classList.add('transit'); }
-  else { dot.classList.add('waiting'); itxt.classList.remove('active'); }
-
-  // Done screen
-  if(status === 'done'){ show('done'); vib([500,200,500,200,500]); }
+function appIconHTML(){
+  return `<div style="margin-top:10px">
+    <div class="icon-demo">
+      <svg viewBox="0 0 28 28" fill="none">
+        <circle cx="14" cy="14" r="11" stroke="#00e87a" stroke-width="1"/>
+        <text x="14" y="18" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#00e87a" letter-spacing="1">GA</text>
+      </svg>
+    </div>
+    <div style="font-size:8px;color:#3a5068;letter-spacing:1px">General Anesthesia</div>
+  </div>`;
 }
 
-function defaultInstruction(status, data){
-  if(status === 'waiting_s3' || status === 's3_holding') return 'Stand by.';
-  if(status === 'transit'){
-    const name = STATION_NAMES[data.transitTo] || 'next location';
-    return 'Proceed to\n' + name + '.';
-  }
-  if(status === 'buffering') return 'Wait here\nfor your group.';
-  if(status === 'active') return 'You are in\n' + (STATION_NAMES[data.currentStation]||'') + '.';
-  if(status === 'done') return 'Experience complete.';
-  return 'Stand by.';
+// If already standalone, just show open button
+if(isStandalone){
+  const section = document.getElementById('install-section');
+  if(section) section.style.display = 'none';
+} else {
+  buildSteps();
 }
 
-function show(name){
-  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-  const el = document.getElementById('screen-'+name);
-  if(el) el.classList.remove('hidden');
-}
-
-const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
-
-function vib(pattern){
-  if(!isIOS){ try{ if('vibrate' in navigator) navigator.vibrate(pattern); }catch(e){} }
-  flash();
-}
-
-function flash(){
-  const o=document.getElementById('flash-overlay');
-  if(!o) return;
-  o.style.opacity='1';
-  setTimeout(()=>o.style.opacity='0', isIOS?220:140);
-}
-</script>
-<script>
+// Register service worker
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 </script>
-<div id="flash-overlay" style="position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .15s;z-index:999"></div>
-<div id="ios-hint" style="display:none;position:fixed;bottom:20px;left:0;right:0;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:2px;color:#3a5068;text-transform:uppercase"></div>
 </body>
 </html>
