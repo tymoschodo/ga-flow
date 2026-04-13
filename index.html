@@ -17,11 +17,11 @@ html,body{width:100%;min-height:100%;background:#000;color:#dde4ee;font-family:'
 .page{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 32px;text-align:center}
 
 /* HEADER */
-.header-label{font-size:8px;letter-spacing:4px;color:#0e1e2e;text-transform:uppercase;margin-bottom:12px}
-.title{font-size:11px;letter-spacing:6px;color:#1a2e44;text-transform:uppercase;margin-bottom:64px;line-height:1.8}
+.header-label{font-size:8px;letter-spacing:4px;color:#3a5068;text-transform:uppercase;margin-bottom:12px}
+.title{font-size:11px;letter-spacing:6px;color:#dde4ee;text-transform:uppercase;margin-bottom:64px;line-height:1.8}
 
 /* ALREADY INSTALLED */
-.already{font-size:9px;letter-spacing:2px;color:#1a3050;text-transform:uppercase;margin-bottom:48px;display:none}
+.already{font-size:9px;letter-spacing:2px;color:#3a5068;text-transform:uppercase;margin-bottom:48px;display:none}
 
 /* STEPS */
 .steps{width:100%;max-width:320px;margin-bottom:48px}
@@ -30,13 +30,13 @@ html,body{width:100%;min-height:100%;background:#000;color:#dde4ee;font-family:'
 .step:nth-child(2){animation-delay:.25s}
 .step:nth-child(3){animation-delay:.4s}
 .step:nth-child(4){animation-delay:.55s}
-.step-num{font-size:9px;color:#0e1e2e;min-width:20px;margin-top:2px;letter-spacing:1px}
+.step-num{font-size:9px;color:#7a9ab8;min-width:20px;margin-top:2px;letter-spacing:1px}
 .step-body{}
 .step-action{font-size:12px;color:#dde4ee;margin-bottom:4px;line-height:1.5}
-.step-detail{font-size:9px;color:#1a2e44;letter-spacing:1px;line-height:1.6}
+.step-detail{font-size:9px;color:#7a9ab8;letter-spacing:1px;line-height:1.6}
 
 /* ICON DEMO */
-.icon-demo{width:52px;height:52px;border-radius:12px;background:#000;border:1px solid #0e1822;display:inline-flex;align-items:center;justify-content:center;margin-bottom:4px}
+.icon-demo{width:52px;height:52px;border-radius:12px;background:#000;border:1px solid #1e3050;display:inline-flex;align-items:center;justify-content:center;margin-bottom:4px}
 .icon-demo svg{width:28px;height:28px}
 
 /* SHARE ICON */
@@ -51,10 +51,10 @@ html,body{width:100%;min-height:100%;background:#000;color:#dde4ee;font-family:'
 .install-btn:active{background:rgba(0,232,122,.18)}
 
 /* FOOTER */
-.footer{font-size:7px;letter-spacing:3px;color:#080f18;text-transform:uppercase;line-height:2}
+.footer{font-size:7px;letter-spacing:3px;color:#7a9ab8;text-transform:uppercase;line-height:2}
 
 /* DIVIDER */
-.div{width:40px;height:1px;background:#0a1520;margin:0 auto 48px}
+.div{width:40px;height:1px;background:#3a5068;margin:0 auto 48px}
 
 @keyframes fadeup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
@@ -211,7 +211,7 @@ function buildSteps(){
 }
 
 function shareIconSVG(){
-  return `<svg class="share-icon" viewBox="0 0 24 24" fill="none" stroke="#1a2e44" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  return `<svg class="share-icon" viewBox="0 0 24 24" fill="none" stroke="#7a9ab8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
     <path d="M8 12H8.01M12 8V3l5 5-5 5V8z"/>
     <path d="M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2v-7"/>
   </svg>`;
@@ -225,7 +225,7 @@ function appIconHTML(){
         <text x="14" y="18" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#00e87a" letter-spacing="1">GA</text>
       </svg>
     </div>
-    <div style="font-size:8px;color:#0e1e2e;letter-spacing:1px">General Anesthesia</div>
+    <div style="font-size:8px;color:#3a5068;letter-spacing:1px">General Anesthesia</div>
   </div>`;
 }
 
