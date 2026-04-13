@@ -1,4 +1,4 @@
-const CACHE = 'ga-flow-v1';
+const CACHE = 'ga-flow-v2';
 const ASSETS = [
   '/ga-flow/participant.html',
   '/ga-flow/manifest.json',
