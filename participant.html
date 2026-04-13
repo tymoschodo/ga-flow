@@ -18,31 +18,31 @@ html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',mon
 .screen.hidden{opacity:0;pointer-events:none}
 
 /* LOGIN */
-#screen-login .title{font-size:9px;letter-spacing:4px;color:#152030;text-transform:uppercase;margin-bottom:52px;text-align:center}
+#screen-login .title{font-size:9px;letter-spacing:4px;color:#7a9ab8;text-transform:uppercase;margin-bottom:52px;text-align:center}
 #screen-login .field{width:100%;max-width:260px;display:flex;flex-direction:column;gap:10px}
-#screen-login label{font-size:8px;letter-spacing:3px;color:#152030;text-transform:uppercase;text-align:center}
-#screen-login input{background:#050709;border:1px solid #0d1822;color:#dde4ee;text-align:center;font-size:22px;letter-spacing:5px;padding:14px;font-family:'IBM Plex Mono',monospace;border-radius:2px;outline:none;text-transform:uppercase}
-#screen-login input:focus{border-color:#1a2e44}
-#screen-login .btn{background:none;border:1px solid #0d1822;color:#152030;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;padding:12px;cursor:pointer;border-radius:2px}
+#screen-login label{font-size:8px;letter-spacing:3px;color:#7a9ab8;text-transform:uppercase;text-align:center}
+#screen-login input{background:#050709;border:1px solid #2a4a68;color:#dde4ee;text-align:center;font-size:22px;letter-spacing:5px;padding:14px;font-family:'IBM Plex Mono',monospace;border-radius:2px;outline:none;text-transform:uppercase}
+#screen-login input:focus{border-color:#7a9ab8}
+#screen-login .btn{background:none;border:1px solid #1e3050;color:#7a9ab8;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;padding:12px;cursor:pointer;border-radius:2px}
 #screen-login .err{font-size:9px;color:#ff3c3c;text-align:center;min-height:14px;letter-spacing:1px;margin-top:4px}
 
 /* MAIN SCREEN — shown after login, always visible */
 #screen-main{justify-content:space-between;padding:48px 32px 40px}
 
 /* TOP: participant ID */
-.main-id{font-size:9px;letter-spacing:4px;color:#0e1e2e;text-transform:uppercase;text-align:center}
+.main-id{font-size:9px;letter-spacing:4px;color:#7a9ab8;text-transform:uppercase;text-align:center}
 
 /* MIDDLE: instruction block */
 .instruction-block{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:320px;text-align:center}
-.instruction-label{font-size:8px;letter-spacing:3px;color:#0e1e2e;text-transform:uppercase;margin-bottom:20px}
-.instruction-text{font-size:15px;color:#2a4060;line-height:1.9;letter-spacing:.5px;transition:color .5s}
+.instruction-label{font-size:8px;letter-spacing:3px;color:#7a9ab8;text-transform:uppercase;margin-bottom:20px}
+.instruction-text{font-size:15px;color:#8aafc8;line-height:1.9;letter-spacing:.5px;transition:color .5s}
 .instruction-text.active{color:#dde4ee}
 .instruction-text.new{color:#dde4ee;animation:pulse-text .6s ease}
 @keyframes pulse-text{0%{opacity:0;transform:translateY(6px) scale(.97)}60%{opacity:1;transform:translateY(-1px) scale(1.01)}100%{opacity:1;transform:translateY(0) scale(1)}}
 #flash-overlay{transition:opacity .1s ease-in, opacity .2s ease-out}
 
 /* Status indicator — subtle */
-.status-dot{width:4px;height:4px;border-radius:50%;margin:24px auto 0;background:#0e1e2e}
+.status-dot{width:4px;height:4px;border-radius:50%;margin:24px auto 0;background:#4a6a88}
 .status-dot.waiting{animation:blink 2.5s infinite}
 .status-dot.active{background:#00e87a}
 .status-dot.transit{background:#ffaa00;animation:blink .8s infinite}
@@ -50,15 +50,15 @@ html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',mon
 
 /* BOTTOM: QR code */
 .qr-section{display:flex;flex-direction:column;align-items:center;gap:10px}
-.qr-label{font-size:7px;letter-spacing:3px;color:#0a1520;text-transform:uppercase}
-#qr-container{background:#000;padding:8px;border:1px solid #0d1822;border-radius:3px}
+.qr-label{font-size:7px;letter-spacing:3px;color:#5a7a98;text-transform:uppercase}
+#qr-container{background:#000;padding:8px;border:1px solid #1e3050;border-radius:3px}
 #qr-container canvas,#qr-container img{display:block}
-.qr-id{font-size:10px;letter-spacing:3px;color:#152030;text-align:center}
+.qr-id{font-size:10px;letter-spacing:3px;color:#7a9ab8;text-align:center}
 
 /* DONE */
 #screen-done{background:#000}
 .done-mark{font-size:56px;color:#00e87a;text-align:center;margin-bottom:20px}
-.done-msg{font-size:10px;color:#1a3050;letter-spacing:2px;text-align:center;line-height:2;text-transform:uppercase}
+.done-msg{font-size:10px;color:#7a9ab8;letter-spacing:2px;text-align:center;line-height:2;text-transform:uppercase}
 </style>
 </head>
 <body>
@@ -66,7 +66,7 @@ html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',mon
 <!-- LOGIN -->
 <div class="screen" id="screen-login">
   <div class="title">General Anesthesia</div>
-  <div id="install-hint" style="display:none;font-size:8px;letter-spacing:2px;color:#0a1820;text-transform:uppercase;text-align:center;margin-bottom:24px;line-height:1.8"></div>
+  <div id="install-hint" style="display:none;font-size:8px;letter-spacing:2px;color:#5a7a98;text-transform:uppercase;text-align:center;margin-bottom:24px;line-height:1.8"></div>
   <div class="field">
     <label>Your ID</label>
     <input id="id-input" placeholder="XXXXXXX" maxlength="16"
@@ -178,7 +178,7 @@ function generateQR(id){
       correctLevel: QRCode.CorrectLevel.M
     });
   } catch(e) {
-    container.innerHTML = '<div style="width:140px;height:140px;display:flex;align-items:center;justify-content:center;font-size:18px;letter-spacing:4px;color:#1a2e44">'+id+'</div>';
+    container.innerHTML = '<div style="width:140px;height:140px;display:flex;align-items:center;justify-content:center;font-size:18px;letter-spacing:4px;color:#7a9ab8">'+id+'</div>';
   }
 }
 
@@ -249,6 +249,6 @@ if('serviceWorker' in navigator){
 }
 </script>
 <div id="flash-overlay" style="position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .15s;z-index:999"></div>
-<div id="ios-hint" style="display:none;position:fixed;bottom:20px;left:0;right:0;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:2px;color:#0a1520;text-transform:uppercase"></div>
+<div id="ios-hint" style="display:none;position:fixed;bottom:20px;left:0;right:0;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:2px;color:#5a7a98;text-transform:uppercase"></div>
 </body>
 </html>
