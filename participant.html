@@ -36,7 +36,8 @@ html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',mon
 .instruction-text{font-size:15px;color:#2a4060;line-height:1.9;letter-spacing:.5px;transition:color .5s}
 .instruction-text.active{color:#dde4ee}
 .instruction-text.new{color:#dde4ee;animation:pulse-text .6s ease}
-@keyframes pulse-text{0%{opacity:0;transform:translateY(4px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes pulse-text{0%{opacity:0;transform:translateY(6px) scale(.97)}60%{opacity:1;transform:translateY(-1px) scale(1.01)}100%{opacity:1;transform:translateY(0) scale(1)}}
+#flash-overlay{transition:opacity .1s ease-in, opacity .2s ease-out}
 
 /* Status indicator — subtle */
 .status-dot{width:4px;height:4px;border-radius:50%;margin:24px auto 0;background:#0e1e2e}
@@ -139,6 +140,10 @@ function doLogin(){
     errEl.textContent = '';
     generateQR(val);
     show('main');
+  if(isIOS){
+    const hint=document.getElementById('ios-hint');
+    if(hint){hint.style.display='block';hint.textContent='Screen flashes on new instructions';}
+  }
     db.ref('/participants/'+pid).on('value', snap => { if(snap.exists()) render(snap.val()); });
   }).catch(() => { errEl.textContent = 'Connection error — check internet'; });
 }
@@ -210,7 +215,21 @@ function show(name){
   if(el) el.classList.remove('hidden');
 }
 
-function vib(p){ try{ if('vibrate' in navigator) navigator.vibrate(p); }catch(e){} }
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+
+function vib(pattern){
+  if(!isIOS){ try{ if('vibrate' in navigator) navigator.vibrate(pattern); }catch(e){} }
+  flash();
+}
+
+function flash(){
+  const o=document.getElementById('flash-overlay');
+  if(!o) return;
+  o.style.opacity='1';
+  setTimeout(()=>o.style.opacity='0', isIOS?220:140);
+}
 </script>
+<div id="flash-overlay" style="position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .15s;z-index:999"></div>
+<div id="ios-hint" style="display:none;position:fixed;bottom:20px;left:0;right:0;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:2px;color:#0a1520;text-transform:uppercase"></div>
 </body>
 </html>
