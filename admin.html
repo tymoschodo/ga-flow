@@ -359,6 +359,21 @@ function AdminDashboard({toast}){
   const finishAndAdvance=async(pid)=>{await advanceParticipant(pid);toast.add(`${pid} → next`,'ok');};
   const startShow=async()=>{await dbSet('/showStarted',true);await dbSet('/showStartAt',now());toast.add('Show started','ok');};
 
+  const removeParticipant=async(pid)=>{
+    if(!window.confirm(`Remove ${pid}? This cannot be undone.`)) return;
+    const p=participants[pid];
+    if(p?.currentStation){
+      const occ=(await dbGet('/occupancy/'+p.currentStation))||0;
+      await dbSet('/occupancy/'+p.currentStation,Math.max(0,occ-1));
+    }
+    await fdb.ref('/participants/'+pid).remove();
+    const notifs=await dbGet('/notifications')||{};
+    for(const [nid,n] of Object.entries(notifs)){
+      if(n?.pid===pid) await fdb.ref('/notifications/'+nid).remove();
+    }
+    toast.add(`${pid} removed`,'ok');
+  };
+
   const active=pList.filter(p=>p.status==='active').length;
   const inTransit=pList.filter(p=>p.status==='transit').length;
   const waiting=pList.filter(p=>p.status==='waiting_s3'||p.status==='s3_holding'||p.status==='buffering').length;
@@ -383,15 +398,15 @@ function AdminDashboard({toast}){
           <button key={t} className={`tb ${tab===t?'on':''}`} onClick={()=>setTab(t)}>{t}</button>
         ))}
       </div>
-      {tab==='overview'&&<OverviewTab pList={pList} occupancy={occupancy} notifList={notifList} finishAndAdvance={finishAndAdvance} clearNotif={clearNotif} regId={regId} setRegId={setRegId} register={register} broadcastMsg={broadcastMsg} setBroadcastMsg={setBroadcastMsg} doBroadcast={doBroadcast} toast={toast}/>}
+      {tab==='overview'&&<OverviewTab pList={pList} occupancy={occupancy} notifList={notifList} finishAndAdvance={finishAndAdvance} clearNotif={clearNotif} regId={regId} setRegId={setRegId} register={register} broadcastMsg={broadcastMsg} setBroadcastMsg={setBroadcastMsg} doBroadcast={doBroadcast} removeParticipant={removeParticipant} toast={toast}/>}
       {tab==='instructions'&&<InstructionsTab pList={pList} toast={toast}/>}
-      {tab==='participants'&&<ParticipantsTab pList={pList} finishAndAdvance={finishAndAdvance} toast={toast}/>}
+      {tab==='participants'&&<ParticipantsTab pList={pList} finishAndAdvance={finishAndAdvance} removeParticipant={removeParticipant} toast={toast}/>}
     </div>
   );
 }
 
 /* ── OVERVIEW TAB ──────────────────────────────────────────────────── */
-function OverviewTab({pList,occupancy,notifList,finishAndAdvance,clearNotif,regId,setRegId,register,broadcastMsg,setBroadcastMsg,doBroadcast,toast}){
+function OverviewTab({pList,occupancy,notifList,finishAndAdvance,clearNotif,regId,setRegId,register,broadcastMsg,setBroadcastMsg,doBroadcast,removeParticipant,toast}){
   const [,setT]=useState(0);
   useEffect(()=>{const t=setInterval(()=>setT(x=>x+1),1000);return()=>clearInterval(t);},[]);
   const s3ppl=pList.filter(p=>p.status==='waiting_s3'||p.status==='s3_holding');
@@ -442,10 +457,13 @@ function OverviewTab({pList,occupancy,notifList,finishAndAdvance,clearNotif,regI
                     {nextSt&&<span className="dim">→{nextSt.name}</span>}
                     {isHolding&&rem>0&&<span style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--amber)'}}>⏳{fmtSec(rem)}</span>}
                   </div>
-                  {isHolding
-                    ?<button className="btn ba sm" onClick={()=>{dispatchFromS3(p.id,true);toast.add(p.id+' forced','ok');}}>Force →</button>
-                    :<button className="btn bg sm" onClick={()=>{dispatchFromS3(p.id);toast.add(p.id+' dispatched','ok');}}>Send →</button>
-                  }
+                  <div className="row" style={{gap:4}}>
+                    {isHolding
+                      ?<button className="btn ba sm" onClick={()=>{dispatchFromS3(p.id,true);toast.add(p.id+' forced','ok');}}>Force →</button>
+                      :<button className="btn bg sm" onClick={()=>{dispatchFromS3(p.id);toast.add(p.id+' dispatched','ok');}}>Send →</button>
+                    }
+                    <button className="btn br sm" onClick={()=>removeParticipant(p.id)}>✕</button>
+                  </div>
                 </div>
               );
             })}
@@ -582,7 +600,7 @@ function InstructionsTab({pList,toast}){
 }
 
 /* ── PARTICIPANTS TAB ──────────────────────────────────────────────── */
-function ParticipantsTab({pList,finishAndAdvance,toast}){
+function ParticipantsTab({pList,finishAndAdvance,removeParticipant,toast}){
   const [filter,setFilter]=useState('all');
   const [,setT]=useState(0);
   useEffect(()=>{const t=setInterval(()=>setT(x=>x+1),1000);return()=>clearInterval(t);},[]);
@@ -630,9 +648,12 @@ function ParticipantsTab({pList,finishAndAdvance,toast}){
                   </td>
                   <td style={{color:'var(--t3)',fontSize:9,maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.instruction||'—'}</td>
                   <td>
-                    {p.status==='waiting_s3'&&<button className="btn bg sm" onClick={()=>{dispatchFromS3(p.id);toast.add(p.id,'ok');}}>Send</button>}
-                    {p.status==='s3_holding'&&<button className="btn ba sm" onClick={()=>{dispatchFromS3(p.id,true);toast.add(p.id+' forced','ok');}}>Force</button>}
-                    {p.status==='active'&&<button className="btn ba sm" onClick={()=>finishAndAdvance(p.id)}>End →</button>}
+                    <div className="row" style={{gap:4}}>
+                      {p.status==='waiting_s3'&&<button className="btn bg sm" onClick={()=>{dispatchFromS3(p.id);toast.add(p.id,'ok');}}>Send</button>}
+                      {p.status==='s3_holding'&&<button className="btn ba sm" onClick={()=>{dispatchFromS3(p.id,true);toast.add(p.id+' forced','ok');}}>Force</button>}
+                      {p.status==='active'&&<button className="btn ba sm" onClick={()=>finishAndAdvance(p.id)}>End →</button>}
+                      <button className="btn br sm" onClick={()=>removeParticipant(p.id)} title="Remove participant">✕</button>
+                    </div>
                   </td>
                 </tr>
               );
