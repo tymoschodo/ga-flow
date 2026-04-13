@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>General Anesthesia</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;min-height:100%;background:#000;color:#dde4ee;font-family:'IBM Plex Mono',monospace;-webkit-font-smoothing:antialiased}
+
+.page{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 32px;text-align:center}
+
+/* HEADER */
+.header-label{font-size:8px;letter-spacing:4px;color:#0e1e2e;text-transform:uppercase;margin-bottom:12px}
+.title{font-size:11px;letter-spacing:6px;color:#1a2e44;text-transform:uppercase;margin-bottom:64px;line-height:1.8}
+
+/* ALREADY INSTALLED */
+.already{font-size:9px;letter-spacing:2px;color:#1a3050;text-transform:uppercase;margin-bottom:48px;display:none}
+
+/* STEPS */
+.steps{width:100%;max-width:320px;margin-bottom:48px}
+.step{display:flex;align-items:flex-start;gap:16px;margin-bottom:28px;text-align:left;opacity:0;animation:fadeup .5s ease forwards}
+.step:nth-child(1){animation-delay:.1s}
+.step:nth-child(2){animation-delay:.25s}
+.step:nth-child(3){animation-delay:.4s}
+.step:nth-child(4){animation-delay:.55s}
+.step-num{font-size:9px;color:#0e1e2e;min-width:20px;margin-top:2px;letter-spacing:1px}
+.step-body{}
+.step-action{font-size:12px;color:#dde4ee;margin-bottom:4px;line-height:1.5}
+.step-detail{font-size:9px;color:#1a2e44;letter-spacing:1px;line-height:1.6}
+
+/* ICON DEMO */
+.icon-demo{width:52px;height:52px;border-radius:12px;background:#000;border:1px solid #0e1822;display:inline-flex;align-items:center;justify-content:center;margin-bottom:4px}
+.icon-demo svg{width:28px;height:28px}
+
+/* SHARE ICON */
+.share-icon{display:inline-block;width:20px;height:20px;vertical-align:middle;margin:0 3px;position:relative;top:-1px}
+
+/* OPEN BUTTON */
+.open-btn{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;padding:14px 32px;border:1px solid #00e87a;color:#00e87a;background:rgba(0,232,122,.07);border-radius:2px;cursor:pointer;text-decoration:none;margin-bottom:48px;transition:background .2s;-webkit-appearance:none}
+.open-btn:active{background:rgba(0,232,122,.18)}
+
+/* ANDROID INSTALL BTN */
+.install-btn{display:none;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;padding:14px 32px;border:1px solid #00e87a;color:#00e87a;background:rgba(0,232,122,.07);border-radius:2px;cursor:pointer;margin-bottom:48px;transition:background .2s;width:100%;max-width:280px}
+.install-btn:active{background:rgba(0,232,122,.18)}
+
+/* FOOTER */
+.footer{font-size:7px;letter-spacing:3px;color:#080f18;text-transform:uppercase;line-height:2}
+
+/* DIVIDER */
+.div{width:40px;height:1px;background:#0a1520;margin:0 auto 48px}
+
+@keyframes fadeup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* If already installed as PWA */
+@media(display-mode:standalone){
+  .install-section{display:none}
+  .already{display:block}
+  .open-btn{display:inline-block!important}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header-label">Welcome</div>
+  <div class="title">General<br/>Anesthesia</div>
+
+  <div class="already">App installed. Tap below to open.</div>
+
+  <!-- INSTALL SECTION — shown based on device -->
+  <div class="install-section" id="install-section">
+    <div class="steps" id="steps-container"></div>
+    <div class="div"></div>
+  </div>
+
+  <!-- ANDROID: native install button -->
+  <button class="install-btn" id="install-btn" onclick="doInstall()">
+    Install App
+  </button>
+
+  <!-- OPEN LINK (always available) -->
+  <a class="open-btn" href="participant.html" id="open-btn">
+    Open App →
+  </a>
+
+  <div class="footer">
+    tymoschodo.github.io/ga-flow<br/>
+    Keep your screen unlocked during the performance
+  </div>
+
+</div>
+
+<script>
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isAndroid = /android/i.test(navigator.userAgent);
+const isStandalone = window.navigator.standalone === true ||
+                     window.matchMedia('(display-mode: standalone)').matches;
+
+let deferredPrompt = null;
+
+// Android: catch install prompt
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const btn = document.getElementById('install-btn');
+  if(btn) btn.style.display = 'block';
+});
+
+function doInstall(){
+  if(!deferredPrompt) { window.location.href = 'participant.html'; return; }
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(result => {
+    deferredPrompt = null;
+    if(result.outcome === 'accepted'){
+      document.getElementById('install-btn').style.display = 'none';
+    }
+    window.location.href = 'participant.html';
+  });
+}
+
+// Build step instructions based on device
+function buildSteps(){
+  const container = document.getElementById('steps-container');
+  if(!container) return;
+
+  let steps = [];
+
+  if(isIOS){
+    steps = [
+      {
+        num: '01',
+        action: 'Tap the Share button',
+        detail: 'The square icon with an arrow at the bottom of Safari',
+        icon: 'share'
+      },
+      {
+        num: '02',
+        action: 'Tap "Add to Home Screen"',
+        detail: 'Scroll down in the share menu until you see it',
+        icon: null
+      },
+      {
+        num: '03',
+        action: 'Tap "Add"',
+        detail: 'The app icon will appear on your home screen',
+        icon: null
+      },
+      {
+        num: '04',
+        action: 'Open from your home screen',
+        detail: 'Find the GA icon and open it — then enter your ID',
+        icon: 'app'
+      }
+    ];
+  } else if(isAndroid){
+    steps = [
+      {
+        num: '01',
+        action: 'Tap "Install App" below',
+        detail: 'Or tap ⋮ in Chrome and select "Add to Home Screen"',
+        icon: null
+      },
+      {
+        num: '02',
+        action: 'Tap "Install" when prompted',
+        detail: 'The app will be added to your home screen',
+        icon: null
+      },
+      {
+        num: '03',
+        action: 'Open from your home screen',
+        detail: 'Find the GA icon and open it — then enter your ID',
+        icon: 'app'
+      }
+    ];
+  } else {
+    // Desktop — show both options
+    steps = [
+      {
+        num: '01',
+        action: 'Tap the menu in your browser',
+        detail: 'Look for ⋮ or Share button',
+        icon: null
+      },
+      {
+        num: '02',
+        action: 'Tap "Add to Home Screen"',
+        detail: 'Then open the app from your home screen and enter your ID',
+        icon: 'app'
+      }
+    ];
+  }
+
+  container.innerHTML = steps.map(s => `
+    <div class="step">
+      <div class="step-num">${s.num}</div>
+      <div class="step-body">
+        <div class="step-action">${s.action}${s.icon === 'share' ? ` ${shareIconSVG()}` : ''}</div>
+        <div class="step-detail">${s.detail}</div>
+        ${s.icon === 'app' ? appIconHTML() : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function shareIconSVG(){
+  return `<svg class="share-icon" viewBox="0 0 24 24" fill="none" stroke="#1a2e44" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 12H8.01M12 8V3l5 5-5 5V8z"/>
+    <path d="M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2v-7"/>
+  </svg>`;
+}
+
+function appIconHTML(){
+  return `<div style="margin-top:10px">
+    <div class="icon-demo">
+      <svg viewBox="0 0 28 28" fill="none">
+        <circle cx="14" cy="14" r="11" stroke="#00e87a" stroke-width="1"/>
+        <text x="14" y="18" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#00e87a" letter-spacing="1">GA</text>
+      </svg>
+    </div>
+    <div style="font-size:8px;color:#0e1e2e;letter-spacing:1px">General Anesthesia</div>
+  </div>`;
+}
+
+// If already standalone, just show open button
+if(isStandalone){
+  const section = document.getElementById('install-section');
+  if(section) section.style.display = 'none';
+} else {
+  buildSteps();
+}
+
+// Register service worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
