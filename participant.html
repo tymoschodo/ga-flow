@@ -211,7 +211,7 @@ function doLogin(){
 function showWhatsAppScreen(id){
   const TWILIO_NUMBER = '14155238886';
   const JOIN_CODE = 'join certain-clean';
-  const msg = encodeURIComponent(JOIN_CODE + '\n' + id);
+  const msg = encodeURIComponent(JOIN_CODE);
   const waUrl = 'https://wa.me/' + TWILIO_NUMBER + '?text=' + msg;
 
   // Set WhatsApp link
