@@ -497,15 +497,17 @@ function AdminDashboard({toast}){
         <div className="sc"><div className="sl">Waiting{rolePending>0?` / ${rolePending} onboarding`:''}</div><div className="sv" style={{color:'var(--amber)'}}>{waiting}</div></div>
       </div>
       <div className="row mb16">
-        {['overview','participants','instructions','ids','config'].map(t=>(
-          <button key={t} className={`tb ${tab===t?'on':''}`} onClick={()=>setTab(t)}>{t}</button>
+        {['overview','participants','instructions','ids','config','guests'].map(t=>(
+          <button key={t} className={`tb ${tab===t?'on':''}`} onClick={()=>setTab(t)}>{t==='guests'?'guests ★':t}</button>
         ))}
       </div>
+            {/* Pre-reg tab added */}
       {tab==='overview'&&<OverviewTab pList={pList} occupancy={occupancy} notifList={notifList} finishAndAdvance={finishAndAdvance} clearNotif={clearNotif} doRemove={doRemove} config={config} toast={toast}/>}
       {tab==='participants'&&<ParticipantsTab pList={pList} finishAndAdvance={finishAndAdvance} doRemove={doRemove} config={config} toast={toast}/>}
       {tab==='instructions'&&<InstructionsTab pList={pList} broadcastInstruction={broadcastInstruction} toast={toast}/>}
       {tab==='ids'&&<AllowedIdsTab toast={toast}/>}
       {tab==='config'&&<ConfigTab config={config} toast={toast}/>}
+      {tab==='guests'&&<GuestsTab toast={toast}/>}
     </div>
   );
 }
@@ -1125,6 +1127,56 @@ function StationInterface({toast}){
               ✕ End Session · Notify Admin
             </button>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── GUESTS TAB ───────────────────────────────────────────────── */
+function GuestsTab({toast}){
+  const preregistered = useFirebase('/preregistered')||{};
+  const participants = useFirebase('/participants')||{};
+  const guestList = Object.values(preregistered).sort((a,b)=>a.registeredAt-b.registeredAt);
+  const totalParticipants = Object.keys(participants).length;
+
+  const clearGuests = async()=>{
+    if(!window.confirm('Clear all guest pre-registrations?')) return;
+    await fdb.ref('/preregistered').remove();
+    toast.add('Guest list cleared','ok');
+  };
+
+  const isIOS = ua => /iphone|ipad|ipod/i.test(ua||'');
+  const isAndroid = ua => /android/i.test(ua||'');
+  const deviceIcon = ua => isIOS(ua)?'🍎':isAndroid(ua)?'🤖':'💻';
+
+  return(
+    <div>
+      <div className="g3 mb16">
+        <div className="sc"><div className="sl">Invited (opened link)</div><div className="sv" style={{color:'var(--green)'}}>{guestList.length}</div></div>
+        <div className="sc"><div className="sl">Registered on day</div><div className="sv" style={{color:'var(--blue)'}}>{totalParticipants}</div></div>
+        <div className="sc"><div className="sl">Still to arrive</div><div className="sv" style={{color:'var(--amber)'}}>{Math.max(0,guestList.length-totalParticipants)}</div></div>
+      </div>
+      <div className="panel">
+        <div className="ph">
+          <span className="pt">Guest list — opened app before show ({guestList.length})</span>
+          {guestList.length>0&&<button className="btn br sm" onClick={clearGuests}>Clear</button>}
+        </div>
+        <div className="pb scroll">
+          {guestList.length===0&&<div className="dim" style={{textAlign:'center',padding:'16px 0'}}>No guests yet — share the link!</div>}
+          <table className="tbl" style={{width:'100%'}}>
+            <thead><tr><th>#</th><th>Nickname</th><th>Device</th><th>Time</th></tr></thead>
+            <tbody>
+              {guestList.map((g,i)=>(
+                <tr key={i}>
+                  <td className="dim">{i+1}</td>
+                  <td style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--text)'}}>{g.nickname}</td>
+                  <td style={{fontSize:14}}>{deviceIcon(g.userAgent)} <span className="dim" style={{fontSize:8}}>{isIOS(g.userAgent)?'iPhone':isAndroid(g.userAgent)?'Android':'Desktop'}</span></td>
+                  <td className="dim">{g.registeredAt?new Date(g.registeredAt).toLocaleString('en',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):''}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

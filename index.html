@@ -10,6 +10,8 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>General Anesthesia</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{width:100%;min-height:100%;background:#000;color:#dde4ee;font-family:'IBM Plex Mono',monospace;-webkit-font-smoothing:antialiased}
@@ -64,6 +66,18 @@ html,body{width:100%;min-height:100%;background:#000;color:#dde4ee;font-family:'
   .already{display:block}
   .open-btn{display:inline-block!important}
 }
+
+/* PRE-REGISTRATION */
+.prereg{width:100%;max-width:300px;display:flex;flex-direction:column;gap:10px;margin-bottom:40px}
+.prereg-title{font-size:9px;letter-spacing:3px;color:#5a7a98;text-transform:uppercase;text-align:center;margin-bottom:8px}
+.prereg-sub{font-size:11px;color:#7a9ab8;text-align:center;line-height:1.8;margin-bottom:24px;max-width:280px}
+.prereg input{background:#050709;border:1px solid #1e3050;color:#dde4ee;text-align:center;font-size:14px;letter-spacing:2px;padding:12px;font-family:'IBM Plex Mono',monospace;border-radius:2px;outline:none}
+.prereg input:focus{border-color:#5a7a98}
+.prereg input::placeholder{color:#2a4060;font-size:11px}
+.prereg-btn{background:none;border:1px solid #1e3050;color:#5a7a98;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;padding:12px;cursor:pointer;border-radius:2px;transition:all .2s}
+.prereg-btn:hover{border-color:#5a7a98;color:#8aafc8}
+.prereg-err{font-size:9px;color:#ff3c3c;text-align:center;min-height:14px;letter-spacing:1px}
+.prereg-ok{font-size:10px;color:#00e87a;text-align:center;letter-spacing:2px;padding:12px;border:1px solid rgba(0,232,122,.2);border-radius:2px;background:rgba(0,232,122,.05)}
 </style>
 </head>
 <body>
@@ -74,8 +88,20 @@ html,body{width:100%;min-height:100%;background:#000;color:#dde4ee;font-family:'
 
   <div class="already">App installed. Tap below to open.</div>
 
+  <!-- PRE-REGISTRATION -->
+  <div id="prereg-section">
+    <div class="prereg-title">Access</div>
+    <div class="prereg-sub">Please enter your name or a nickname so the organizers can see who has already set up the app — and make sure everything is ready for your arrival.</div>
+    <div class="prereg">
+      <input id="nickname-input" placeholder="Your name or nickname" maxlength="32" autocomplete="off" spellcheck="false"/>
+      <input id="password-input" placeholder="Password" type="password" maxlength="32" autocomplete="off"/>
+      <button class="prereg-btn" onclick="doPreReg()">Continue →</button>
+      <div class="prereg-err" id="prereg-err"></div>
+    </div>
+  </div>
+
   <!-- INSTALL SECTION — shown based on device -->
-  <div class="install-section" id="install-section">
+  <div class="install-section" id="install-section" style="display:none">
     <div class="steps" id="steps-container"></div>
     <div class="div"></div>
   </div>
@@ -96,6 +122,58 @@ html,body{width:100%;min-height:100%;background:#000;color:#dde4ee;font-family:'
   </div>
 
 </div>
+
+<script>
+// Firebase init
+firebase.initializeApp({
+  apiKey:"AIzaSyBzo6qVmam_u-H2asl3GIPRU_JBbMCPN9g",
+  authDomain:"general-anesthesia-cf511.firebaseapp.com",
+  databaseURL:"https://general-anesthesia-cf511-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"general-anesthesia-cf511",
+  storageBucket:"general-anesthesia-cf511.firebasestorage.app",
+  messagingSenderId:"839292271507",
+  appId:"1:839292271507:web:42a6028e0ff992afb50666"
+});
+const preregDb = firebase.database();
+
+const PASSWORD = 'cerebrum';
+
+function doPreReg(){
+  const nickname = document.getElementById('nickname-input').value.trim();
+  const password = document.getElementById('password-input').value.trim();
+  const errEl = document.getElementById('prereg-err');
+
+  if(!nickname){ errEl.textContent = 'Please enter your name'; return; }
+  if(password.toLowerCase() !== PASSWORD){ errEl.textContent = 'Incorrect password'; return; }
+
+  errEl.textContent = '';
+
+  // Save to Firebase
+  const key = nickname.toLowerCase().replace(/[^a-z0-9]/g,'_').substring(0,32);
+  preregDb.ref('/preregistered/' + key).set({
+    nickname: nickname,
+    registeredAt: Date.now(),
+    userAgent: navigator.userAgent.substring(0,100),
+  }).then(()=>{
+    // Hide pre-reg, show install
+    document.getElementById('prereg-section').style.display = 'none';
+    document.getElementById('install-section').style.display = 'block';
+    buildSteps();
+  }).catch(()=>{
+    // Even if Firebase fails, proceed
+    document.getElementById('prereg-section').style.display = 'none';
+    document.getElementById('install-section').style.display = 'block';
+    buildSteps();
+  });
+}
+
+// Allow Enter key
+document.addEventListener('DOMContentLoaded', ()=>{
+  ['nickname-input','password-input'].forEach(id=>{
+    document.getElementById(id)?.addEventListener('keydown', e=>{ if(e.key==='Enter') doPreReg(); });
+  });
+});
+</script>
 
 <script>
 const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -231,10 +309,10 @@ function appIconHTML(){
 
 // If already standalone, just show open button
 if(isStandalone){
-  const section = document.getElementById('install-section');
-  if(section) section.style.display = 'none';
+  document.getElementById('prereg-section').style.display = 'none';
+  document.getElementById('install-section').style.display = 'none';
 } else {
-  buildSteps();
+  // Pre-reg section already visible, buildSteps called after password
 }
 
 // Register service worker
