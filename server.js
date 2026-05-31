@@ -93,7 +93,7 @@ app.post('/webhook', async (req, res) => {
     } else {
       // Ask role preference
       await sendWA(from,
-        `Welcome to General Anesthesia.\n\nSome stations include immersive, hands-on roles — for example, being the center of a simulated medical procedure.\n\nWould you be comfortable taking on an active, immersive role if needed?\n\nReply:\n*YES* — I'm comfortable being an active participant\n*NO* — I prefer to remain a pure observer`
+        `⚕️ Welcome to General Anesthesia ⚕️\n\nSome stations include immersive, hands-on roles — for example, being the center of a simulated medical procedure. 💉\n\nWould you be comfortable taking on an active, immersive role if needed?\n\n🩻 Reply:\n*YES* — I'm comfortable being an active participant 🫀\n*NO* — I prefer to remain a pure observer 🩺`
       );
       await db.ref('/participants/' + body).update({ status: 'role_pending_wa' });
     }
