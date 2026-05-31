@@ -68,6 +68,12 @@ app.post('/webhook', async (req, res) => {
   const linkedId = phoneSnap.val();
 
   if (!linkedId) {
+    // Handle sandbox join code
+    if (body.startsWith('JOIN ')) {
+      await sendWA(from, `⚕️ Welcome to General Anesthesia.\n\nPlease send your *participant ID* — the code from your card.`);
+      res.status(200).send('<Response></Response>'); return;
+    }
+
     // Not linked yet — expect participant ID
     const allowedSnap = await db.ref('/allowedIds/' + body).once('value');
     if (!allowedSnap.exists()) {
