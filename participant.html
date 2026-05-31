@@ -13,60 +13,49 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',monospace;color:#dde4ee;overflow:hidden}
-
-.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;background:#000;transition:opacity .35s}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;background:#000;transition:opacity .3s}
 .screen.hidden{opacity:0;pointer-events:none}
 
 /* LOGIN */
-#screen-login .title{font-size:9px;letter-spacing:4px;color:#7a9ab8;text-transform:uppercase;margin-bottom:52px;text-align:center}
+#screen-login .title{font-size:9px;letter-spacing:4px;color:#5a7a98;text-transform:uppercase;margin-bottom:52px;text-align:center}
 #screen-login .field{width:100%;max-width:260px;display:flex;flex-direction:column;gap:10px}
-#screen-login label{font-size:8px;letter-spacing:3px;color:#7a9ab8;text-transform:uppercase;text-align:center}
-#screen-login input{background:#050709;border:1px solid #2a4a68;color:#dde4ee;text-align:center;font-size:22px;letter-spacing:5px;padding:14px;font-family:'IBM Plex Mono',monospace;border-radius:2px;outline:none;text-transform:uppercase}
-#screen-login input:focus{border-color:#7a9ab8}
-#screen-login .btn{background:none;border:1px solid #1e3050;color:#7a9ab8;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;padding:12px;cursor:pointer;border-radius:2px}
+#screen-login label{font-size:8px;letter-spacing:3px;color:#5a7a98;text-transform:uppercase;text-align:center}
+#screen-login input{background:#050709;border:1px solid #1e3050;color:#dde4ee;text-align:center;font-size:22px;letter-spacing:5px;padding:14px;font-family:'IBM Plex Mono',monospace;border-radius:2px;outline:none;text-transform:uppercase}
+#screen-login input:focus{border-color:#5a7a98}
+#screen-login .btn{background:none;border:1px solid #1e3050;color:#5a7a98;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;padding:12px;cursor:pointer;border-radius:2px}
 #screen-login .err{font-size:9px;color:#ff3c3c;text-align:center;min-height:14px;letter-spacing:1px;margin-top:4px}
 
-/* MAIN SCREEN — shown after login, always visible */
-#screen-main{justify-content:space-between;padding:48px 32px 40px}
-
-/* TOP: participant ID */
-.main-id{font-size:9px;letter-spacing:4px;color:#7a9ab8;text-transform:uppercase;text-align:center}
-
-/* MIDDLE: instruction block */
+/* MAIN */
+#screen-main{justify-content:space-between;padding:52px 32px 44px}
+.main-id{font-size:9px;letter-spacing:4px;color:#3a5068;text-transform:uppercase;text-align:center}
 .instruction-block{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:320px;text-align:center}
-.instruction-label{font-size:8px;letter-spacing:3px;color:#7a9ab8;text-transform:uppercase;margin-bottom:20px}
-.instruction-text{font-size:15px;color:#8aafc8;line-height:1.9;letter-spacing:.5px;transition:color .5s}
+.instruction-label{font-size:8px;letter-spacing:3px;color:#4a6a88;text-transform:uppercase;margin-bottom:20px}
+.instruction-text{font-size:16px;color:#8aafc8;line-height:1.9;letter-spacing:.5px;transition:color .4s;white-space:pre-line}
 .instruction-text.active{color:#dde4ee}
-.instruction-text.new{color:#dde4ee;animation:pulse-text .6s ease}
-@keyframes pulse-text{0%{opacity:0;transform:translateY(6px) scale(.97)}60%{opacity:1;transform:translateY(-1px) scale(1.01)}100%{opacity:1;transform:translateY(0) scale(1)}}
-#flash-overlay{transition:opacity .1s ease-in, opacity .2s ease-out}
-
-/* Status indicator — subtle */
-.status-dot{width:4px;height:4px;border-radius:50%;margin:24px auto 0;background:#4a6a88}
+.instruction-text.new{color:#dde4ee;animation:fadeup .5s ease}
+@keyframes fadeup{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.status-dot{width:4px;height:4px;border-radius:50%;margin:24px auto 0;background:#3a5068}
 .status-dot.waiting{animation:blink 2.5s infinite}
 .status-dot.active{background:#00e87a}
 .status-dot.transit{background:#ffaa00;animation:blink .8s infinite}
 @keyframes blink{0%,100%{opacity:.2}50%{opacity:.7}}
-
-/* BOTTOM: QR code */
-.qr-section{display:flex;flex-direction:column;align-items:center;gap:10px}
-.qr-label{font-size:7px;letter-spacing:3px;color:#5a7a98;text-transform:uppercase}
-#qr-container{background:#000;padding:8px;border:1px solid #1e3050;border-radius:3px}
-#qr-container canvas,#qr-container img{display:block}
-.qr-id{font-size:10px;letter-spacing:3px;color:#7a9ab8;text-align:center}
+.qr-section{display:flex;flex-direction:column;align-items:center;gap:8px}
+.qr-label{font-size:7px;letter-spacing:3px;color:#2a4060;text-transform:uppercase}
+#qr-container{background:#000;padding:8px;border:1px solid #1a2e44;border-radius:3px}
+.qr-id{font-size:10px;letter-spacing:3px;color:#3a5068;text-align:center}
 
 /* DONE */
-#screen-done{background:#000}
-.done-mark{font-size:56px;color:#00e87a;text-align:center;margin-bottom:20px}
-.done-msg{font-size:10px;color:#7a9ab8;letter-spacing:2px;text-align:center;line-height:2;text-transform:uppercase}
+#screen-done .done-mark{font-size:56px;color:#00e87a;text-align:center;margin-bottom:20px}
+#screen-done .done-msg{font-size:10px;color:#5a7a98;letter-spacing:2px;text-align:center;line-height:2;text-transform:uppercase}
+
+/* FLASH */
+#flash-overlay{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:999;transition:opacity .08s}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
 <div class="screen" id="screen-login">
   <div class="title">General Anesthesia</div>
-  <div id="install-hint" style="display:none;font-size:8px;letter-spacing:2px;color:#5a7a98;text-transform:uppercase;text-align:center;margin-bottom:24px;line-height:1.8"></div>
   <div class="field">
     <label>Your ID</label>
     <input id="id-input" placeholder="XXXXXXX" maxlength="16"
@@ -76,16 +65,13 @@ html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',mon
   </div>
 </div>
 
-<!-- MAIN (post-login) -->
 <div class="screen hidden" id="screen-main">
   <div class="main-id" id="main-id"></div>
-
   <div class="instruction-block">
     <div class="instruction-label">Instructions</div>
     <div class="instruction-text" id="instruction-text">Stand by.</div>
     <div class="status-dot waiting" id="status-dot"></div>
   </div>
-
   <div class="qr-section">
     <div class="qr-label">Show this to performers</div>
     <div id="qr-container"></div>
@@ -93,54 +79,39 @@ html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',mon
   </div>
 </div>
 
-<!-- DONE -->
 <div class="screen hidden" id="screen-done">
   <div class="done-mark">✓</div>
   <div class="done-msg">Your experience<br/>has concluded.<br/><br/>Please remain<br/>in place.</div>
 </div>
+
+<div id="flash-overlay"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
 firebase.initializeApp({
-  apiKey: "AIzaSyBzo6qVmam_u-H2asl3GIPRU_JBbMCPN9g",
-  authDomain: "general-anesthesia-cf511.firebaseapp.com",
-  databaseURL: "https://general-anesthesia-cf511-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "general-anesthesia-cf511",
-  storageBucket: "general-anesthesia-cf511.firebasestorage.app",
-  messagingSenderId: "839292271507",
-  appId: "1:839292271507:web:42a6028e0ff992afb50666"
+  apiKey:"AIzaSyBzo6qVmam_u-H2asl3GIPRU_JBbMCPN9g",
+  authDomain:"general-anesthesia-cf511.firebaseapp.com",
+  databaseURL:"https://general-anesthesia-cf511-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"general-anesthesia-cf511",
+  storageBucket:"general-anesthesia-cf511.firebasestorage.app",
+  messagingSenderId:"839292271507",
+  appId:"1:839292271507:web:42a6028e0ff992afb50666"
 });
 const db = firebase.database();
 
-const STATION_NAMES = {s1:'Station 01',s2:'Station 02',s3:'Waiting Room',s4:'Station 04',s5:'Station 05',s6:'Station 06',s7:'Station 07'};
-
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 let pid = null;
 let prevInstruction = null;
-let prevStatus = null;
+let flashInterval = null;
 let qrGenerated = false;
 
-// Auto-fill from URL
-// Show install prompt if not already installed as PWA
-if(window.navigator.standalone === false || window.matchMedia('(display-mode: browser)').matches){
-  const hint = document.getElementById('install-hint');
-  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  if(hint){
-    hint.style.display = 'block';
-    hint.textContent = ios
-      ? 'Tip: tap Share → Add to Home Screen for best experience'
-      : 'Tip: tap ⋮ → Add to Home Screen for best experience';
-  }
-}
+// URL param auto-fill
 const urlId = new URLSearchParams(location.search).get('id');
-if(urlId){
-  document.getElementById('id-input').value = urlId.toUpperCase();
-  setTimeout(doLogin, 300);
-}
-
-document.getElementById('id-input').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
-document.getElementById('id-input').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase(); });
+if(urlId){ document.getElementById('id-input').value = urlId.toUpperCase(); setTimeout(doLogin,300); }
+document.getElementById('id-input').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+document.getElementById('id-input').addEventListener('input', e=>{ e.target.value=e.target.value.toUpperCase(); });
 
 function doLogin(){
   const val = document.getElementById('id-input').value.trim().toUpperCase();
@@ -148,18 +119,37 @@ function doLogin(){
   const errEl = document.getElementById('err');
   errEl.textContent = 'Connecting...';
 
-  db.ref('/participants/'+val).once('value').then(snap => {
+  // Check if ID is in allowed list
+  db.ref('/allowedIds/'+val).once('value').then(snap=>{
     if(!snap.exists()){ errEl.textContent = 'ID not found — ask staff'; return; }
+
     pid = val;
     errEl.textContent = '';
-    generateQR(val);
-    show('main');
-  if(isIOS){
-    const hint=document.getElementById('ios-hint');
-    if(hint){hint.style.display='block';hint.textContent='Screen flashes on new instructions';}
-  }
-    db.ref('/participants/'+pid).on('value', snap => { if(snap.exists()) render(snap.val()); });
-  }).catch(() => { errEl.textContent = 'Connection error — check internet'; });
+
+    // Auto-register if not already in participants
+    db.ref('/participants/'+val).once('value').then(psnap=>{
+      if(!psnap.exists()){
+        // Auto-register: add to participants + S3
+        db.ref('/participants').once('value').then(allSnap=>{
+          const existing = allSnap.val()||{};
+          const num = Object.keys(existing).length + 1;
+          const path = num<=10?'A':num<=20?'B':'C';
+          const now = Date.now();
+          db.ref('/participants/'+val).set({
+            id:val, num, path,
+            status:'waiting_s3', currentStation:'s3', stepIndex:0,
+            registeredAt:now, stationStartedAt:null, transitStartedAt:null,
+            transitDur:null, transitTo:null, holdUntil:null, stationCap:null,
+            instruction:'Stand by.', instructionAt:now,
+          });
+          db.ref('/occupancy/s3').transaction(v=>(v||0)+1);
+        });
+      }
+      generateQR(val);
+      show('main');
+      db.ref('/participants/'+val).on('value', snap=>{ if(snap.exists()) render(snap.val()); });
+    });
+  }).catch(()=>{ errEl.textContent = 'Connection error — check internet'; });
 }
 
 function generateQR(id){
@@ -169,86 +159,75 @@ function generateQR(id){
   document.getElementById('main-id').textContent = id;
   const container = document.getElementById('qr-container');
   container.innerHTML = '';
-  try {
-    new QRCode(container, {
-      text: id,
-      width: 140, height: 140,
-      colorDark: '#dde4ee',
-      colorLight: '#000000',
-      correctLevel: QRCode.CorrectLevel.M
-    });
-  } catch(e) {
-    container.innerHTML = '<div style="width:140px;height:140px;display:flex;align-items:center;justify-content:center;font-size:18px;letter-spacing:4px;color:#7a9ab8">'+id+'</div>';
+  try{
+    new QRCode(container,{text:id,width:140,height:140,colorDark:'#dde4ee',colorLight:'#000000',correctLevel:QRCode.CorrectLevel.M});
+  }catch(e){
+    container.innerHTML='<div style="width:140px;height:140px;display:flex;align-items:center;justify-content:center;font-size:16px;letter-spacing:3px;color:#5a7a98">'+id+'</div>';
   }
 }
 
 function render(data){
   const status = data.status;
-  const instruction = data.instruction || defaultInstruction(status, data);
+  const instruction = data.instruction || defaultInstruction(status,data);
   const dot = document.getElementById('status-dot');
   const itxt = document.getElementById('instruction-text');
 
-  // Vibrate + update on new instruction
+  // New instruction → flash loop
   if(instruction !== prevInstruction && prevInstruction !== null){
-    vib([300,100,300,100,500]);
+    triggerFlash();
     itxt.classList.remove('new');
-    void itxt.offsetWidth; // reflow
+    void itxt.offsetWidth;
     itxt.classList.add('new');
+    if(!isIOS){ try{ navigator.vibrate([300,100,300,100,500]); }catch(e){} }
   }
   prevInstruction = instruction;
-  prevStatus = status;
-
-  // Update instruction text
   itxt.textContent = instruction;
 
-  // Update status dot
+  // Status dot
   dot.className = 'status-dot';
-  if(status === 'active') { dot.classList.add('active'); itxt.classList.add('active'); }
-  else if(status === 'transit') { dot.classList.add('transit'); }
-  else { dot.classList.add('waiting'); itxt.classList.remove('active'); }
+  if(status==='active'){ dot.classList.add('active'); itxt.classList.add('active'); }
+  else if(status==='transit'){ dot.classList.add('transit'); }
+  else{ dot.classList.add('waiting'); itxt.classList.remove('active'); }
 
-  // Done screen
-  if(status === 'done'){ show('done'); vib([500,200,500,200,500]); }
+  if(status==='done'){ triggerFlash(); show('done'); }
 }
 
-function defaultInstruction(status, data){
-  if(status === 'waiting_s3' || status === 's3_holding') return 'Stand by.';
-  if(status === 'transit'){
-    const name = STATION_NAMES[data.transitTo] || 'next location';
-    return 'Proceed to\n' + name + '.';
-  }
-  if(status === 'buffering') return 'Wait here\nfor your group.';
-  if(status === 'active') return 'You are in\n' + (STATION_NAMES[data.currentStation]||'') + '.';
-  if(status === 'done') return 'Experience complete.';
+function defaultInstruction(status,data){
+  const names={s1:'Station 01',s2:'Station 02',s3:'Waiting Room',s4:'Station 04',s5:'Station 05',s6:'Station 06',s7:'Station 07'};
+  if(status==='waiting_s3'||status==='s3_holding') return 'Stand by.';
+  if(status==='transit') return 'Proceed to\n'+(names[data.transitTo]||'next location')+'.';
+  if(status==='buffering') return 'Wait here\nfor your group.';
+  if(status==='active') return 'You are in\n'+(names[data.currentStation]||'')+'.';
+  if(status==='done') return 'Experience complete.';
   return 'Stand by.';
 }
 
+// Flash loop: 1.5x per second for 3 seconds (= ~4-5 flashes)
+function triggerFlash(){
+  if(flashInterval) clearInterval(flashInterval);
+  const overlay = document.getElementById('flash-overlay');
+  let count = 0;
+  const total = 5; // number of flashes
+  const interval = Math.round(1000/1.5); // 667ms per cycle
+
+  flashInterval = setInterval(()=>{
+    overlay.style.opacity = '0.85';
+    setTimeout(()=>{ overlay.style.opacity='0'; }, 180);
+    count++;
+    if(count >= total){
+      clearInterval(flashInterval);
+      flashInterval = null;
+    }
+  }, interval);
+}
+
 function show(name){
-  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
   const el = document.getElementById('screen-'+name);
   if(el) el.classList.remove('hidden');
 }
 
-const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
-
-function vib(pattern){
-  if(!isIOS){ try{ if('vibrate' in navigator) navigator.vibrate(pattern); }catch(e){} }
-  flash();
-}
-
-function flash(){
-  const o=document.getElementById('flash-overlay');
-  if(!o) return;
-  o.style.opacity='1';
-  setTimeout(()=>o.style.opacity='0', isIOS?220:140);
-}
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
 </script>
-<script>
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').catch(()=>{});
-}
-</script>
-<div id="flash-overlay" style="position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .15s;z-index:999"></div>
-<div id="ios-hint" style="display:none;position:fixed;bottom:20px;left:0;right:0;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:2px;color:#5a7a98;text-transform:uppercase"></div>
 </body>
 </html>
