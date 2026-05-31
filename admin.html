@@ -2,7 +2,1114 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GA — Admin</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080a0c;--bg2:#0e1116;--bg3:#141820;
+  --line:#1e2840;--line2:#2a3850;
+  --green:#00e87a;--gbg:rgba(0,232,122,.07);--gbr:rgba(0,232,122,.18);
+  --red:#ff3c3c;--rbg:rgba(255,60,60,.07);
+  --amber:#ffaa00;--abg:rgba(255,170,0,.07);
+  --blue:#3d9eff;--bbg:rgba(61,158,255,.07);
+  --purple:#a066ff;--pbg:rgba(160,102,255,.07);
+  --text:#dde4ee;--t2:#7a8fa8;--t3:#4a6a88;
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:2px}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--line);background:var(--bg2);position:sticky;top:0;z-index:100}
+.logo{font-family:var(--mono);font-size:10px;letter-spacing:3px;color:var(--green);text-transform:uppercase}
+.logo em{color:var(--t3);font-style:normal}
+.navtabs{display:flex;gap:3px}
+.tb{font-family:var(--mono);font-size:9px;letter-spacing:2px;padding:5px 14px;border:1px solid transparent;border-radius:2px;cursor:pointer;text-transform:uppercase;transition:all .15s;background:transparent;color:var(--t3)}
+.tb:hover{color:var(--t2);border-color:var(--line2)}.tb.on{color:var(--green);border-color:var(--green);background:var(--gbg)}
+.page{padding:20px;max-width:1440px;margin:0 auto}
+.panel{background:var(--bg2);border:1px solid var(--line);border-radius:4px;margin-bottom:14px}
+.ph{padding:11px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.pt{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--t2)}
+.pb{padding:14px 16px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.g7{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+.sc{background:var(--bg3);border:1px solid var(--line);border-radius:3px;padding:13px 15px}
+.sl{font-family:var(--mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--t3);margin-bottom:5px}
+.sv{font-family:var(--mono);font-size:24px;font-weight:300;line-height:1}
+.btn{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;padding:6px 14px;border-radius:2px;cursor:pointer;border:1px solid;transition:all .12s;white-space:nowrap}
+.bg{color:var(--green);border-color:var(--green);background:var(--gbg)}.bg:hover{background:var(--gbr)}.bg:disabled{opacity:.3;cursor:not-allowed}
+.br{color:var(--red);border-color:var(--red);background:var(--rbg)}.br:hover{background:rgba(255,60,60,.14)}.br:disabled{opacity:.3;cursor:not-allowed}
+.ba{color:var(--amber);border-color:var(--amber);background:var(--abg)}.ba:hover{background:rgba(255,170,0,.14)}
+.bb{color:var(--blue);border-color:var(--blue);background:var(--bbg)}
+.bx{color:var(--t2);border-color:var(--line2);background:transparent}.bx:hover{color:var(--text);border-color:var(--t2)}
+.sm{padding:4px 9px;font-size:8px}
+input,select,textarea{background:var(--bg3);border:1px solid var(--line);border-radius:2px;color:var(--text);font-family:var(--mono);font-size:11px;padding:7px 10px;width:100%;outline:none;transition:border-color .15s;resize:none}
+input:focus,select:focus,textarea:focus{border-color:var(--green)}
+label{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3);display:block;margin-bottom:4px}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-family:var(--mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--t3);padding:8px 11px;text-align:left;border-bottom:1px solid var(--line)}
+.tbl td{padding:8px 11px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:10px;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}.tbl tr:hover td{background:var(--bg3)}
+.badge{display:inline-block;font-family:var(--mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;padding:2px 6px;border-radius:2px}
+.bg-g{color:var(--green);background:var(--gbg);border:1px solid rgba(0,232,122,.18)}
+.bg-r{color:var(--red);background:var(--rbg);border:1px solid rgba(255,60,60,.18)}
+.bg-a{color:var(--amber);background:var(--abg);border:1px solid rgba(255,170,0,.18)}
+.bg-b{color:var(--blue);background:var(--bbg);border:1px solid rgba(61,158,255,.18)}
+.bg-p{color:var(--purple);background:var(--pbg);border:1px solid rgba(160,102,255,.18)}
+.bg-x{color:var(--t2);background:var(--bg3);border:1px solid var(--line)}
+.scard{background:var(--bg3);border:1px solid var(--line);border-radius:4px;padding:11px}
+.scard.act{border-color:var(--green);background:var(--gbg)}
+.scard.full{border-color:var(--red);background:var(--rbg)}
+.sname{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;color:var(--t2);margin-bottom:3px;text-transform:uppercase}
+.socc{font-family:var(--mono);font-size:22px;font-weight:300;line-height:1}
+.scap{font-family:var(--mono);font-size:9px;color:var(--t3)}
+.pbar{height:2px;background:var(--line);border-radius:1px;overflow:hidden;margin-top:7px}
+.pfill{height:100%;border-radius:1px}
+.tbar{height:2px;background:var(--line);border-radius:1px;overflow:hidden;margin-top:5px}
+.tfill{height:100%;border-radius:1px}
+.tlabel{font-family:var(--mono);font-size:8px;color:var(--t3);margin-top:2px;display:flex;justify-content:space-between}
+.wslot{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--bg3);border:1px solid var(--line);border-radius:3px;margin-bottom:5px;gap:8px;flex-wrap:wrap}
+.notif{padding:9px 12px;background:var(--bg3);border-left:2px solid var(--amber);border-radius:0 3px 3px 0;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.ntxt{font-family:var(--mono);font-size:9px;color:var(--t2);line-height:1.5}
+/* STATION INTERFACE */
+.sif{min-height:100vh;background:#050709;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;position:relative}
+.sif-nav{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #0e1822}
+.sif-nav-btn{background:none;border:1px solid #1e3050;color:#5a7a98;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:6px 14px;cursor:pointer;border-radius:2px}
+.sif-nav-btn:hover{border-color:#5a7a98;color:#8aafc8}
+.sif-station-name{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;color:#5a7a98;text-transform:uppercase}
+.sif-hd{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:3px;color:#3a5068;text-transform:uppercase;margin-bottom:28px;text-align:center}
+.sif-name{font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:300;color:#dde4ee;margin-bottom:3px;text-align:center}
+.sif-cap{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#3a5068;text-align:center;letter-spacing:2px;margin-bottom:6px}
+.sif-occ{font-family:'IBM Plex Mono',monospace;font-size:48px;font-weight:300;text-align:center;margin:12px 0 3px}
+.sif-timer{font-family:'IBM Plex Mono',monospace;font-size:13px;text-align:center;letter-spacing:3px;margin-bottom:6px}
+.sif-tbar{width:200px;height:2px;background:#0e1822;border-radius:1px;overflow:hidden;margin:0 auto 16px}
+.sif-tfill{height:100%;border-radius:1px}
+.sif-plist{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:18px;min-height:28px}
+.sif-act{width:100%;max-width:300px;display:flex;flex-direction:column;gap:10px}
+.sif-btn{width:100%;padding:15px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;border-radius:3px;cursor:pointer;border:1px solid;transition:all .15s}
+.sif-fn{color:#ff3c3c;border-color:#ff3c3c;background:rgba(255,60,60,.06)}.sif-fn:hover{background:rgba(255,60,60,.14)}.sif-fn:disabled{opacity:.3;cursor:not-allowed}
+.sif-scan{color:#00e87a;border-color:#00e87a;background:rgba(0,232,122,.06)}.sif-scan:hover{background:rgba(0,232,122,.14)}
+.sif-scan-stop{color:#ffaa00;border-color:#ffaa00;background:rgba(255,170,0,.06)}
+.scanner-video{width:100%;max-width:280px;border-radius:4px;border:1px solid #0e1822;display:none;background:#000;margin-bottom:10px}
+.scan-id{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#00e87a;text-align:center;margin-bottom:10px;min-height:16px;letter-spacing:2px}
+/* TOASTS */
+.toasts{position:fixed;top:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:10px 16px;background:var(--bg2);border:1px solid var(--line2);border-radius:3px;color:var(--t2);animation:tIn .25s ease}
+.toast.ok{border-left:2px solid var(--green)}.toast.warn{border-left:2px solid var(--amber)}.toast.err{border-left:2px solid var(--red)}
+@keyframes tIn{from{transform:translateX(24px);opacity:0}to{transform:translateX(0);opacity:1}}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.row-b{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}.mb20{margin-bottom:20px}
+.scroll{max-height:380px;overflow-y:auto}.dim{color:var(--t3);font-family:var(--mono);font-size:9px}
+/* CONFIG */
+.config-row{display:grid;grid-template-columns:120px 70px 70px 80px 1fr;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:10px}
+.config-row:last-child{border-bottom:none}
+.path-step{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9px;color:var(--green);background:var(--gbg);border:1px solid rgba(0,232,122,.18);padding:2px 8px;border-radius:2px;margin:2px}
+.path-arrow{color:var(--t3);font-size:10px;margin:0 2px}
+/* ANALYSIS */
+.analysis-item{padding:7px 10px;border-radius:3px;margin-bottom:4px;font-size:10px;line-height:1.6;font-family:var(--mono)}
+.a-ok{background:var(--gbg);border-left:2px solid var(--green)}
+.a-warn{background:var(--abg);border-left:2px solid var(--amber)}
+.a-err{background:var(--rbg);border-left:2px solid var(--red)}
+@media(max-width:800px){.g4{grid-template-columns:repeat(2,1fr)}.g2,.g3{grid-template-columns:1fr}.g7{grid-template-columns:repeat(4,1fr)}.page{padding:12px}.config-row{grid-template-columns:1fr 1fr 1fr}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useCallback,useRef,useMemo} = React;
+
+/* ── FIREBASE ─────────────────────────────────────────────────── */
+firebase.initializeApp({
+  apiKey:"AIzaSyBzo6qVmam_u-H2asl3GIPRU_JBbMCPN9g",
+  authDomain:"general-anesthesia-cf511.firebaseapp.com",
+  databaseURL:"https://general-anesthesia-cf511-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"general-anesthesia-cf511",
+  storageBucket:"general-anesthesia-cf511.firebasestorage.app",
+  messagingSenderId:"839292271507",
+  appId:"1:839292271507:web:42a6028e0ff992afb50666"
+});
+const fdb = firebase.database();
+const dbSet=(p,v)=>fdb.ref(p).set(v);
+const dbUpdate=(p,v)=>fdb.ref(p).update(v);
+const dbGet=p=>fdb.ref(p).once('value').then(s=>s.val());
+const dbTx=(p,fn)=>fdb.ref(p).transaction(fn);
+
+/* ── DEFAULT CONFIG ───────────────────────────────────────────── */
+const DEFAULT_CONFIG = {
+  stations:{
+    s1:{id:'s1',num:1,name:'Station 01',cap:1,dur:240,type:'solo'},
+    s2:{id:'s2',num:2,name:'Station 02',cap:1,dur:300,type:'solo'},
+    s3:{id:'s3',num:3,name:'Waiting Room',cap:10,dur:0,type:'waiting'},
+    s4:{id:'s4',num:4,name:'Station 04',cap:4,dur:240,type:'group'},
+    s5:{id:'s5',num:5,name:'Station 05',cap:4,dur:240,type:'group'},
+    s6:{id:'s6',num:6,name:'Station 06',cap:15,dur:360,type:'group'},
+    s7:{id:'s7',num:7,name:'Station 07',cap:30,dur:0,type:'finale'},
+  },
+  transit:{
+    's3-s1':45,'s3-s2':45,'s3-s4':120,'s3-s5':120,
+    's1-s2':60,'s1-s6':120,'s2-s4':120,'s2-s5':120,
+    's4-s5':180,'s4-s6':120,'s5-s1':120,'s5-s6':120,'s6-s7':60,
+  },
+  paths:{
+    A:{label:'A',seq:['s3','s1','s2','s4','s5','s6','s7']},
+    B:{label:'B',seq:['s3','s4','s2','s5','s1','s6','s7']},
+    C:{label:'C',seq:['s3','s5','s1','s2','s4','s6','s7']},
+  },
+  maxParticipants:30,
+  regInterval:60,
+};
+
+/* ── HELPERS ──────────────────────────────────────────────────── */
+const now=()=>Date.now();
+const fmtSec=s=>{s=Math.max(0,Math.round(s));return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;};
+const getT=(transit,a,b)=>transit[`${a}-${b}`]||transit[`${b}-${a}`]||90;
+
+/* ── AUTO-CALIBRATE BASE DELAYS ───────────────────────────────── */
+function calcBaseDelays(config){
+  const {stations,transit,paths} = config;
+  function pathTimeToFinal(pathKey){
+    const seq = paths[pathKey].seq;
+    let t=0;
+    for(let i=1;i<seq.length;i++){
+      const sid=seq[i];
+      const s=stations[sid];
+      if(!s) continue;
+      t+=getT(transit,seq[i-1],sid);
+      if(s.type!=='finale') t+=s.dur||0;
+    }
+    return t;
+  }
+  const pathKeys=Object.keys(paths);
+  const times={};
+  pathKeys.forEach(k=>times[k]=pathTimeToFinal(k));
+  const maxT=Math.max(...Object.values(times));
+  const delays={};
+  pathKeys.forEach(k=>delays[k]=Math.round(maxT-times[k]));
+  return delays;
+}
+
+/* ── DISPATCH ENGINE ──────────────────────────────────────────── */
+async function dispatchFromS3(pid,forced=false,config=null){
+  const cfg=config||(await dbGet('/config'))||DEFAULT_CONFIG;
+  const p=await dbGet('/participants/'+pid);
+  if(!p||(p.status!=='waiting_s3'&&p.status!=='s3_holding')) return;
+  const path=cfg.paths[p.path];
+  if(!path) return;
+  const nextIdx=(p.stepIndex??0)+1;
+  if(nextIdx>=path.seq.length) return;
+  const fromSid='s3',toSid=path.seq[nextIdx];
+  const toSt=cfg.stations[toSid];
+  if(!toSt) return;
+  const tDur=getT(cfg.transit,fromSid,toSid);
+  const delays=calcBaseDelays(cfg);
+
+  if(!forced){
+    const earliest=(p.registeredAt||now())+(delays[p.path]||0)*1000;
+    if(now()<earliest){
+      await dbUpdate('/participants/'+pid,{status:'s3_holding',holdUntil:earliest});
+      setTimeout(()=>dispatchFromS3(pid,true,cfg),earliest-now()+100);
+      return;
+    }
+  }
+  if(toSt.type==='solo'){
+    const soloFreeAt=(await dbGet('/soloFreeAt/'+toSid))||0;
+    const arrivalTime=now()+tDur*1000;
+    if(!forced&&arrivalTime<soloFreeAt-5000){
+      await dbUpdate('/participants/'+pid,{status:'s3_holding',holdUntil:soloFreeAt-tDur*1000});
+      setTimeout(()=>dispatchFromS3(pid,true,cfg),Math.max(100,soloFreeAt-tDur*1000-now()));
+      return;
+    }
+    await dbSet('/soloFreeAt/'+toSid,arrivalTime+toSt.dur*1000);
+  }
+  await dbTx('/occupancy/s3',v=>Math.max(0,(v||0)-1));
+  const instrText=`Proceed to ${toSt.name}.`;
+  await dbUpdate('/participants/'+pid,{
+    status:'transit',transitStartedAt:now(),transitDur:tDur,transitTo:toSid,
+    stepIndex:nextIdx,currentStation:null,stationStartedAt:null,stationCap:toSt.cap,
+    holdUntil:null,instruction:instrText,instructionAt:now(),checkedIn:false,
+  });
+  setTimeout(()=>handleArrival(pid,toSid,cfg),tDur*1000+200);
+}
+
+async function handleArrival(pid,sid,config=null){
+  const cfg=config||(await dbGet('/config'))||DEFAULT_CONFIG;
+  const p=await dbGet('/participants/'+pid);
+  if(!p||p.transitTo!==sid) return;
+  const s=cfg.stations[sid];
+  if(!s) return;
+  // Participant arrives but is NOT active until performer scans QR
+  const instrText=s.type==='finale'?'You have arrived.\nStay here.':
+    s.type==='group'?`Proceed to ${s.name}.\nWait for check-in.`:
+    `Proceed to ${s.name}.\nWait for check-in.`;
+  await dbUpdate('/participants/'+pid,{
+    status:'arrived', // NEW status: physically at station, waiting for QR scan
+    currentStation:sid,transitTo:null,transitStartedAt:null,transitDur:null,
+    instruction:instrText,instructionAt:now(),checkedIn:false,
+  });
+  await dbTx('/occupancy/'+sid,v=>(v||0)+1);
+}
+
+async function checkInParticipant(pid,cfg=null){
+  // Called when performer scans QR — starts the actual session
+  const config=cfg||(await dbGet('/config'))||DEFAULT_CONFIG;
+  const p=await dbGet('/participants/'+pid);
+  if(!p) return false;
+  if(p.status!=='arrived'&&p.status!=='buffering') return false;
+  const sid=p.currentStation;
+  const s=config.stations[sid];
+  if(!s) return false;
+
+  if(s.type==='group'&&s.cap>1){
+    // Mark as buffering (checked in, waiting for group)
+    await dbUpdate('/participants/'+pid,{
+      status:'buffering',checkedIn:true,
+      instruction:`You are at ${s.name}.\nWait for your group.`,instructionAt:now()
+    });
+    await checkGroupLaunch(sid,config);
+  } else {
+    // Solo or finale — start immediately
+    await dbUpdate('/participants/'+pid,{
+      status:'active',stationStartedAt:now(),checkedIn:true,
+      instruction:`Session started.\nYou are at ${s.name}.`,instructionAt:now()
+    });
+    if(s.dur>0) setTimeout(()=>addNotif(pid,`${pid} — time up · ${s.name}`,'warn'),s.dur*1000);
+  }
+  return true;
+}
+
+async function checkGroupLaunch(sid,config=null){
+  const cfg=config||(await dbGet('/config'))||DEFAULT_CONFIG;
+  const s=cfg.stations[sid];
+  if(!s) return;
+  const allP=await dbGet('/participants')||{};
+  const checkedIn=Object.values(allP).filter(p=>p.status==='buffering'&&p.currentStation===sid&&p.checkedIn);
+  const needed=s.type==='finale'?s.cap:s.cap;
+  if(checkedIn.length>=needed){
+    const group=checkedIn.slice(0,needed);
+    const t=now();
+    const instrText=`Session started.\nYou are at ${s.name}.`;
+    for(const p of group) await dbUpdate('/participants/'+p.id,{status:'active',stationStartedAt:t,instruction:instrText,instructionAt:t});
+    if(s.dur>0) setTimeout(async()=>{for(const p of group) await addNotif(p.id,`${p.id} — time up · ${s.name}`,'warn');},s.dur*1000);
+  }
+}
+
+async function advanceParticipant(pid,cfg=null){
+  const config=cfg||(await dbGet('/config'))||DEFAULT_CONFIG;
+  const p=await dbGet('/participants/'+pid);
+  if(!p||p.status==='done') return;
+  const path=config.paths[p.path];
+  if(!path) return;
+  const curIdx=p.stepIndex??0,nextIdx=curIdx+1;
+  if(p.currentStation){
+    await dbTx('/occupancy/'+p.currentStation,v=>Math.max(0,(v||0)-1));
+  }
+  if(nextIdx>=path.seq.length){
+    await dbUpdate('/participants/'+pid,{status:'done',currentStation:null,stationStartedAt:null,instruction:'Your experience has concluded.',instructionAt:now()});
+    return;
+  }
+  const fromSid=path.seq[curIdx],toSid=path.seq[nextIdx];
+  const toSt=config.stations[toSid];
+  if(!toSt) return;
+  const tDur=getT(config.transit,fromSid,toSid);
+  if(toSt.type==='solo'){
+    const soloFreeAt=(await dbGet('/soloFreeAt/'+toSid))||0;
+    const arrivalTime=now()+tDur*1000;
+    if(arrivalTime<soloFreeAt-5000){
+      const s3occ=(await dbGet('/occupancy/s3'))||0;
+      if(s3occ<(config.stations.s3?.cap||10)){
+        await dbTx('/occupancy/s3',v=>(v||0)+1);
+        await dbUpdate('/participants/'+pid,{status:'s3_holding',currentStation:'s3',stationStartedAt:null,stepIndex:curIdx,holdUntil:soloFreeAt-tDur*1000,transitTo:null,instruction:'Stand by.',instructionAt:now()});
+        setTimeout(()=>dispatchFromS3(pid,true,config),Math.max(100,soloFreeAt-tDur*1000-now()));
+        await addNotif(pid,`${pid} → Waiting Room (${toSt.name} busy)`,'warn');
+        return;
+      }
+    }
+    await dbSet('/soloFreeAt/'+toSid,now()+tDur*1000+toSt.dur*1000);
+  }
+  const instrText=`Proceed to ${toSt.name}.`;
+  await dbUpdate('/participants/'+pid,{
+    status:'transit',transitStartedAt:now(),transitDur:tDur,transitTo:toSid,
+    stepIndex:nextIdx,currentStation:null,stationStartedAt:null,stationCap:toSt.cap,
+    instruction:instrText,instructionAt:now(),checkedIn:false,
+  });
+  setTimeout(()=>handleArrival(pid,toSid,config),tDur*1000+200);
+}
+
+async function addNotif(pid,msg,type='info'){
+  await fdb.ref('/notifications/'+now()+Math.random()).set({pid,msg,time:now(),type});
+}
+
+async function removeParticipant(pid){
+  const p=await dbGet('/participants/'+pid);
+  if(p?.currentStation) await dbTx('/occupancy/'+p.currentStation,v=>Math.max(0,(v||0)-1));
+  await fdb.ref('/participants/'+pid).remove();
+  const notifs=await dbGet('/notifications')||{};
+  for(const [nid,n] of Object.entries(notifs)){if(n?.pid===pid) await fdb.ref('/notifications/'+nid).remove();}
+}
+
+/* ── HOOKS ────────────────────────────────────────────────────── */
+function useFirebase(path){
+  const [val,setVal]=useState(null);
+  useEffect(()=>{const ref=fdb.ref(path);ref.on('value',s=>setVal(s.val()));return()=>ref.off();},[path]);
+  return val;
+}
+function useToast(){
+  const [ts,setTs]=useState([]);
+  const add=useCallback((msg,type='ok')=>{const id=now();setTs(t=>[...t,{id,msg,type}]);setTimeout(()=>setTs(t=>t.filter(x=>x.id!==id)),3400);},[]);
+  return{ts,add};
+}
+
+/* ── TIMER BAR ────────────────────────────────────────────────── */
+function TimerBar({startedAt,dur}){
+  const [,setT]=useState(0);
+  useEffect(()=>{const t=setInterval(()=>setT(x=>x+1),1000);return()=>clearInterval(t);},[]);
+  if(!startedAt||!dur) return null;
+  const el=Math.floor((now()-startedAt)/1000),pct=Math.min(100,(el/dur)*100),rem=Math.max(0,dur-el),over=el>dur;
+  const col=over?'var(--red)':pct>80?'var(--amber)':'var(--green)';
+  return(<div><div className="tbar"><div className="tfill" style={{width:pct+'%',background:col}}/></div><div className="tlabel"><span style={{color:col}}>{over?'+':''}{fmtSec(el)}</span><span style={{color:rem<30?'var(--red)':undefined}}>{fmtSec(rem)}</span></div></div>);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   APP
+════════════════════════════════════════════════════════════════ */
+function App(){
+  const [view,setView]=useState('admin');
+  const toast=useToast();
+  return(
+    <div>
+      <div className="toasts">{toast.ts.map(t=><div key={t.id} className={`toast ${t.type}`}>{t.msg}</div>)}</div>
+      <nav className="nav">
+        <div className="logo">General<em>/</em>Anesthesia<em> — </em>Flow</div>
+        <div className="navtabs">
+          <button className={`tb ${view==='admin'?'on':''}`} onClick={()=>setView('admin')}>Admin</button>
+          <button className={`tb ${view==='station'?'on':''}`} onClick={()=>setView('station')}>Station</button>
+        </div>
+      </nav>
+      {view==='admin'&&<AdminDashboard toast={toast}/>}
+      {view==='station'&&<StationInterface toast={toast}/>}
+    </div>
+  );
+}
+
+/* ── ADMIN DASHBOARD ──────────────────────────────────────────── */
+function AdminDashboard({toast}){
+  const [tab,setTab]=useState('overview');
+  const [,setT]=useState(0);
+  useEffect(()=>{const t=setInterval(()=>setT(x=>x+1),1000);return()=>clearInterval(t);},[]);
+
+  const participants=useFirebase('/participants')||{};
+  const occupancy=useFirebase('/occupancy')||{};
+  const notifications=useFirebase('/notifications')||{};
+  const showStarted=useFirebase('/showStarted');
+  const config=useFirebase('/config')||DEFAULT_CONFIG;
+
+  const pList=Object.values(participants);
+  const notifList=Object.values(notifications).filter(Boolean).sort((a,b)=>b.time-a.time);
+  const active=pList.filter(p=>p.status==='active').length;
+  const inTransit=pList.filter(p=>p.status==='transit').length;
+  const waiting=pList.filter(p=>['waiting_s3','s3_holding','buffering','arrived'].includes(p.status)).length;
+
+  const startShow=async()=>{
+    await dbSet('/showStarted',true);
+    await dbSet('/showStartAt',now());
+    toast.add('Show started','ok');
+  };
+
+  const finishAndAdvance=async(pid)=>{await advanceParticipant(pid,config);toast.add(`${pid} → next`,'ok');};
+  const clearNotif=nid=>fdb.ref('/notifications/'+nid).remove();
+  const doRemove=async(pid)=>{if(!window.confirm(`Remove ${pid}?`)) return;await removeParticipant(pid);toast.add(`${pid} removed`,'ok');};
+
+  const broadcastInstruction=async(msg)=>{
+    if(!msg.trim()) return;
+    for(const p of pList) await dbUpdate('/participants/'+p.id,{instruction:msg,instructionAt:now()});
+    toast.add(`Broadcast sent to ${pList.length}`,'ok');
+  };
+
+  return(
+    <div className="page">
+      <div className="row-b mb20">
+        <div><div className="dim mb8">Control Room · Firebase Live</div><div style={{fontFamily:'var(--mono)',fontSize:18,fontWeight:300}}>Master Dashboard</div></div>
+        <div className="row">
+          {!showStarted&&<button className="btn bg" onClick={startShow}>▶ Start Show</button>}
+          {showStarted&&<span className="badge bg-g">LIVE</span>}
+        </div>
+      </div>
+      <div className="g4 mb16">
+        <div className="sc"><div className="sl">Registered</div><div className="sv">{pList.length}<span style={{fontSize:13,color:'var(--t3)'}}>/{config.maxParticipants||30}</span></div></div>
+        <div className="sc"><div className="sl">Active</div><div className="sv" style={{color:'var(--green)'}}>{active}</div></div>
+        <div className="sc"><div className="sl">In Transit</div><div className="sv" style={{color:'var(--blue)'}}>{inTransit}</div></div>
+        <div className="sc"><div className="sl">Waiting</div><div className="sv" style={{color:'var(--amber)'}}>{waiting}</div></div>
+      </div>
+      <div className="row mb16">
+        {['overview','participants','instructions','ids','config'].map(t=>(
+          <button key={t} className={`tb ${tab===t?'on':''}`} onClick={()=>setTab(t)}>{t}</button>
+        ))}
+      </div>
+      {tab==='overview'&&<OverviewTab pList={pList} occupancy={occupancy} notifList={notifList} finishAndAdvance={finishAndAdvance} clearNotif={clearNotif} doRemove={doRemove} config={config} toast={toast}/>}
+      {tab==='participants'&&<ParticipantsTab pList={pList} finishAndAdvance={finishAndAdvance} doRemove={doRemove} config={config} toast={toast}/>}
+      {tab==='instructions'&&<InstructionsTab pList={pList} broadcastInstruction={broadcastInstruction} toast={toast}/>}
+      {tab==='ids'&&<AllowedIdsTab toast={toast}/>}
+      {tab==='config'&&<ConfigTab config={config} toast={toast}/>}
+    </div>
+  );
+}
+
+/* ── OVERVIEW TAB ─────────────────────────────────────────────── */
+function OverviewTab({pList,occupancy,notifList,finishAndAdvance,clearNotif,doRemove,config,toast}){
+  const [,setT]=useState(0);
+  useEffect(()=>{const t=setInterval(()=>setT(x=>x+1),1000);return()=>clearInterval(t);},[]);
+  const stations=config.stations||DEFAULT_CONFIG.stations;
+  const s3ppl=pList.filter(p=>p.status==='waiting_s3'||p.status==='s3_holding');
+  const delays=useMemo(()=>calcBaseDelays(config),[config]);
+  return(
+    <div className="g2">
+      <div>
+        <div className="panel mb14">
+          <div className="ph"><span className="pt">Stations · live</span></div>
+          <div className="pb">
+            <div className="g7">
+              {Object.values(stations).map(station=>{
+                const occ=occupancy[station.id]||0;
+                const buffering=pList.filter(p=>['buffering','arrived'].includes(p.status)&&p.currentStation===station.id).length;
+                const full=occ>=station.cap;
+                const stPpl=pList.filter(p=>p.currentStation===station.id&&p.status==='active');
+                return(
+                  <div key={station.id} className={`scard ${full?'full':occ>0?'act':''}`}>
+                    <div className="sname">S{station.num}</div>
+                    <div className="socc" style={{color:full?'var(--red)':occ>0?'var(--green)':'var(--t3)'}}>{occ}</div>
+                    <div className="scap">/{station.cap}</div>
+                    {buffering>0&&<div style={{fontFamily:'var(--mono)',fontSize:8,color:'var(--amber)',marginTop:2}}>{buffering}⏳</div>}
+                    <div className="pbar"><div className="pfill" style={{width:`${Math.min(100,(occ/station.cap)*100)}%`,background:full?'var(--red)':'var(--green)'}}/></div>
+                    {stPpl[0]?.stationStartedAt&&station.dur>0&&<TimerBar startedAt={stPpl[0].stationStartedAt} dur={station.dur}/>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="panel mb14">
+          <div className="ph">
+            <span className="pt">Waiting Room ({s3ppl.length}/{stations.s3?.cap||10})</span>
+            <span className="dim">delays: {Object.entries(delays).map(([k,v])=>`${k}:${fmtSec(v)}`).join(' · ')}</span>
+          </div>
+          <div className="pb">
+            {s3ppl.length===0&&<div className="dim" style={{textAlign:'center',padding:'10px 0'}}>Empty</div>}
+            {s3ppl.map(p=>{
+              const path=config.paths?.[p.path];
+              const nextSid=path?.seq[(p.stepIndex??0)+1];
+              const nextSt=nextSid?stations[nextSid]:null;
+              const isHolding=p.status==='s3_holding';
+              const rem=isHolding&&p.holdUntil?Math.max(0,Math.round((p.holdUntil-now())/1000)):0;
+              return(
+                <div key={p.id} className="wslot">
+                  <div className="row">
+                    <span style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--text)'}}>{p.id}</span>
+                    <span className={`badge ${p.path==='A'?'bg-b':p.path==='B'?'bg-p':'bg-a'}`}>{p.path}</span>
+                    {nextSt&&<span className="dim">→{nextSt.name}</span>}
+                    {isHolding&&rem>0&&<span style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--amber)'}}>⏳{fmtSec(rem)}</span>}
+                  </div>
+                  <div className="row" style={{gap:4}}>
+                    {isHolding
+                      ?<button className="btn ba sm" onClick={()=>{dispatchFromS3(p.id,true,config);toast.add(p.id+' forced','ok');}}>Force →</button>
+                      :<button className="btn bg sm" onClick={()=>{dispatchFromS3(p.id,false,config);toast.add(p.id+' sent','ok');}}>Send →</button>}
+                    <button className="btn br sm" onClick={()=>doRemove(p.id)}>✕</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Group buffers */}
+        {Object.values(stations).filter(s=>s.type==='group').map(station=>{
+          const arrived=pList.filter(p=>['arrived','buffering'].includes(p.status)&&p.currentStation===station.id);
+          const inTransit=pList.filter(p=>p.status==='transit'&&p.transitTo===station.id);
+          if(arrived.length===0&&inTransit.length===0) return null;
+          const needed=station.type==='finale'?station.cap:station.cap;
+          return(
+            <div key={station.id} className="panel mb14" style={{borderColor:'rgba(255,170,0,.25)'}}>
+              <div className="ph"><span className="pt" style={{color:'var(--amber)'}}>{station.name} · {arrived.filter(p=>p.checkedIn).length}/{needed} checked in</span><span className="dim">{inTransit.length} in transit · {arrived.filter(p=>!p.checkedIn).length} arrived</span></div>
+              <div className="pb">
+                <div className="row" style={{gap:5,flexWrap:'wrap',marginBottom:6}}>
+                  {arrived.filter(p=>p.checkedIn).map(p=><span key={p.id} className="badge bg-g">{p.id} ✓</span>)}
+                  {arrived.filter(p=>!p.checkedIn).map(p=><span key={p.id} className="badge bg-a">{p.id} arrived</span>)}
+                  {inTransit.map(p=>{const rem=p.transitStartedAt?Math.max(0,p.transitDur-Math.floor((now()-p.transitStartedAt)/1000)):0;return<span key={p.id} className="badge bg-b">{p.id} ✈{fmtSec(rem)}</span>;})}
+                  {Array.from({length:Math.max(0,needed-arrived.length-inTransit.length)}).map((_,i)=><span key={i} className="badge bg-x">—</span>)}
+                </div>
+                <div className="dim">Need {Math.max(0,needed-arrived.filter(p=>p.checkedIn).length)} more check-ins to start</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div>
+        <div className="panel">
+          <div className="ph">
+            <span className="pt" style={{color:notifList.some(n=>n.type==='warn')?'var(--amber)':undefined}}>
+              Notifications {notifList.length>0&&`(${notifList.length})`}
+            </span>
+            {notifList.length>0&&<button className="btn bx sm" onClick={()=>fdb.ref('/notifications').remove()}>Clear</button>}
+          </div>
+          <div className="pb scroll">
+            {notifList.length===0&&<div className="dim" style={{textAlign:'center',padding:'12px 0'}}>None</div>}
+            {notifList.map(n=>(
+              <div key={n.id} className="notif">
+                <div><div className="ntxt">{n.msg}</div><div className="dim">{new Date(n.time).toLocaleTimeString('en')}</div></div>
+                <div className="row" style={{gap:5}}>
+                  {n.type==='warn'&&n.pid&&<button className="btn bg sm" onClick={()=>{finishAndAdvance(n.pid);clearNotif(n.id);}}>→ Next</button>}
+                  <button className="btn bx sm" onClick={()=>clearNotif(n.id)}>✕</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── PARTICIPANTS TAB ─────────────────────────────────────────── */
+function ParticipantsTab({pList,finishAndAdvance,doRemove,config,toast}){
+  const [filter,setFilter]=useState('all');
+  const [,setT]=useState(0);
+  useEffect(()=>{const t=setInterval(()=>setT(x=>x+1),1000);return()=>clearInterval(t);},[]);
+  const stations=config.stations||DEFAULT_CONFIG.stations;
+  const paths=config.paths||DEFAULT_CONFIG.paths;
+  const filtered=pList.filter(p=>filter==='all'||p.status===filter||p.path===filter);
+  const sorted=[...filtered].sort((a,b)=>a.num-b.num);
+  const sBadge={active:'bg-g',waiting_s3:'bg-a',s3_holding:'bg-a',transit:'bg-b',buffering:'bg-p',arrived:'bg-a',done:'bg-x'};
+  const sLabel={active:'active',waiting_s3:'waiting',s3_holding:'holding',transit:'transit',buffering:'group',arrived:'arrived',done:'done'};
+  const pathBadge={A:'bg-b',B:'bg-p',C:'bg-a'};
+  return(
+    <div>
+      <div className="row-b mb12">
+        <div className="row" style={{gap:3}}>
+          {['all','active','transit','arrived','waiting_s3','buffering','done',...Object.keys(paths)].map(f=>(
+            <button key={f} className={`tb ${filter===f?'on':''}`} onClick={()=>setFilter(f)} style={{fontSize:8,padding:'3px 9px'}}>
+              {f==='waiting_s3'?'waiting':f==='all'?'all':f}
+            </button>
+          ))}
+        </div>
+        <span className="dim">{filtered.length}</span>
+      </div>
+      <div className="panel"><div className="scroll">
+        <table className="tbl">
+          <thead><tr><th>ID</th><th>#</th><th>Path</th><th>Status</th><th>Location</th><th>Step</th><th>Timer</th><th>Transit</th><th>Action</th></tr></thead>
+          <tbody>
+            {sorted.map(p=>{
+              const path=paths[p.path];
+              const curSt=p.currentStation?stations[p.currentStation]:null;
+              const el=p.stationStartedAt?Math.floor((now()-p.stationStartedAt)/1000):0;
+              const dur=curSt?.dur||0;const over=dur>0&&el>dur;
+              const trEl=p.transitStartedAt?Math.floor((now()-p.transitStartedAt)/1000):0;
+              const trRem=Math.max(0,(p.transitDur||0)-trEl);
+              const destSt=p.transitTo?stations[p.transitTo]:null;
+              const holdRem=p.holdUntil?Math.max(0,Math.round((p.holdUntil-now())/1000)):0;
+              return(
+                <tr key={p.id}>
+                  <td style={{color:'var(--text)',fontWeight:500}}>{p.id}</td>
+                  <td className="dim">{p.num}</td>
+                  <td><span className={`badge ${pathBadge[p.path]||'bg-x'}`}>{p.path}</span></td>
+                  <td><span className={`badge ${sBadge[p.status]||'bg-x'}`}>{sLabel[p.status]||p.status}</span></td>
+                  <td style={{color:'var(--t2)',fontSize:9}}>{curSt&&curSt.type!=='waiting'?curSt.name:destSt?`→${destSt.name}`:curSt?.name||'—'}</td>
+                  <td className="dim">{p.stepIndex??0}/{path?.seq.length-1||'—'}</td>
+                  <td>{p.status==='active'&&dur>0&&<span style={{fontFamily:'var(--mono)',fontSize:9,color:over?'var(--red)':'var(--green)'}}>{over?'+':''}{fmtSec(el)}/{fmtSec(dur)}</span>}</td>
+                  <td>
+                    {p.status==='transit'&&<span style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--blue)'}}>✈{fmtSec(trRem)}</span>}
+                    {p.status==='s3_holding'&&holdRem>0&&<span style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--amber)'}}>⏳{fmtSec(holdRem)}</span>}
+                  </td>
+                  <td>
+                    <div className="row" style={{gap:4}}>
+                      {p.status==='waiting_s3'&&<button className="btn bg sm" onClick={()=>{dispatchFromS3(p.id,false,config);toast.add(p.id,'ok');}}>Send</button>}
+                      {p.status==='s3_holding'&&<button className="btn ba sm" onClick={()=>{dispatchFromS3(p.id,true,config);toast.add(p.id+' forced','ok');}}>Force</button>}
+                      {p.status==='active'&&<button className="btn ba sm" onClick={()=>finishAndAdvance(p.id)}>End →</button>}
+                      <button className="btn br sm" onClick={()=>doRemove(p.id)}>✕</button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+            {sorted.length===0&&<tr><td colSpan={9} style={{textAlign:'center',padding:'20px',color:'var(--t3)'}}>No participants</td></tr>}
+          </tbody>
+        </table>
+      </div></div>
+    </div>
+  );
+}
+
+/* ── INSTRUCTIONS TAB ─────────────────────────────────────────── */
+function InstructionsTab({pList,broadcastInstruction,toast}){
+  const [instructions,setInstructions]=useState({});
+  const [broadcast,setBroadcast]=useState('');
+  const sorted=[...pList].sort((a,b)=>a.num-b.num);
+  const sBadge={active:'bg-g',waiting_s3:'bg-a',s3_holding:'bg-a',transit:'bg-b',buffering:'bg-p',arrived:'bg-a',done:'bg-x'};
+
+  const send=async(pid)=>{
+    const txt=(instructions[pid]||'').trim();
+    if(!txt){toast.add('Enter instruction','err');return;}
+    await dbUpdate('/participants/'+pid,{instruction:txt,instructionAt:now()});
+    toast.add(`Sent to ${pid}`,'ok');
+    setInstructions(prev=>({...prev,[pid]:''}));
+  };
+
+  return(
+    <div>
+      <div className="panel mb14">
+        <div className="ph"><span className="pt">Broadcast to all</span><span className="dim">triggers flash on all devices</span></div>
+        <div className="pb">
+          <textarea rows={2} value={broadcast} onChange={e=>setBroadcast(e.target.value)} placeholder="e.g. Please remain where you are." style={{marginBottom:8}}/>
+          <button className="btn bg" style={{width:'100%'}} onClick={()=>{broadcastInstruction(broadcast);setBroadcast('');}}>Send to All →</button>
+        </div>
+      </div>
+      <div className="panel">
+        <div className="ph"><span className="pt">Individual instructions</span></div>
+        <div className="pb scroll">
+          {sorted.length===0&&<div className="dim" style={{textAlign:'center',padding:'16px 0'}}>No participants</div>}
+          {sorted.map(p=>(
+            <div key={p.id} style={{display:'grid',gridTemplateColumns:'100px 1fr 160px 60px',gap:8,alignItems:'center',padding:'7px 0',borderBottom:'1px solid var(--line)'}}>
+              <div>
+                <div style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--text)'}}>{p.id}</div>
+                <span className={`badge ${sBadge[p.status]||'bg-x'}`} style={{marginTop:3,display:'inline-block'}}>{p.status.replace('_',' ')}</span>
+              </div>
+              <div style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--t3)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                {p.instruction||'—'}
+              </div>
+              <input value={instructions[p.id]||''} onChange={e=>setInstructions(prev=>({...prev,[p.id]:e.target.value}))} onKeyDown={e=>e.key==='Enter'&&send(p.id)} placeholder="New instruction..." style={{fontSize:9,padding:'5px 8px'}}/>
+              <button className="btn bg sm" onClick={()=>send(p.id)}>Send</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── ALLOWED IDs TAB ──────────────────────────────────────────── */
+function AllowedIdsTab({toast}){
+  const allowedIds=useFirebase('/allowedIds')||{};
+  const [newId,setNewId]=useState('');
+  const [bulkText,setBulkText]=useState('');
+  const idList=Object.keys(allowedIds).sort();
+
+  const addId=async()=>{
+    const id=newId.trim().toUpperCase();
+    if(!id){toast.add('Enter ID','err');return;}
+    await dbSet('/allowedIds/'+id,true);
+    toast.add(`${id} added`,'ok');
+    setNewId('');
+  };
+
+  const addBulk=async()=>{
+    const ids=bulkText.split(/[\n,\s]+/).map(s=>s.trim().toUpperCase()).filter(Boolean);
+    if(ids.length===0){toast.add('No IDs found','err');return;}
+    for(const id of ids) await dbSet('/allowedIds/'+id,true);
+    toast.add(`${ids.length} IDs added`,'ok');
+    setBulkText('');
+  };
+
+  const removeId=async(id)=>{
+    await fdb.ref('/allowedIds/'+id).remove();
+    toast.add(`${id} removed`,'ok');
+  };
+
+  const clearAll=async()=>{
+    if(!window.confirm('Remove all allowed IDs?')) return;
+    await fdb.ref('/allowedIds').remove();
+    toast.add('All IDs cleared','ok');
+  };
+
+  return(
+    <div>
+      <div className="panel mb14">
+        <div className="ph"><span className="pt">Add Single ID</span></div>
+        <div className="pb">
+          <div className="row">
+            <input value={newId} onChange={e=>setNewId(e.target.value.toUpperCase())} onKeyDown={e=>e.key==='Enter'&&addId()} placeholder="e.g. WOLF7" maxLength={16} style={{maxWidth:200}}/>
+            <button className="btn bg" onClick={addId}>+ Add</button>
+          </div>
+        </div>
+      </div>
+      <div className="panel mb14">
+        <div className="ph"><span className="pt">Bulk Add</span><span className="dim">one per line, or comma-separated</span></div>
+        <div className="pb">
+          <textarea rows={4} value={bulkText} onChange={e=>setBulkText(e.target.value)} placeholder={'WOLF7\nECHO3\nALPHA1\n...'} style={{marginBottom:8}}/>
+          <button className="btn bg" style={{width:'100%'}} onClick={addBulk}>Add All →</button>
+        </div>
+      </div>
+      <div className="panel">
+        <div className="ph">
+          <span className="pt">Allowed IDs ({idList.length})</span>
+          {idList.length>0&&<button className="btn br sm" onClick={clearAll}>Clear All</button>}
+        </div>
+        <div className="pb scroll">
+          {idList.length===0&&<div className="dim" style={{textAlign:'center',padding:'12px 0'}}>No IDs defined — add above</div>}
+          <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+            {idList.map(id=>(
+              <div key={id} style={{display:'flex',alignItems:'center',gap:4,background:'var(--bg3)',border:'1px solid var(--line)',borderRadius:3,padding:'3px 8px'}}>
+                <span style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--text)'}}>{id}</span>
+                <button onClick={()=>removeId(id)} style={{background:'none',border:'none',color:'var(--red)',cursor:'pointer',fontFamily:'var(--mono)',fontSize:10,padding:'0 2px'}}>✕</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── CONFIG TAB ───────────────────────────────────────────────── */
+function ConfigTab({config,toast}){
+  const [cfg,setCfg]=useState(null);
+  useEffect(()=>{if(config) setCfg(JSON.parse(JSON.stringify(config)));},[config]);
+
+  if(!cfg) return <div className="dim" style={{padding:20}}>Loading config...</div>;
+
+  const stations=cfg.stations||{};
+  const paths=cfg.paths||{};
+  const transit=cfg.transit||{};
+  const delays=calcBaseDelays(cfg);
+
+  const saveConfig=async()=>{
+    await dbSet('/config',cfg);
+    toast.add('Config saved','ok');
+  };
+
+  const resetConfig=async()=>{
+    if(!window.confirm('Reset to defaults?')) return;
+    await dbSet('/config',DEFAULT_CONFIG);
+    toast.add('Config reset','ok');
+  };
+
+  const updateStation=(id,field,val)=>{
+    setCfg(prev=>({...prev,stations:{...prev.stations,[id]:{...prev.stations[id],[field]:field==='cap'||field==='dur'?+val:val}}}));
+  };
+
+  const updateTransit=(key,val)=>{
+    setCfg(prev=>({...prev,transit:{...prev.transit,[key]:+val}}));
+  };
+
+  const updatePathSeq=(pathKey,idx,val)=>{
+    setCfg(prev=>{
+      const newSeq=[...prev.paths[pathKey].seq];
+      newSeq[idx]=val;
+      return{...prev,paths:{...prev.paths,[pathKey]:{...prev.paths[pathKey],seq:newSeq}}};
+    });
+  };
+
+  const addPathStep=(pathKey)=>{
+    setCfg(prev=>({...prev,paths:{...prev.paths,[pathKey]:{...prev.paths[pathKey],seq:[...prev.paths[pathKey].seq,'s1']}}}));
+  };
+
+  const removePathStep=(pathKey,idx)=>{
+    setCfg(prev=>({...prev,paths:{...prev.paths,[pathKey]:{...prev.paths[pathKey],seq:prev.paths[pathKey].seq.filter((_,i)=>i!==idx)}}}));
+  };
+
+  // Analysis
+  const analyses=[];
+  Object.values(stations).filter(s=>s.type==='solo').forEach(s=>{
+    const totalUsers=cfg.maxParticipants||30;
+    const pathsUsingThis=Object.values(paths).filter(p=>p.seq.includes(s.id)).length;
+    const sessionsNeeded=Math.ceil(totalUsers/Object.keys(paths).length)*pathsUsingThis;
+    const timeNeeded=sessionsNeeded*(s.dur+60);
+    const totalTime=Math.max(...Object.values(paths).map(p=>{
+      let t=0;for(let i=1;i<p.seq.length;i++){const sid=p.seq[i];const st=stations[sid];if(st)t+=getT(transit,p.seq[i-1],sid)+(st.dur||0);}return t;
+    }));
+    if(timeNeeded>totalTime*1.2){
+      analyses.push({type:'warn',msg:`${s.name} (solo cap 1): ${sessionsNeeded} sessions needed — may create queue. Consider shorter duration or parallel solo station.`});
+    } else {
+      analyses.push({type:'ok',msg:`${s.name}: ${sessionsNeeded} sessions fit within show duration`});
+    }
+  });
+
+  return(
+    <div>
+      <div className="row-b mb16">
+        <div className="dim">Edit stations, paths, transit times. Save when done.</div>
+        <div className="row" style={{gap:6}}>
+          <button className="btn bx sm" onClick={resetConfig}>Reset defaults</button>
+          <button className="btn bg" onClick={saveConfig}>Save Config</button>
+        </div>
+      </div>
+
+      {/* STATIONS */}
+      <div className="panel mb14">
+        <div className="ph"><span className="pt">Stations</span></div>
+        <div className="pb">
+          <div style={{display:'grid',gridTemplateColumns:'1fr 70px 80px 80px 80px',gap:8,marginBottom:8}}>
+            <span className="dim">Name</span><span className="dim">Cap</span><span className="dim">Dur (s)</span><span className="dim">Type</span><span className="dim">Delays</span>
+          </div>
+          {Object.values(stations).map(s=>(
+            <div key={s.id} style={{display:'grid',gridTemplateColumns:'1fr 70px 80px 80px 80px',gap:8,alignItems:'center',marginBottom:8}}>
+              <input value={s.name} onChange={e=>updateStation(s.id,'name',e.target.value)} style={{fontSize:10,padding:'5px 8px'}}/>
+              <input type="number" value={s.cap} min={1} max={30} onChange={e=>updateStation(s.id,'cap',e.target.value)} disabled={s.type==='waiting'||s.type==='finale'} style={{fontSize:10,padding:'5px 8px'}}/>
+              <input type="number" value={s.dur} min={0} onChange={e=>updateStation(s.id,'dur',e.target.value)} disabled={s.type==='waiting'||s.type==='finale'} style={{fontSize:10,padding:'5px 8px'}}/>
+              <span className={`badge ${s.type==='solo'?'bg-b':s.type==='group'?'bg-p':s.type==='waiting'?'bg-a':'bg-x'}`}>{s.type}</span>
+              <span className="dim" style={{fontSize:9}}>{s.type!=='waiting'&&s.type!=='finale'?fmtSec(s.dur):'—'}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* PATHS */}
+      <div className="panel mb14">
+        <div className="ph"><span className="pt">Paths</span><span className="dim">drag to reorder, click × to remove</span></div>
+        <div className="pb">
+          {Object.entries(paths).map(([pathKey,path])=>(
+            <div key={pathKey} className="mb16">
+              <div className="row mb8">
+                <span className={`badge ${pathKey==='A'?'bg-b':pathKey==='B'?'bg-p':'bg-a'}`}>{pathKey}</span>
+                <span className="dim">base delay: {fmtSec(delays[pathKey]||0)}</span>
+                <button className="btn bg sm" onClick={()=>addPathStep(pathKey)}>+ Step</button>
+              </div>
+              <div className="row" style={{flexWrap:'wrap',gap:4}}>
+                {path.seq.map((sid,i)=>(
+                  <React.Fragment key={i}>
+                    {i>0&&<span className="path-arrow">→</span>}
+                    <div style={{display:'flex',alignItems:'center',gap:3}}>
+                      <select value={sid} onChange={e=>updatePathSeq(pathKey,i,e.target.value)} style={{fontSize:9,padding:'2px 4px',width:100}}>
+                        {Object.values(stations).map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+                      </select>
+                      {path.seq.length>2&&<button onClick={()=>removePathStep(pathKey,i)} style={{background:'none',border:'none',color:'var(--red)',cursor:'pointer',fontSize:10}}>×</button>}
+                    </div>
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* TRANSIT TIMES */}
+      <div className="panel mb14">
+        <div className="ph"><span className="pt">Transit times (seconds)</span></div>
+        <div className="pb">
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+            {Object.entries(transit).map(([key,val])=>(
+              <div key={key} className="row">
+                <span style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--t2)',minWidth:80}}>{key.toUpperCase().replace('-',' → ')}</span>
+                <input type="number" value={val} min={0} onChange={e=>updateTransit(key,e.target.value)} style={{fontSize:10,padding:'4px 6px',width:70}}/>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* SHOW SETTINGS */}
+      <div className="panel mb14">
+        <div className="ph"><span className="pt">Show settings</span></div>
+        <div className="pb">
+          <div className="g3">
+            <div>
+              <label>Max participants</label>
+              <input type="number" value={cfg.maxParticipants||30} min={1} max={100} onChange={e=>setCfg(prev=>({...prev,maxParticipants:+e.target.value}))} style={{fontSize:11}}/>
+            </div>
+            <div>
+              <label>Reg. interval (s)</label>
+              <input type="number" value={cfg.regInterval||60} min={10} onChange={e=>setCfg(prev=>({...prev,regInterval:+e.target.value}))} style={{fontSize:11}}/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ANALYSIS */}
+      <div className="panel">
+        <div className="ph"><span className="pt">Flow analysis</span></div>
+        <div className="pb">
+          {analyses.map((a,i)=>(
+            <div key={i} className={`analysis-item ${a.type==='ok'?'a-ok':a.type==='warn'?'a-warn':'a-err'}`}>
+              {a.type==='ok'?'✓':a.type==='warn'?'⚡':'✗'} {a.msg}
+            </div>
+          ))}
+          <div className="analysis-item a-ok" style={{marginTop:8}}>
+            ↳ Path delays auto-calculated: {Object.entries(delays).map(([k,v])=>`${k}=${fmtSec(v)}`).join(' · ')}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── STATION INTERFACE ────────────────────────────────────────── */
+function StationInterface({toast}){
+  const [sel,setSel]=useState(null);
+  const [stationList,setStationList]=useState([]);
+  const [selIdx,setSelIdx]=useState(0);
+  const [scanVal,setScanVal]=useState('');
+  const [scanning,setScanning]=useState(false);
+  const [,setT]=useState(0);
+  useEffect(()=>{const t=setInterval(()=>setT(x=>x+1),1000);return()=>clearInterval(t);},[]);
+
+  const videoRef=useRef(null);
+  const streamRef=useRef(null);
+  const occupancy=useFirebase('/occupancy')||{};
+  const participants=useFirebase('/participants')||{};
+  const config=useFirebase('/config')||DEFAULT_CONFIG;
+  const pList=Object.values(participants);
+  const stations=config.stations||DEFAULT_CONFIG.stations;
+
+  // Build station list (non-waiting)
+  useEffect(()=>{
+    const list=Object.values(stations).filter(s=>s.type!=='waiting');
+    setStationList(list);
+  },[stations]);
+
+  const goNext=()=>{ if(selIdx<stationList.length-1){setSelIdx(i=>i+1);setSel(stationList[selIdx+1]?.id);} };
+  const goPrev=()=>{ if(selIdx>0){setSelIdx(i=>i-1);setSel(stationList[selIdx-1]?.id);} };
+
+  const handleScan=async(raw)=>{
+    const id=raw.trim().toUpperCase().replace(/.*[?&]ID=/i,'').split(/[^A-Z0-9]/)[0];
+    if(!id) return;
+    setScanVal(id);
+    // Check in the participant
+    const p=participants[id];
+    if(!p){ toast.add(`${id} not found`,'err'); return; }
+    if(p.currentStation!==sel&&p.status!=='arrived'){
+      toast.add(`${id} is not at this station`,'warn'); return;
+    }
+    const ok=await checkInParticipant(id,config);
+    if(ok){ toast.add(`${id} checked in ✓`,'ok'); if('vibrate' in navigator) navigator.vibrate([100,50,100]); }
+    else { toast.add(`${id} already checked in`,'warn'); }
+    setTimeout(()=>setScanVal(''),2000);
+  };
+
+  const startScan=async()=>{
+    setScanning(true);
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+      streamRef.current=stream;
+      if(videoRef.current){videoRef.current.srcObject=stream;videoRef.current.play();videoRef.current.style.display='block';}
+      if('BarcodeDetector' in window){
+        const det=new BarcodeDetector({formats:['qr_code']});
+        const scan=async()=>{
+          if(!scanning&&!streamRef.current) return;
+          try{
+            const bc=await det.detect(videoRef.current);
+            if(bc.length>0){await handleScan(bc[0].rawValue);stopScan();}
+            else requestAnimationFrame(scan);
+          }catch{requestAnimationFrame(scan);}
+        };
+        requestAnimationFrame(scan);
+      }
+    }catch{toast.add('Camera denied','err');setScanning(false);}
+  };
+
+  const stopScan=()=>{
+    setScanning(false);
+    if(streamRef.current){streamRef.current.getTracks().forEach(t=>t.stop());streamRef.current=null;}
+    if(videoRef.current){videoRef.current.style.display='none';}
+  };
+
+  useEffect(()=>()=>stopScan(),[]);
+
+  if(!sel||stationList.length===0){
+    return(
+      <div className="sif">
+        <div className="sif-hd">Select your station</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(120px,1fr))',gap:9,maxWidth:520,width:'100%'}}>
+          {stationList.map((station,i)=>{
+            const occ=occupancy[station.id]||0;const full=occ>=station.cap;
+            return(
+              <button key={station.id} onClick={()=>{setSel(station.id);setSelIdx(i);}} style={{background:'var(--bg3)',border:`1px solid ${full?'var(--red)':occ>0?'var(--green)':'var(--line)'}`,borderRadius:4,padding:16,cursor:'pointer',fontFamily:'var(--mono)',color:'var(--text)',textAlign:'center'}}>
+                <div style={{fontSize:8,color:'var(--t2)',marginBottom:5,letterSpacing:2,textTransform:'uppercase'}}>{station.name}</div>
+                <div style={{fontSize:26,color:full?'var(--red)':occ>0?'var(--green)':'var(--t3)',fontWeight:300}}>{occ}</div>
+                <div style={{fontSize:8,color:'var(--t3)'}}>/{station.cap}</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  const station=stations[sel];
+  const occ=occupancy[sel]||0;
+  const full=occ>=station.cap;
+  const stPpl=pList.filter(p=>p.currentStation===sel&&['active','buffering','arrived'].includes(p.status));
+  const activePpl=stPpl.filter(p=>p.status==='active');
+  const elapsed=activePpl[0]?.stationStartedAt?Math.floor((now()-activePpl[0].stationStartedAt)/1000):0;
+  const pct=station.dur>0?Math.min(100,(elapsed/station.dur)*100):0;
+  const over=station.dur>0&&elapsed>station.dur;
+
+  const endSession=async()=>{
+    if(activePpl.length===0){toast.add('No active participants','err');return;}
+    for(const p of activePpl) await addNotif(p.id,`${p.id} finished ${station.name}`,'warn');
+    if('vibrate' in navigator) navigator.vibrate([200,100,200]);
+    toast.add('Admin notified','ok');
+  };
+
+  return(
+    <div className="sif">
+      {/* NAV BAR */}
+      <div className="sif-nav">
+        <button className="sif-nav-btn" onClick={goPrev} disabled={selIdx===0} style={{opacity:selIdx===0?.3:1}}>← Prev</button>
+        <span className="sif-station-name">{station.name}</span>
+        <button className="sif-nav-btn" onClick={goNext} disabled={selIdx===stationList.length-1} style={{opacity:selIdx===stationList.length-1?.3:1}}>Next →</button>
+      </div>
+
+      <div style={{marginTop:60}}>
+        <div className="sif-hd">Performer Interface</div>
+        <div className="sif-name">{station.name}</div>
+        <div className="sif-cap">{station.type==='solo'?'solo':station.type==='finale'?`finale ${station.cap}`:`group ${station.cap}`}</div>
+        <div className="sif-occ" style={{color:full?'var(--red)':occ>0?'var(--green)':'var(--t3)'}}>{occ}</div>
+        {station.dur>0&&activePpl.length>0&&(
+          <>
+            <div className="sif-timer" style={{color:over?'var(--red)':pct>80?'var(--amber)':'var(--green)'}}>{over?'+':''}{fmtSec(elapsed)} / {fmtSec(station.dur)}</div>
+            <div className="sif-tbar"><div className="sif-tfill" style={{width:pct+'%',background:over?'var(--red)':pct>80?'var(--amber)':'var(--green)'}}/></div>
+          </>
+        )}
+        <div className="sif-plist">
+          {stPpl.map(p=>(
+            <span key={p.id} className={`badge ${p.status==='active'?'bg-g':p.checkedIn?'bg-a':'bg-x'}`}>{p.id} {p.status==='active'?'✓':p.checkedIn?'⏳':'→'}</span>
+          ))}
+          {stPpl.length===0&&<span className="dim">no participants</span>}
+        </div>
+
+        {/* QR SCAN */}
+        <div style={{width:'100%',maxWidth:280,marginBottom:14,textAlign:'center'}}>
+          <div style={{fontFamily:'var(--mono)',fontSize:8,letterSpacing:2,color:'#3a5068',textTransform:'uppercase',marginBottom:6}}>Scan participant QR</div>
+          <video ref={videoRef} style={{display:'none',width:'100%',borderRadius:4,border:'1px solid #0e1822'}} playsInline muted/>
+          {scanVal&&<div style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--green)',letterSpacing:2,margin:'6px 0'}}>{scanVal} ✓</div>}
+          <div style={{display:'flex',gap:6,marginTop:8}}>
+            {!scanning
+              ?<button className="sif-btn sif-scan" style={{padding:'10px'}} onClick={startScan}>📷 Scan QR</button>
+              :<button className="sif-btn sif-scan-stop" style={{padding:'10px'}} onClick={stopScan}>Stop</button>
+            }
+          </div>
+          <div style={{display:'flex',gap:6,marginTop:6}}>
+            <input style={{background:'#050709',border:'1px solid #0e1822',color:'#dde4ee',textAlign:'center',fontSize:12,letterSpacing:2,padding:'8px',fontFamily:'var(--mono)',borderRadius:2,flex:1}} placeholder="or type ID" value={scanVal} onChange={e=>setScanVal(e.target.value.toUpperCase())} onKeyDown={e=>e.key==='Enter'&&handleScan(scanVal)} autoComplete="off"/>
+            {scanVal&&<button className="sif-btn sif-scan" style={{padding:'8px 14px',width:'auto'}} onClick={()=>handleScan(scanVal)}>✓</button>}
+          </div>
+        </div>
+
+        <div className="sif-act">
+          <button className="sif-btn sif-fn" onClick={endSession} disabled={activePpl.length===0}>
+            ✕ End session · Notify admin
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
+
 <title>GA — Admin</title>
 <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
