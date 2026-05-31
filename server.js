@@ -61,7 +61,7 @@ app.post('/webhook', async (req, res) => {
 
   console.log(`Incoming from ${from}: ${body}`);
 
-  if (!db) { res.sendStatus(200); return; }
+  if (!db) { res.set('Content-Type', 'text/xml').send('<Response></Response>'); return; }
 
   // Check if this phone is already linked to a participant
   const phoneSnap = await db.ref('/phoneIndex/' + from.replace('+', '')).once('value');
@@ -72,7 +72,7 @@ app.post('/webhook', async (req, res) => {
     const allowedSnap = await db.ref('/allowedIds/' + body).once('value');
     if (!allowedSnap.exists()) {
       await sendWA(from, `ID not recognised. Please send your participant ID exactly as given by staff.`);
-      res.sendStatus(200); return;
+      res.set('Content-Type', 'text/xml').send('<Response></Response>'); return;
     }
 
     // Check if ID already linked to another phone
@@ -80,7 +80,7 @@ app.post('/webhook', async (req, res) => {
     const pData = pSnap.val();
     if (pData?.phone && pData.phone !== from) {
       await sendWA(from, `This ID is already registered on another device. Please ask staff for help.`);
-      res.sendStatus(200); return;
+      res.set('Content-Type', 'text/xml').send('<Response></Response>'); return;
     }
 
     // Link phone to ID
@@ -98,13 +98,13 @@ app.post('/webhook', async (req, res) => {
       await db.ref('/participants/' + body).update({ status: 'role_pending_wa' });
     }
 
-    res.sendStatus(200); return;
+    res.set('Content-Type', 'text/xml').send('<Response></Response>'); return;
   }
 
   // Phone is linked — handle replies
   const pSnap = await db.ref('/participants/' + linkedId).once('value');
   const pData = pSnap.val();
-  if (!pData) { res.sendStatus(200); return; }
+  if (!pData) { res.set('Content-Type', 'text/xml').send('<Response></Response>'); return; }
 
   // Role preference answer
   if (pData.status === 'role_pending_wa' || pData.status === 'role_pending') {
@@ -131,12 +131,12 @@ app.post('/webhook', async (req, res) => {
     } else {
       await sendWA(from, `Please reply *YES* or *NO*.`);
     }
-    res.sendStatus(200); return;
+    res.set('Content-Type', 'text/xml').send('<Response></Response>'); return;
   }
 
   // General replies — acknowledge
   await sendWA(from, `Stand by. Instructions will follow.`);
-  res.sendStatus(200);
+  res.set('Content-Type', 'text/xml').send('<Response></Response>');
 });
 
 // ── SEND INSTRUCTION TO PARTICIPANT (called from Firebase trigger) ─
