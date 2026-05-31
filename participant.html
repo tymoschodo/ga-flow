@@ -25,14 +25,37 @@ html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',mon
 #screen-login .btn{background:none;border:1px solid #1e3050;color:#5a7a98;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;padding:12px;cursor:pointer;border-radius:2px}
 #screen-login .err{font-size:9px;color:#ff3c3c;text-align:center;min-height:14px;letter-spacing:1px;margin-top:4px}
 
+/* WHATSAPP SETUP */
+#screen-whatsapp{padding:40px 28px}
+#screen-whatsapp .wa-title{font-size:9px;letter-spacing:3px;color:#5a7a98;text-transform:uppercase;margin-bottom:8px;text-align:center}
+#screen-whatsapp .wa-subtitle{font-size:12px;color:#dde4ee;line-height:1.8;text-align:center;margin-bottom:32px;max-width:300px}
+#wa-qr{background:#000;padding:10px;border:1px solid #1a2e44;border-radius:3px;margin-bottom:16px}
+.wa-btn{display:block;width:100%;max-width:280px;padding:14px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;text-align:center;border-radius:3px;cursor:pointer;text-decoration:none;margin-bottom:10px;transition:all .2s}
+.wa-btn-primary{color:#00e87a;border:1px solid #00e87a;background:rgba(0,232,122,.07)}
+.wa-btn-primary:active{background:rgba(0,232,122,.18)}
+.wa-btn-secondary{color:#5a7a98;border:1px solid #2a4060;background:transparent}
+.wa-btn-secondary:active{background:rgba(61,158,255,.08)}
+.wa-step{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:2px;color:#3a5068;text-transform:uppercase;margin-bottom:20px;text-align:center}
+
+/* ROLE QUESTION */
+#screen-role{padding:40px 32px}
+#screen-role .q-title{font-size:9px;letter-spacing:3px;color:#5a7a98;text-transform:uppercase;margin-bottom:32px;text-align:center}
+#screen-role .q-text{font-size:13px;color:#dde4ee;line-height:1.9;text-align:center;margin-bottom:40px;max-width:320px}
+#screen-role .q-options{display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px}
+.role-btn{padding:16px 20px;border-radius:3px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;text-align:left;line-height:1.6;transition:all .2s;border:1px solid}
+.role-btn-active{color:#00e87a;border-color:#00e87a;background:rgba(0,232,122,.07)}
+.role-btn-active:hover{background:rgba(0,232,122,.14)}
+.role-btn-observer{color:#7a9ab8;border-color:#2a4060;background:rgba(61,158,255,.04)}
+.role-btn-observer:hover{background:rgba(61,158,255,.1)}
+
 /* MAIN */
 #screen-main{justify-content:space-between;padding:52px 32px 44px}
 .main-id{font-size:9px;letter-spacing:4px;color:#3a5068;text-transform:uppercase;text-align:center}
 .instruction-block{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:320px;text-align:center}
 .instruction-label{font-size:8px;letter-spacing:3px;color:#4a6a88;text-transform:uppercase;margin-bottom:20px}
-.instruction-text{font-size:16px;color:#8aafc8;line-height:1.9;letter-spacing:.5px;transition:color .4s;white-space:pre-line}
+.instruction-text{font-size:16px;color:#8aafc8;line-height:1.9;letter-spacing:.5px;white-space:pre-line;transition:color .4s}
 .instruction-text.active{color:#dde4ee}
-.instruction-text.new{color:#dde4ee;animation:fadeup .5s ease}
+.instruction-text.new{animation:fadeup .5s ease}
 @keyframes fadeup{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 .status-dot{width:4px;height:4px;border-radius:50%;margin:24px auto 0;background:#3a5068}
 .status-dot.waiting{animation:blink 2.5s infinite}
@@ -49,11 +72,12 @@ html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',mon
 #screen-done .done-msg{font-size:10px;color:#5a7a98;letter-spacing:2px;text-align:center;line-height:2;text-transform:uppercase}
 
 /* FLASH */
-#flash-overlay{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:999;transition:opacity .08s}
+#flash-overlay{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:999}
 </style>
 </head>
 <body>
 
+<!-- LOGIN -->
 <div class="screen" id="screen-login">
   <div class="title">General Anesthesia</div>
   <div class="field">
@@ -65,11 +89,36 @@ html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',mon
   </div>
 </div>
 
+<!-- WHATSAPP SETUP -->
+<div class="screen hidden" id="screen-whatsapp">
+  <div class="wa-title">⚕️ Step 1 of 2</div>
+  <div class="wa-subtitle">Connect via WhatsApp to receive instructions during the performance.</div>
+  <div id="wa-qr"></div>
+  <div class="wa-step">Scan QR or tap button below</div>
+  <a id="wa-link" class="wa-btn wa-btn-primary" href="#" target="_blank">Open WhatsApp →</a>
+  <button class="wa-btn wa-btn-secondary" onclick="proceedToApp()">Already connected · Continue →</button>
+</div>
+
+<!-- ROLE QUESTION -->
+<div class="screen hidden" id="screen-role">
+  <div class="q-title">Before you begin</div>
+  <div class="q-text">Some stations at this clinic include immersive, hands-on roles — for example, being the center of a simulated medical procedure.<br><br>Would you be comfortable taking on an active, immersive role if needed?</div>
+  <div class="q-options">
+    <button class="role-btn role-btn-active" onclick="setRole('active')">
+      Yes — I'm comfortable being an active participant or patient.
+    </button>
+    <button class="role-btn role-btn-observer" onclick="setRole('observer')">
+      No — I prefer to remain a pure observer.
+    </button>
+  </div>
+</div>
+
+<!-- MAIN -->
 <div class="screen hidden" id="screen-main">
   <div class="main-id" id="main-id"></div>
   <div class="instruction-block">
     <div class="instruction-label">Instructions</div>
-    <div class="instruction-text" id="instruction-text">Stand by.</div>
+    <div class="instruction-text" id="instruction-text">Please take a seat and wait for your appointment.</div>
     <div class="status-dot waiting" id="status-dot"></div>
   </div>
   <div class="qr-section">
@@ -79,6 +128,7 @@ html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',mon
   </div>
 </div>
 
+<!-- DONE -->
 <div class="screen hidden" id="screen-done">
   <div class="done-mark">✓</div>
   <div class="done-msg">Your experience<br/>has concluded.<br/><br/>Please remain<br/>in place.</div>
@@ -100,14 +150,14 @@ firebase.initializeApp({
   appId:"1:839292271507:web:42a6028e0ff992afb50666"
 });
 const db = firebase.database();
-
 const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
 let pid = null;
-let prevInstruction = null;
 let flashInterval = null;
+let prevInstruction = null;
 let qrGenerated = false;
 
-// URL param auto-fill
+// URL param
 const urlId = new URLSearchParams(location.search).get('id');
 if(urlId){ document.getElementById('id-input').value = urlId.toUpperCase(); setTimeout(doLogin,300); }
 document.getElementById('id-input').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
@@ -119,37 +169,102 @@ function doLogin(){
   const errEl = document.getElementById('err');
   errEl.textContent = 'Connecting...';
 
-  // Check if ID is in allowed list
   db.ref('/allowedIds/'+val).once('value').then(snap=>{
     if(!snap.exists()){ errEl.textContent = 'ID not found — ask staff'; return; }
-
     pid = val;
     errEl.textContent = '';
 
-    // Auto-register if not already in participants
+    // Check if already registered
     db.ref('/participants/'+val).once('value').then(psnap=>{
-      if(!psnap.exists()){
-        // Auto-register: add to participants + S3
-        db.ref('/participants').once('value').then(allSnap=>{
-          const existing = allSnap.val()||{};
-          const num = Object.keys(existing).length + 1;
-          const path = num<=10?'A':num<=20?'B':'C';
-          const now = Date.now();
-          db.ref('/participants/'+val).set({
-            id:val, num, path,
-            status:'waiting_s3', currentStation:'s3', stepIndex:0,
-            registeredAt:now, stationStartedAt:null, transitStartedAt:null,
-            transitDur:null, transitTo:null, holdUntil:null, stationCap:null,
-            instruction:'Stand by.', instructionAt:now,
+      if(psnap.exists() && psnap.val().whatsappLinked && psnap.val().rolePreference){
+        // Fully set up — go straight to main
+        generateQR(val);
+        show('main');
+        db.ref('/participants/'+val).on('value', s=>{ if(s.exists()) render(s.val()); });
+      } else {
+        // New or incomplete — register if needed, then show WhatsApp screen
+        if(!psnap.exists()){
+          db.ref('/participants').once('value').then(allSnap=>{
+            const existing = allSnap.val()||{};
+            const num = Object.keys(existing).length + 1;
+            const path = num<=10?'A':num<=20?'B':'C';
+            const t = Date.now();
+            db.ref('/participants/'+val).set({
+              id:val, num, path,
+              status:'role_pending',
+              currentStation:null, stepIndex:0,
+              registeredAt:t, stationStartedAt:null,
+              transitStartedAt:null, transitDur:null,
+              transitTo:null, holdUntil:null, stationCap:null,
+              instruction:'Please take a seat and wait for your appointment.',
+              instructionAt:t, checkedIn:false,
+              rolePreference:null,
+            });
           });
-          db.ref('/occupancy/s3').transaction(v=>(v||0)+1);
-        });
+        }
+        showWhatsAppScreen(val);
       }
-      generateQR(val);
-      show('main');
-      db.ref('/participants/'+val).on('value', snap=>{ if(snap.exists()) render(snap.val()); });
     });
   }).catch(()=>{ errEl.textContent = 'Connection error — check internet'; });
+}
+
+function showWhatsAppScreen(id){
+  const TWILIO_NUMBER = '14155238886';
+  const JOIN_CODE = 'join certain-clean';
+  const msg = encodeURIComponent(JOIN_CODE + '\n' + id);
+  const waUrl = 'https://wa.me/' + TWILIO_NUMBER + '?text=' + msg;
+
+  // Set WhatsApp link
+  document.getElementById('wa-link').href = waUrl;
+
+  // Generate QR code for WhatsApp URL
+  const qrContainer = document.getElementById('wa-qr');
+  qrContainer.innerHTML = '';
+  try{
+    new QRCode(qrContainer,{
+      text: waUrl,
+      width: 180, height: 180,
+      colorDark: '#00e87a',
+      colorLight: '#000000',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  }catch(e){
+    qrContainer.innerHTML = '<div style="width:180px;height:180px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#5a7a98;text-align:center;padding:20px">Open WhatsApp<br/>manually</div>';
+  }
+
+  show('whatsapp');
+
+  // Listen for whatsappLinked to become true
+  db.ref('/participants/'+pid+'/whatsappLinked').on('value', snap=>{
+    if(snap.val()===true){
+      // WhatsApp connected — check role
+      db.ref('/participants/'+pid+'/rolePreference').once('value').then(rsnap=>{
+        if(rsnap.val()){
+          proceedToApp();
+        }
+        // else: bot will ask role question via WhatsApp, wait
+      });
+    }
+  });
+}
+
+function proceedToApp(){
+  generateQR(pid);
+  show('main');
+  db.ref('/participants/'+pid).on('value', s=>{ if(s.exists()) render(s.val()); });
+}
+
+function setRole(role){
+  if(!pid) return;
+  db.ref('/participants/'+pid).update({
+    rolePreference: role,
+    status: 'waiting_s3',
+    currentStation: 's3',
+  });
+  db.ref('/occupancy/s3').transaction(v=>(v||0)+1);
+  generateQR(pid);
+  show('main');
+  db.ref('/participants/'+pid).on('value', s=>{ if(s.exists()) render(s.val()); });
 }
 
 function generateQR(id){
@@ -168,13 +283,12 @@ function generateQR(id){
 
 function render(data){
   const status = data.status;
-  const instruction = data.instruction || defaultInstruction(status,data);
-  const dot = document.getElementById('status-dot');
+  const instruction = data.instruction || defaultInstruction(status, data);
   const itxt = document.getElementById('instruction-text');
+  const dot = document.getElementById('status-dot');
 
-  // New instruction → flash loop
+  // New instruction
   if(instruction !== prevInstruction && prevInstruction !== null){
-    triggerFlash();
     itxt.classList.remove('new');
     void itxt.offsetWidth;
     itxt.classList.add('new');
@@ -183,48 +297,52 @@ function render(data){
   prevInstruction = instruction;
   itxt.textContent = instruction;
 
+  // Flash loop: keep flashing while in transit or arrived (until performer begins session)
+  if(status === 'transit' || status === 'arrived'){
+    if(!flashInterval) startFlashLoop();
+  } else {
+    stopFlashLoop();
+  }
+
   // Status dot
   dot.className = 'status-dot';
   if(status==='active'){ dot.classList.add('active'); itxt.classList.add('active'); }
-  else if(status==='transit'){ dot.classList.add('transit'); }
+  else if(status==='transit'||status==='arrived'){ dot.classList.add('transit'); }
   else{ dot.classList.add('waiting'); itxt.classList.remove('active'); }
 
-  if(status==='done'){ triggerFlash(); show('done'); }
+  if(status==='done'){ stopFlashLoop(); show('done'); }
 }
 
-function defaultInstruction(status,data){
-  const names={s1:'Station 01',s2:'Station 02',s3:'Waiting Room',s4:'Station 04',s5:'Station 05',s6:'Station 06',s7:'Station 07'};
-  if(status==='waiting_s3'||status==='s3_holding') return 'Stand by.';
-  if(status==='transit') return 'Proceed to\n'+(names[data.transitTo]||'next location')+'.';
+function defaultInstruction(status, data){
+  if(status==='waiting_s3'||status==='s3_holding'||status==='role_pending')
+    return 'Please take a seat and wait for your appointment.';
+  if(status==='transit') return 'Proceed to\n'+(data.transitToName||'next location')+'.';
+  if(status==='arrived') return 'You have arrived.\nWait for check-in.';
   if(status==='buffering') return 'Wait here\nfor your group.';
-  if(status==='active') return 'You are in\n'+(names[data.currentStation]||'')+'.';
-  if(status==='done') return 'Experience complete.';
-  return 'Stand by.';
+  if(status==='active') return data.instruction||'Session in progress.';
+  if(status==='done') return 'Your experience has concluded.';
+  return 'Please take a seat and wait for your appointment.';
 }
 
-// Flash loop: 1.5x per second for 3 seconds (= ~4-5 flashes)
-function triggerFlash(){
-  if(flashInterval) clearInterval(flashInterval);
+function startFlashLoop(){
+  if(flashInterval) return;
   const overlay = document.getElementById('flash-overlay');
-  let count = 0;
-  const total = 5; // number of flashes
-  const interval = Math.round(1000/1.5); // 667ms per cycle
-
+  const interval = Math.round(1000/1.5); // 667ms
   flashInterval = setInterval(()=>{
+    overlay.style.transition = 'opacity .08s';
     overlay.style.opacity = '0.85';
     setTimeout(()=>{ overlay.style.opacity='0'; }, 180);
-    count++;
-    if(count >= total){
-      clearInterval(flashInterval);
-      flashInterval = null;
-    }
   }, interval);
+}
+
+function stopFlashLoop(){
+  if(flashInterval){ clearInterval(flashInterval); flashInterval=null; }
+  document.getElementById('flash-overlay').style.opacity='0';
 }
 
 function show(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
-  const el = document.getElementById('screen-'+name);
-  if(el) el.classList.remove('hidden');
+  document.getElementById('screen-'+name)?.classList.remove('hidden');
 }
 
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
