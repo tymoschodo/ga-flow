@@ -106,6 +106,16 @@ app.post('/webhook', async (req, res) => {
   const pData = pSnap.val();
   if (!pData) { res.set('Content-Type', 'text/xml').send('<Response></Response>'); return; }
 
+  // If participant exists but no role yet — re-ask
+  if (!pData.rolePreference && pData.status !== 'role_pending_wa' && pData.status !== 'role_pending') {
+    await db.ref('/participants/' + linkedId).update({ status: 'role_pending_wa' });
+    await sendWA(from,
+      `⚕️ Welcome to General Anesthesia ⚕️\n\nSome stations include immersive, hands-on roles — for example, being the center of a simulated medical procedure. 💉\n\nWould you be comfortable taking on an active, immersive role if needed?\n\n🩻 Reply:\n*YES* — I'm comfortable being an active participant 🫀\n*NO* — I prefer to remain a pure observer 🩺`
+    );
+    res.status(200).send('<Response></Response>');
+    return;
+  }
+
   // Role preference answer
   if (pData.status === 'role_pending_wa' || pData.status === 'role_pending') {
     if (body === 'YES' || body === 'Y') {
