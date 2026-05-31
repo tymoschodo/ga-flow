@@ -201,7 +201,12 @@ function watchParticipants() {
 
 // ── HEALTH CHECK ──────────────────────────────────────────────
 app.get('/', (req, res) => {
-  res.json({ status: 'ok', service: 'GA WhatsApp Bot' });
+  res.json({ status: 'ok', service: 'GA WhatsApp Bot', uptime: process.uptime() });
+});
+
+// ── KEEPALIVE (pinged by UptimeRobot every 5 min) ─────────────
+app.get('/ping', (req, res) => {
+  res.json({ pong: true, time: new Date().toISOString() });
 });
 
 // ── START ─────────────────────────────────────────────────────
