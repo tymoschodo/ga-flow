@@ -156,9 +156,9 @@ html,body{width:100%;min-height:100%;background:#000;color:#dde4ee;font-family:'
         </label>
       </div>
       <div class="tech-check">
-        <div class="tech-text">To play along, I need a smartphone with WhatsApp installed. I also agree to add the show's secure web app to my home screen (which respects my privacy and cannot access my files).</div>
-        <label class="tech-label" id="tech-label" onclick="toggleTech()">
-          <input type="checkbox" id="tech-input"/>
+        <div class="tech-text">To play along, you need a smartphone with WhatsApp installed. You also need to add the show's secure web app to your phone's home screen (which respects your privacy and cannot access your files).</div>
+        <label class="tech-label" id="tech-label">
+          <input type="checkbox" id="tech-input" onchange="toggleTech()"/>
           <div class="tech-box"><div class="tech-box-tick">✓</div></div>
           <div class="tech-box-text">I understand the tech requirements</div>
         </label>
@@ -207,7 +207,6 @@ const PASSWORD = 'cerebrum';
 function toggleTech(){
   const label = document.getElementById('tech-label');
   const input = document.getElementById('tech-input');
-  input.checked = !input.checked;
   label.classList.toggle('checked', input.checked);
 }
 
