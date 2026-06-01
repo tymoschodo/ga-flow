@@ -220,98 +220,157 @@ html,body{width:100%;min-height:100%;background:#000;color:#dde4ee;font-family:'
 </div>
 
 <script>
-// Firebase init
-firebase.initializeApp({
-  apiKey:"AIzaSyBzo6qVmam_u-H2asl3GIPRU_JBbMCPN9g",
-  authDomain:"general-anesthesia-cf511.firebaseapp.com",
-  databaseURL:"https://general-anesthesia-cf511-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId:"general-anesthesia-cf511",
-  storageBucket:"general-anesthesia-cf511.firebasestorage.app",
-  messagingSenderId:"839292271507",
-  appId:"1:839292271507:web:42a6028e0ff992afb50666"
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isAndroid = /android/i.test(navigator.userAgent);
+const isSamsung = /samsungbrowser/i.test(navigator.userAgent);
+const isFirefoxAndroid = /firefox/i.test(navigator.userAgent) && isAndroid;
+const isChromeAndroid = isAndroid && /chrome/i.test(navigator.userAgent) && !isSamsung;
+const isStandalone = window.navigator.standalone === true ||
+                     window.matchMedia('(display-mode: standalone)').matches;
+
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
 });
-const preregDb = firebase.database();
 
-const PASSWORD = 'cerebrum';
-
-function toggleTech(){
-  const label = document.getElementById('tech-label');
-  const input = document.getElementById('tech-input');
-  label.classList.toggle('checked', input.checked);
-}
-
-function selectRole(el){
-  document.querySelectorAll('.role-slot').forEach(s=>s.classList.remove('selected'));
-  el.classList.add('selected');
-  el.querySelector('input').checked = true;
-}
-
-function getSelectedRole(){
-  const checked = document.querySelector('.role-slot.selected input');
-  return checked ? checked.value : null;
-}
-
-function selectSlot(el){
-  document.querySelectorAll('.time-slot').forEach(s=>s.classList.remove('selected'));
-  el.classList.add('selected');
-  el.querySelector('input').checked = true;
-}
-
-function getSelectedSlot(){
-  const checked = document.querySelector('.time-slot.selected input');
-  return checked ? checked.value : null;
-}
-
-function doPreReg(){
-  const nickname = document.getElementById('nickname-input').value.trim();
-  const password = document.getElementById('password-input').value.trim();
-  const errEl = document.getElementById('prereg-err');
-
-  if(!nickname){ errEl.textContent = 'Please enter your name'; return; }
-  if(password.toLowerCase() !== PASSWORD){ errEl.textContent = 'Incorrect password'; return; }
-
-  const slot = getSelectedSlot();
-  if(!slot){ errEl.textContent = 'Please choose an appointment time'; return; }
-
-  const role = getSelectedRole();
-  if(!role){ errEl.textContent = 'Please choose your preferred role'; return; }
-
-  const techOk = document.getElementById('tech-input').checked;
-  if(!techOk){ errEl.textContent = 'Please confirm the tech requirements'; return; }
-
-  errEl.textContent = '';
-
-  // Save to Firebase
-  const key = nickname.toLowerCase().replace(/[^a-z0-9]/g,'_').substring(0,32);
-  preregDb.ref('/preregistered/' + key).set({
-    nickname: nickname,
-    appointmentTime: slot,
-    role: role,
-    registeredAt: Date.now(),
-    userAgent: navigator.userAgent.substring(0,100),
-  }).then(()=>{
-    showConfirmation(nickname, slot);
-  }).catch(()=>{
-    showConfirmation(nickname, slot);
+function doInstall(){
+  if(!deferredPrompt){ return; }
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(result => {
+    deferredPrompt = null;
   });
 }
 
-function showConfirmation(nickname, slot){
-  document.querySelector('.page').style.display = 'none';
-  const confirmPage = document.getElementById('confirm-page');
-  confirmPage.style.display = 'flex';
-  document.getElementById('confirm-time').textContent = slot;
-  // Build install section inside confirm page
-  const sec = document.getElementById('confirm-install-section');
-  sec.innerHTML = buildInstallHTML();
+// ── Install instructions HTML ──
+function buildInstallHTML(){
+  const LAST = `<div class="step" style="margin-top:8px">
+    <div class="step-num">→</div>
+    <div class="step-body">
+      <div class="step-action">During the performance you'll be asked to open the app from your home screen and enter the code you will receive upon reception. We'll see you soon.</div>
+    </div>
+  </div>`;
+
+  const installBtn = deferredPrompt
+    ? `<button class="install-btn" style="display:block;margin:16px auto 0" onclick="doInstall()">Install App</button>`
+    : '';
+
+  let steps = '';
+
+  if(isIOS){
+    steps = `
+      <div class="step"><div class="step-num">01</div><div class="step-body">
+        <div class="step-action">Tap the Share button ${shareIconSVG()}</div>
+        <div class="step-detail">The square icon with an arrow at the bottom of Safari</div>
+      </div></div>
+      <div class="step"><div class="step-num">02</div><div class="step-body">
+        <div class="step-action">Tap "Add to Home Screen"</div>
+        <div class="step-detail">Scroll down in the share menu until you see it</div>
+      </div></div>
+      <div class="step"><div class="step-num">03</div><div class="step-body">
+        <div class="step-action">Tap "Add" to confirm</div>
+        <div class="step-detail">The GA icon will appear on your home screen</div>
+      </div></div>`;
+  } else if(isChromeAndroid){
+    steps = `
+      ${installBtn}
+      <div class="step" style="margin-top:16px"><div class="step-num">or</div><div class="step-body">
+        <div class="step-action">Tap ⋮ in the top-right corner of Chrome</div>
+        <div class="step-detail">Then tap "Add to Home Screen" → "Add" or "Install"</div>
+      </div></div>`;
+  } else if(isSamsung){
+    steps = `
+      <div class="step"><div class="step-num">01</div><div class="step-body">
+        <div class="step-action">Tap ⋮ in the top-right corner</div>
+        <div class="step-detail">This opens the Samsung Internet menu</div>
+      </div></div>
+      <div class="step"><div class="step-num">02</div><div class="step-body">
+        <div class="step-action">Tap "Add page to" → "Home screen"</div>
+        <div class="step-detail">Then tap "Add" to confirm</div>
+      </div></div>`;
+  } else if(isFirefoxAndroid){
+    steps = `
+      <div class="step"><div class="step-num">01</div><div class="step-body">
+        <div class="step-action">Tap ⋮ in the top-right corner</div>
+        <div class="step-detail">This opens the Firefox menu</div>
+      </div></div>
+      <div class="step"><div class="step-num">02</div><div class="step-body">
+        <div class="step-action">Tap "Install" or "Add to Home Screen"</div>
+        <div class="step-detail">Then tap "Add" to confirm</div>
+      </div></div>`;
+  } else if(isAndroid){
+    steps = `
+      ${installBtn}
+      <div class="step" style="margin-top:16px"><div class="step-num">or</div><div class="step-body">
+        <div class="step-action">Tap the browser menu (⋮ or Share)</div>
+        <div class="step-detail">Look for "Add to Home Screen" or "Install App", then confirm</div>
+      </div></div>`;
+  } else {
+    steps = `
+      <div class="step"><div class="step-num">01</div><div class="step-body">
+        <div class="step-action">Open this page on your phone</div>
+        <div class="step-detail">Use Safari (iPhone) or Chrome (Android)</div>
+      </div></div>
+      <div class="step"><div class="step-num">02</div><div class="step-body">
+        <div class="step-action">Add to Home Screen from the browser menu</div>
+        <div class="step-detail">Safari: Share → Add to Home Screen. Chrome: ⋮ → Add to Home Screen</div>
+      </div></div>`;
+  }
+
+  return `<div class="steps" style="width:100%;max-width:320px;margin:0 auto">${steps}${LAST}</div>`;
 }
 
-// Allow Enter key
+function shareIconSVG(){
+  return `<svg style="width:16px;height:16px;vertical-align:middle;margin:0 2px" viewBox="0 0 24 24" fill="none" stroke="#7a9ab8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 12H8.01M12 8V3l5 5-5 5V8z"/>
+    <path d="M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2v-7"/>
+  </svg>`;
+}
+
+// ── localStorage persistence ──
+const STORAGE_KEY = 'ga_registered';
+
+function saveRegistration(nickname, slot){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({nickname, slot, ts: Date.now()}));
+}
+
+function loadRegistration(){
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); }
+  catch(e){ return null; }
+}
+
+// ── On page load: check if already registered ──
 document.addEventListener('DOMContentLoaded', ()=>{
+  const saved = loadRegistration();
+  if(saved){
+    // Already registered — skip form, show confirmation directly
+    document.querySelector('.page').style.display = 'none';
+    showConfirmationPage(saved.nickname, saved.slot);
+  }
+  // Wire Enter key on inputs
   ['nickname-input','password-input'].forEach(id=>{
     document.getElementById(id)?.addEventListener('keydown', e=>{ if(e.key==='Enter') doPreReg(); });
   });
 });
+
+// ── Override showConfirmation to also save to localStorage ──
+const _origShowConfirmation = showConfirmation;
+window.showConfirmation = function(nickname, slot){
+  saveRegistration(nickname, slot);
+  showConfirmationPage(nickname, slot);
+};
+
+function showConfirmationPage(nickname, slot){
+  document.querySelector('.page').style.display = 'none';
+  const confirmPage = document.getElementById('confirm-page');
+  confirmPage.style.display = 'flex';
+  document.getElementById('confirm-time').textContent = slot;
+  document.getElementById('confirm-install-section').innerHTML = buildInstallHTML();
+}
+
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
 </script>
 
 <!-- CONFIRMATION PAGE -->
