@@ -98,10 +98,17 @@ app.post('/webhook', async (req, res) => {
       await sendWA(from, `Welcome back, ${body}. You are connected. Stand by for instructions.`);
     } else {
       // Ask role preference
+      // Role preference already collected at registration (index.html)
+      // Just confirm and set to waiting
+      await db.ref('/participants/' + body).update({
+        status: 'waiting_s3',
+        currentStation: 's3',
+        whatsappLinked: true,
+      });
+      await db.ref('/occupancy/s3').transaction(v => (v||0)+1);
       await sendWA(from,
-        `⚕️ Welcome to General Anesthesia ⚕️\n\nSome stations include immersive, hands-on roles — for example, being the center of a simulated medical procedure. 💉\n\nWould you be comfortable taking on an active, immersive role if needed?\n\n🩻 Reply:\n*YES* — I'm comfortable being an active participant 🫀\n*NO* — I prefer to remain a pure observer 🩺`
+        `⚕️ Welcome to General Anesthesia ⚕️\n\nYou are now connected. Please take a seat and wait for your appointment.\n\nYou will receive further instructions here during the show. 🩺`
       );
-      await db.ref('/participants/' + body).update({ status: 'role_pending_wa' });
     }
 
     res.set('Content-Type', 'text/xml').send('<Response></Response>'); return;
