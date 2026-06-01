@@ -80,6 +80,19 @@ html,body{width:100%;min-height:100%;background:#000;color:#dde4ee;font-family:'
 .time-label{font-size:12px;color:#7a9ab8;letter-spacing:1px;transition:color .2s}
 .time-slot.selected .time-label{color:#dde4ee}
 
+/* ROLE SELECTION */
+.role-section{width:100%;max-width:300px;margin-bottom:4px}
+.role-text{font-size:10px;color:#7a9ab8;line-height:1.8;margin-bottom:12px;text-align:left}
+.role-slots{display:flex;flex-direction:column;gap:8px}
+.role-slot{display:flex;align-items:flex-start;gap:12px;padding:11px 14px;border:1px solid #1e3050;border-radius:2px;cursor:pointer;transition:all .2s;background:#050709}
+.role-slot:hover{border-color:#3a5068}
+.role-slot.selected{border-color:#00e87a;background:rgba(0,232,122,.06)}
+.role-slot input[type=radio]{display:none}
+.role-dot{width:10px;height:10px;border-radius:50%;border:1px solid #3a5068;flex-shrink:0;margin-top:2px;transition:all .2s}
+.role-slot.selected .role-dot{background:#00e87a;border-color:#00e87a}
+.role-slot-text{font-size:10px;color:#5a7a98;letter-spacing:0.5px;line-height:1.6;transition:color .2s}
+.role-slot.selected .role-slot-text{color:#dde4ee}
+
 /* TECH CHECKBOX */
 .tech-check{width:100%;max-width:300px;margin-bottom:4px}
 .tech-text{font-size:10px;color:#7a9ab8;line-height:1.8;margin-bottom:12px;text-align:left}
@@ -155,6 +168,23 @@ html,body{width:100%;min-height:100%;background:#000;color:#dde4ee;font-family:'
           <div class="time-label">17:45 &nbsp;·&nbsp; 22.6</div>
         </label>
       </div>
+      <div class="role-section">
+        <div class="role-text">Some stations at this clinic include immersive, hands-on roles — for example, being the center of a simulated medical procedure. Would you be comfortable taking on an active, immersive role if needed?</div>
+        <div class="role-slots" id="role-slots">
+          <label class="role-slot" onclick="selectRole(this)">
+            <input type="radio" name="role" value="active"/>
+            <div class="role-dot"></div>
+            <div class="role-slot-text">Yes — I'm comfortable being an active participant or patient.</div>
+          </label>
+          <label class="role-slot" onclick="selectRole(this)">
+            <input type="radio" name="role" value="observer"/>
+            <div class="role-dot"></div>
+            <div class="role-slot-text">No — I prefer to remain a pure observer.</div>
+          </label>
+        </div>
+      </div>
+      <div style="height:8px"></div>
+
       <div class="tech-check">
         <div class="tech-text">To play along, you need a smartphone with WhatsApp installed. You also need to add the show's secure web app to your phone's home screen (which respects your privacy and cannot access your files).</div>
         <label class="tech-label" id="tech-label">
@@ -210,6 +240,17 @@ function toggleTech(){
   label.classList.toggle('checked', input.checked);
 }
 
+function selectRole(el){
+  document.querySelectorAll('.role-slot').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+  el.querySelector('input').checked = true;
+}
+
+function getSelectedRole(){
+  const checked = document.querySelector('.role-slot.selected input');
+  return checked ? checked.value : null;
+}
+
 function selectSlot(el){
   document.querySelectorAll('.time-slot').forEach(s=>s.classList.remove('selected'));
   el.classList.add('selected');
@@ -232,6 +273,9 @@ function doPreReg(){
   const slot = getSelectedSlot();
   if(!slot){ errEl.textContent = 'Please choose an appointment time'; return; }
 
+  const role = getSelectedRole();
+  if(!role){ errEl.textContent = 'Please choose your preferred role'; return; }
+
   const techOk = document.getElementById('tech-input').checked;
   if(!techOk){ errEl.textContent = 'Please confirm the tech requirements'; return; }
 
@@ -242,6 +286,7 @@ function doPreReg(){
   preregDb.ref('/preregistered/' + key).set({
     nickname: nickname,
     appointmentTime: slot,
+    role: role,
     registeredAt: Date.now(),
     userAgent: navigator.userAgent.substring(0,100),
   }).then(()=>{
