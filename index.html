@@ -12,6 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{width:100%;min-height:100%;background:#000;color:#dde4ee;font-family:'IBM Plex Mono',monospace;-webkit-font-smoothing:antialiased}
@@ -88,6 +89,11 @@ html,body{width:100%;min-height:100%;background:#000;color:#dde4ee;font-family:'
 
 /* Already installed */
 .already-installed{display:none;font-size:9px;letter-spacing:2px;color:#3a5068;text-transform:uppercase;text-align:center;margin-bottom:32px}
+.handoff-wrap{width:100%;max-width:280px;text-align:center;margin-top:8px}
+.handoff-title{font-size:8px;letter-spacing:3px;color:#4a6a88;text-transform:uppercase;margin-bottom:12px}
+.handoff-sub{font-size:9px;color:#5a7a98;line-height:1.8;margin-top:12px;letter-spacing:.5px}
+#handoff-qr{background:#000;padding:10px;border:1px solid #1a2e44;border-radius:3px;display:inline-block;margin-bottom:8px}
+
 @media(display-mode:standalone){
   #form-section{display:none!important}
   #confirm-section{display:none!important}
@@ -105,7 +111,9 @@ html,body{width:100%;min-height:100%;background:#000;color:#dde4ee;font-family:'
   <div class="already-installed">App installed — you're all set.</div>
 
   <!-- ── REGISTRATION FORM ── -->
- 
+  <div style="font-size:11px;color:#7a9ab8;line-height:1.9;text-align:center;max-width:300px;margin-bottom:36px">
+    To play along, you need a smartphone with WhatsApp installed. You also need to add the show's secure web app to your phone's home screen (which respects your privacy and cannot access your files). You'll be instructed on how to do this after completing the registration.
+  </div>
 
   <div id="form-section">
     <div class="form-wrap">
@@ -142,7 +150,7 @@ html,body{width:100%;min-height:100%;background:#000;color:#dde4ee;font-family:'
             <input type="radio" name="role" value="active"/>
             <div class="role-opt-text">
               <strong>Yes, I'm comfortable</strong>
-              I'm open to being an active participant or a patient in an immersive scene.
+              I'm open to being an active participant or patient in an immersive scene.
             </div>
           </label>
           <label class="role-opt" id="opt-observer" onclick="selectRole('observer')">
@@ -182,7 +190,7 @@ html,body{width:100%;min-height:100%;background:#000;color:#dde4ee;font-family:'
         on the 22nd of June 2026,<br/>
         at Letzi MuST Studios.
       </div>
-      <div class="confirm-sub">Now please add the app to your home screen<br/>using the instructions below.</div>
+      <div class="confirm-sub">One last step — add the app to your home screen<br/>so it's ready when you arrive.</div>
     </div>
   </div>
 
@@ -282,6 +290,38 @@ function doRegister(){
   }, 600);
 }
 
+function showDesktopHandoff(){
+  const container = document.getElementById('steps-container');
+  if(!container) return;
+
+  // Build URL with registered=true so phone skips form
+  const token = btoa(JSON.stringify({
+    nickname: document.getElementById('f-nickname')?.value?.trim() || '',
+    role: selectedRole,
+    time: selectedTime,
+    ts: Date.now(),
+  }));
+  const url = window.location.origin + window.location.pathname + '?registered=' + encodeURIComponent(token);
+
+  container.innerHTML = `
+    <div class="handoff-wrap">
+      <div class="handoff-title">Open on your phone</div>
+      <div id="handoff-qr"></div>
+      <div class="handoff-sub">Scan this QR code with your phone<br/>to add the app to your home screen.<br/>Your registration is already saved.</div>
+    </div>
+  `;
+
+  try {
+    new QRCode(document.getElementById('handoff-qr'), {
+      text: url,
+      width: 180, height: 180,
+      colorDark: '#00e87a',
+      colorLight: '#000000',
+      correctLevel: QRCode.CorrectLevel.M,
+    });
+  } catch(e) {}
+}
+
 function doInstall(){
   if(!deferredPrompt) return;
   deferredPrompt.prompt();
@@ -307,7 +347,9 @@ function buildSteps(){
       {num:'03',action:"You're all set",detail:"During the performance you'll be asked to open the app from your home screen and enter the code you will receive upon reception. We'll see you soon."},
     ];
   } else {
-    steps=[{num:'01',action:'Open this page on your phone',detail:'Use the QR code you received to open this page on your smartphone.'}];
+    // Desktop — show QR code to hand off to phone
+    showDesktopHandoff();
+    return;
   }
 
   container.innerHTML = steps.map(s=>`
@@ -326,6 +368,29 @@ function buildSteps(){
 ['f-nickname','f-password'].forEach(id=>{
   document.getElementById(id)?.addEventListener('keydown',e=>{if(e.key==='Enter')doRegister();});
 });
+
+// Check if coming from desktop handoff QR
+const urlParams = new URLSearchParams(location.search);
+const regToken = urlParams.get('registered');
+if(regToken && (isIOS || isAndroid)){
+  try {
+    const data = JSON.parse(atob(regToken));
+    // Already registered — skip form, show install directly
+    document.getElementById('form-section').style.display = 'none';
+    // Show confirmation with their details
+    if(data.time) document.getElementById('confirm-time').textContent = data.time;
+    document.getElementById('confirm-section').style.display = 'block';
+    const inst = document.getElementById('install-section');
+    inst.style.display = 'flex';
+    // Set globals so buildSteps works
+    selectedRole = data.role;
+    selectedTime = data.time;
+    buildSteps();
+    if(isAndroid && deferredPrompt){
+      document.getElementById('install-btn').style.display = 'block';
+    }
+  } catch(e) {}
+}
 
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
 </script>
