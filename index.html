@@ -186,7 +186,7 @@ html,body{width:100%;min-height:100%;background:#000;color:#dde4ee;font-family:'
       <div style="height:8px"></div>
 
       <div class="tech-check">
-        <div class="tech-text">To play along, you need a smartphone with WhatsApp installed. You also need to add the show's secure web app to your phone's home screen (which respects your privacy and cannot access your files).</div>
+        <div class="tech-text">To play along, you need a smartphone with WhatsApp installed. You also need to add the show's secure web app to your phone's home screen (which respects your privacy and cannot access your files). You'll be instructed on how to do this after completing the registration.</div>
         <label class="tech-label" id="tech-label">
           <input type="checkbox" id="tech-input" onchange="toggleTech()"/>
           <div class="tech-box"><div class="tech-box-tick">✓</div></div>
@@ -361,6 +361,16 @@ function doInstall(){
 // Build step instructions based on device
 function buildInstallHTML(){
   let steps = [];
+  const isSamsung = /samsungbrowser/i.test(navigator.userAgent);
+  const isFirefoxAndroid = /firefox/i.test(navigator.userAgent) && isAndroid;
+  const isChromeAndroid = isAndroid && /chrome/i.test(navigator.userAgent) && !isSamsung;
+
+  const LAST_STEP = {
+    num: '→',
+    action: 'During the performance you'll be asked to open the app from your home screen and enter the code you will receive upon reception. We'll see you soon.',
+    detail: '',
+    icon: 'app'
+  };
 
   if(isIOS){
     steps = [
@@ -378,53 +388,91 @@ function buildInstallHTML(){
       },
       {
         num: '03',
-        action: 'Tap "Add"',
-        detail: 'The app icon will appear on your home screen',
+        action: 'Tap "Add" to confirm',
+        detail: 'The GA icon will appear on your home screen',
         icon: null
       },
-      {
-        num: '04',
-        action: 'Open from your home screen',
-        detail: 'Find the GA icon and open it — then enter your ID',
-        icon: 'app'
-      }
+      LAST_STEP
     ];
-  } else if(isAndroid){
+  } else if(isChromeAndroid){
     steps = [
       {
         num: '01',
-        action: 'Tap "Install App" below',
-        detail: 'Or tap ⋮ in Chrome and select "Add to Home Screen"',
-        icon: null
-      },
-      {
-        num: '02',
-        action: 'Tap "Install" when prompted',
-        detail: 'The app will be added to your home screen',
-        icon: null
-      },
-      {
-        num: '03',
-        action: 'Open from your home screen',
-        detail: 'Find the GA icon and open it — then enter your ID',
-        icon: 'app'
-      }
-    ];
-  } else {
-    // Desktop — show both options
-    steps = [
-      {
-        num: '01',
-        action: 'Tap the menu in your browser',
-        detail: 'Look for ⋮ or Share button',
+        action: 'Tap the Install App button below',
+        detail: 'Or: tap ⋮ (three dots) in the top-right corner of Chrome',
         icon: null
       },
       {
         num: '02',
         action: 'Tap "Add to Home Screen"',
-        detail: 'Then open the app from your home screen and enter your ID',
-        icon: 'app'
-      }
+        detail: 'In Chrome menu: scroll down if needed. Tap "Add" or "Install" to confirm',
+        icon: null
+      },
+      LAST_STEP
+    ];
+  } else if(isSamsung){
+    steps = [
+      {
+        num: '01',
+        action: 'Tap ⋮ in the top-right corner',
+        detail: 'This opens the Samsung Internet menu',
+        icon: null
+      },
+      {
+        num: '02',
+        action: 'Tap "Add page to" → "Home screen"',
+        detail: 'Then tap "Add" to confirm',
+        icon: null
+      },
+      LAST_STEP
+    ];
+  } else if(isFirefoxAndroid){
+    steps = [
+      {
+        num: '01',
+        action: 'Tap ⋮ in the top-right corner',
+        detail: 'This opens the Firefox menu',
+        icon: null
+      },
+      {
+        num: '02',
+        action: 'Tap "Install" or "Add to Home Screen"',
+        detail: 'Then tap "Add" to confirm',
+        icon: null
+      },
+      LAST_STEP
+    ];
+  } else if(isAndroid){
+    steps = [
+      {
+        num: '01',
+        action: 'Tap the menu in your browser (⋮ or Share)',
+        detail: 'Look for "Add to Home Screen" or "Install App"',
+        icon: null
+      },
+      {
+        num: '02',
+        action: 'Tap "Add" or "Install" to confirm',
+        detail: 'The GA icon will appear on your home screen',
+        icon: null
+      },
+      LAST_STEP
+    ];
+  } else {
+    steps = [
+      {
+        num: '01',
+        action: 'Open this page on your phone',
+        detail: 'Use Safari (iPhone) or Chrome (Android) for best results',
+        icon: null
+      },
+      {
+        num: '02',
+        action: 'Add to Home Screen from the browser menu',
+        detail: 'Safari: Share button → Add to Home Screen. Chrome: ⋮ → Add to Home Screen',
+        icon: null
+      },
+      LAST_STEP
     ];
   }
 
