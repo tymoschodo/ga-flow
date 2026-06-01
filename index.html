@@ -15,132 +15,187 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{width:100%;min-height:100%;background:#000;color:#dde4ee;font-family:'IBM Plex Mono',monospace;-webkit-font-smoothing:antialiased}
-.page{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:52px 28px;text-align:center}
+
+.page{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:52px 28px}
 
 /* HEADER */
-.header-label{font-size:8px;letter-spacing:4px;color:#3a5068;text-transform:uppercase;margin-bottom:12px}
-.title{font-size:11px;letter-spacing:6px;color:#dde4ee;text-transform:uppercase;margin-bottom:32px;line-height:1.8}
-.intro{font-size:11px;color:#7a9ab8;line-height:1.9;text-align:center;max-width:320px;margin-bottom:44px}
+.header-label{font-size:8px;letter-spacing:4px;color:#3a5068;text-transform:uppercase;margin-bottom:12px;text-align:center}
+.title{font-size:11px;letter-spacing:6px;color:#dde4ee;text-transform:uppercase;margin-bottom:36px;line-height:1.8;text-align:center}
 
 /* FORM */
-.form{width:100%;max-width:300px;display:flex;flex-direction:column;gap:10px;margin-bottom:40px}
-.form input[type=text],.form input[type=password]{background:#050709;border:1px solid #1e3050;color:#dde4ee;text-align:center;font-size:13px;letter-spacing:1px;padding:13px;font-family:'IBM Plex Mono',monospace;border-radius:2px;outline:none;transition:border-color .2s}
-.form input:focus{border-color:#5a7a98}
-.form input::placeholder{color:#2a4060;font-size:10px;letter-spacing:1px}
-.form-label{font-size:8px;letter-spacing:2px;color:#4a6a88;text-transform:uppercase;text-align:left;margin-top:6px}
+.form-wrap{width:100%;max-width:320px;display:flex;flex-direction:column;gap:0}
+.field-block{margin-bottom:20px}
+.field-label{font-size:8px;letter-spacing:2px;color:#4a6a88;text-transform:uppercase;margin-bottom:6px}
+.field-input{background:#050709;border:1px solid #1e3050;color:#dde4ee;width:100%;font-size:13px;letter-spacing:1px;padding:12px 14px;font-family:'IBM Plex Mono',monospace;border-radius:2px;outline:none;transition:border-color .2s}
+.field-input:focus{border-color:#5a7a98}
+.field-input::placeholder{color:#2a4060;font-size:10px}
 
-/* ROLE QUESTION */
-.role-q{font-size:11px;color:#8aafc8;line-height:1.8;text-align:left;margin:8px 0 10px}
+/* TIMESLOTS */
+.timeslot-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.timeslot-btn{padding:12px 8px;border:1px solid #1e3050;border-radius:2px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:#5a7a98;background:transparent;text-align:center;transition:all .2s;line-height:1.5}
+.timeslot-btn:hover{border-color:#2a4060;color:#7a9ab8}
+.timeslot-btn.selected{border-color:#00e87a;color:#00e87a;background:rgba(0,232,122,.07)}
+
+/* ROLE OPTIONS */
 .role-options{display:flex;flex-direction:column;gap:8px}
-.role-opt{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1px solid #1e3050;border-radius:3px;cursor:pointer;text-align:left;transition:border-color .2s;background:transparent}
+.role-opt{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1px solid #1e3050;border-radius:2px;cursor:pointer;transition:border-color .2s;background:transparent}
 .role-opt:hover{border-color:#2a4060}
-.role-opt.selected-active{border-color:#00e87a;background:rgba(0,232,122,.06)}
-.role-opt.selected-observer{border-color:#3d9eff;background:rgba(61,158,255,.06)}
-.role-opt input[type=radio]{margin-top:2px;accent-color:#00e87a;flex-shrink:0}
-.role-opt-text{font-size:10px;color:#8aafc8;line-height:1.6;letter-spacing:.3px}
+.role-opt.sel-active{border-color:#00e87a;background:rgba(0,232,122,.06)}
+.role-opt.sel-observer{border-color:#3d9eff;background:rgba(61,158,255,.05)}
+.role-opt input[type=radio]{margin-top:3px;accent-color:#00e87a;flex-shrink:0}
+.role-opt-text{font-size:10px;color:#7a9ab8;line-height:1.6}
 .role-opt-text strong{display:block;font-size:11px;color:#dde4ee;margin-bottom:2px;font-weight:400}
 
+/* TECH CHECKBOX */
+.tech-block{display:flex;align-items:flex-start;gap:10px;padding:14px;border:1px solid #1e3050;border-radius:2px;cursor:pointer;transition:border-color .2s}
+.tech-block.checked{border-color:#5a7a98}
+.tech-block input[type=checkbox]{margin-top:3px;accent-color:#00e87a;flex-shrink:0;width:14px;height:14px}
+.tech-text{font-size:10px;color:#7a9ab8;line-height:1.7}
+
 /* SUBMIT */
-.submit-btn{background:none;border:1px solid #1e3050;color:#5a7a98;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;padding:13px;cursor:pointer;border-radius:2px;transition:all .2s;margin-top:4px}
+.submit-btn{width:100%;padding:14px;border:1px solid #1e3050;color:#5a7a98;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all .2s;margin-top:8px}
 .submit-btn:hover{border-color:#00e87a;color:#00e87a}
-.form-err{font-size:9px;color:#ff3c3c;text-align:center;min-height:14px;letter-spacing:1px}
+.form-err{font-size:9px;color:#ff3c3c;text-align:center;min-height:16px;letter-spacing:.5px;margin-top:6px}
 
-/* STEPS */
-.steps-section{width:100%;max-width:320px;margin-bottom:44px}
-.step{display:flex;align-items:flex-start;gap:16px;margin-bottom:28px;text-align:left;opacity:0;animation:fadeup .5s ease forwards}
-.step:nth-child(1){animation-delay:.1s}
-.step:nth-child(2){animation-delay:.25s}
-.step:nth-child(3){animation-delay:.4s}
-.step:nth-child(4){animation-delay:.5s}
-.step:nth-child(5){animation-delay:.6s}
-.step-num{font-size:9px;color:#3a5068;min-width:20px;margin-top:2px;letter-spacing:1px}
-.step-action{font-size:12px;color:#dde4ee;margin-bottom:4px;line-height:1.5}
-.step-detail{font-size:9px;color:#7a9ab8;letter-spacing:.5px;line-height:1.7}
-.step-alt{font-size:8px;color:#3a5068;letter-spacing:.5px;line-height:1.6;margin-top:4px;padding-left:8px;border-left:1px solid #1e3050}
+/* CONFIRMATION */
+.confirm-wrap{width:100%;max-width:300px;text-align:center}
+.confirm-mark{font-size:48px;color:#00e87a;margin-bottom:20px}
+.confirm-title{font-size:9px;letter-spacing:3px;color:#5a7a98;text-transform:uppercase;margin-bottom:20px}
+.confirm-msg{font-size:12px;color:#dde4ee;line-height:2;margin-bottom:36px}
+.confirm-msg em{color:#00e87a;font-style:normal}
+.confirm-sub{font-size:9px;color:#5a7a98;letter-spacing:1px;line-height:1.8;margin-bottom:32px}
 
-/* OPEN BUTTON */
-.open-btn{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;padding:14px 32px;border:1px solid #00e87a;color:#00e87a;background:rgba(0,232,122,.07);border-radius:2px;cursor:pointer;text-decoration:none;margin-bottom:44px;transition:background .2s}
-.open-btn:active{background:rgba(0,232,122,.18)}
-.install-btn{display:none;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;padding:14px 32px;border:1px solid #00e87a;color:#00e87a;background:rgba(0,232,122,.07);border-radius:2px;cursor:pointer;margin-bottom:16px;width:100%;max-width:280px}
+/* INSTALL STEPS */
+.steps-wrap{width:100%;max-width:300px}
+.step{display:flex;align-items:flex-start;gap:14px;margin-bottom:26px;opacity:0;animation:fadeup .5s ease forwards}
+.step:nth-child(1){animation-delay:.05s}
+.step:nth-child(2){animation-delay:.15s}
+.step:nth-child(3){animation-delay:.25s}
+.step:nth-child(4){animation-delay:.35s}
+.step:nth-child(5){animation-delay:.45s}
+.step-num{font-size:9px;color:#3a5068;min-width:18px;margin-top:2px}
+.step-action{font-size:12px;color:#dde4ee;margin-bottom:3px;line-height:1.5}
+.step-detail{font-size:9px;color:#7a9ab8;line-height:1.7}
+.step-alt{font-size:8px;color:#3a5068;line-height:1.7;margin-top:5px;padding-left:8px;border-left:1px solid #1e3050}
+
+.install-btn{display:none;width:100%;max-width:260px;padding:14px;border:1px solid #00e87a;color:#00e87a;background:rgba(0,232,122,.07);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;border-radius:2px;margin-bottom:20px}
 .install-btn:active{background:rgba(0,232,122,.18)}
 
-/* DIVIDER */
-.divider{width:40px;height:1px;background:#1e3050;margin:0 auto 40px}
+.divider{width:40px;height:1px;background:#1e3050;margin:0 auto 32px}
+.footer{font-size:7px;letter-spacing:3px;color:#1e3050;text-transform:uppercase;line-height:2;text-align:center}
 
-/* FOOTER */
-.footer{font-size:7px;letter-spacing:3px;color:#2a4060;text-transform:uppercase;line-height:2}
+@keyframes fadeup{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
 
-/* ALREADY INSTALLED */
-.already-msg{font-size:9px;letter-spacing:2px;color:#3a5068;text-transform:uppercase;margin-bottom:40px;display:none}
-
-@keyframes fadeup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-
+/* Already installed */
+.already-installed{display:none;font-size:9px;letter-spacing:2px;color:#3a5068;text-transform:uppercase;text-align:center;margin-bottom:32px}
 @media(display-mode:standalone){
-  .form-section{display:none!important}
-  .steps-section{display:none!important}
-  .install-btn{display:none!important}
-  .already-msg{display:block!important}
+  #form-section{display:none!important}
+  #confirm-section{display:none!important}
+  #install-section{display:none!important}
+  .already-installed{display:block!important}
 }
 </style>
 </head>
 <body>
 <div class="page">
 
-  <div class="header-label">Welcome</div>
+  <div class="header-label">Registration</div>
   <div class="title">General<br/>Anesthesia</div>
 
-  <div class="already-msg">App installed. Tap below to open.</div>
+  <div class="already-installed">App installed — you're all set.</div>
 
-  <!-- REGISTRATION FORM -->
-  <div class="form-section" id="form-section">
-    <div class="intro">
-      To play along, you need a smartphone with WhatsApp installed. You also need to add the show's secure web app to your phone's home screen (which respects your privacy and cannot access your files). You'll be instructed on how to do this after completing the registration.
-    </div>
+  <!-- ── REGISTRATION FORM ── -->
+  <div style="font-size:11px;color:#7a9ab8;line-height:1.9;text-align:center;max-width:300px;margin-bottom:36px">
+    To play along, you need a smartphone with WhatsApp installed. You also need to add the show's secure web app to your phone's home screen (which respects your privacy and cannot access your files). You'll be instructed on how to do this after completing the registration.
+  </div>
 
-    <div class="form" id="reg-form">
-      <div class="form-label">Your name or nickname</div>
-      <input type="text" id="nickname-input" placeholder="How should we call you?" maxlength="40" autocomplete="off" spellcheck="false"/>
+  <div id="form-section">
+    <div class="form-wrap">
 
-      <div class="form-label" style="margin-top:8px">Access password</div>
-      <input type="password" id="password-input" placeholder="Password" maxlength="32" autocomplete="off"/>
+      <!-- Nickname -->
+      <div class="field-block">
+        <div class="field-label">Your name or nickname</div>
+        <input class="field-input" id="f-nickname" type="text" placeholder="Name" maxlength="40" autocomplete="off" spellcheck="false"/>
+      </div>
 
-      <div class="form-label" style="margin-top:12px">Your role preference</div>
-      <div class="role-q">Some stations include immersive, hands-on roles — for example, being the center of a simulated medical procedure. Would you be comfortable taking on an active role if needed?</div>
-      <div class="role-options">
-        <label class="role-opt" id="opt-active" onclick="selectRole('active')">
-          <input type="radio" name="role" value="active" id="radio-active"/>
-          <div class="role-opt-text">
-            <strong>Yes, I'm comfortable</strong>
-            I'm open to being an active participant or patient in an immersive scene.
-          </div>
-        </label>
-        <label class="role-opt" id="opt-observer" onclick="selectRole('observer')">
-          <input type="radio" name="role" value="observer" id="radio-observer"/>
-          <div class="role-opt-text">
-            <strong>No, I prefer to observe</strong>
-            I'd rather remain a pure observer throughout the show.
-          </div>
+      <!-- Password -->
+      <div class="field-block">
+        <div class="field-label">Access password you've received in the invitation</div>
+        <input class="field-input" id="f-password" type="password" placeholder="Password" maxlength="32" autocomplete="off"/>
+      </div>
+
+      <!-- Timeslot -->
+      <div class="field-block">
+        <div class="field-label">Choose your appointment time</div>
+        <div class="timeslot-grid">
+          <button class="timeslot-btn" onclick="selectTime('17:00')">17:00<br/><span style="font-size:8px;color:#3a5068">22.6.2026</span></button>
+          <button class="timeslot-btn" onclick="selectTime('17:15')">17:15<br/><span style="font-size:8px;color:#3a5068">22.6.2026</span></button>
+          <button class="timeslot-btn" onclick="selectTime('17:30')">17:30<br/><span style="font-size:8px;color:#3a5068">22.6.2026</span></button>
+          <button class="timeslot-btn" onclick="selectTime('17:45')">17:45<br/><span style="font-size:8px;color:#3a5068">22.6.2026</span></button>
+        </div>
+      </div>
+
+      <!-- Role preference -->
+      <div class="field-block">
+        <div class="field-label">Your role preference</div>
+        <div style="font-size:10px;color:#5a7a98;line-height:1.8;margin-bottom:10px">Some stations include immersive, hands-on roles — for example, being the center of a simulated medical procedure. Would you be comfortable taking on an active role if needed?</div>
+        <div class="role-options">
+          <label class="role-opt" id="opt-active" onclick="selectRole('active')">
+            <input type="radio" name="role" value="active"/>
+            <div class="role-opt-text">
+              <strong>Yes, I'm comfortable</strong>
+              I'm open to being an active participant or patient in an immersive scene.
+            </div>
+          </label>
+          <label class="role-opt" id="opt-observer" onclick="selectRole('observer')">
+            <input type="radio" name="role" value="observer"/>
+            <div class="role-opt-text">
+              <strong>No, I prefer to observe</strong>
+              I'd rather remain a pure observer throughout the show.
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Tech requirements -->
+      <div class="field-block">
+        <div class="field-label">Tech requirements</div>
+        <div style="font-size:10px;color:#7a9ab8;line-height:1.8;margin-bottom:10px">To play along, you need a smartphone with WhatsApp installed. You also need to add the show's secure web app to your phone's home screen (which respects your privacy and cannot access your files). You'll be instructed on how to do this after completing the registration.</div>
+        <label class="tech-block" id="tech-block" onclick="toggleTech()">
+          <input type="checkbox" id="tech-check"/>
+          <div class="tech-text">I understand.</div>
         </label>
       </div>
 
-      <button class="submit-btn" onclick="doRegister()">Register & Continue →</button>
+      <button class="submit-btn" onclick="doRegister()">Register →</button>
       <div class="form-err" id="form-err"></div>
     </div>
   </div>
 
-  <!-- INSTALL INSTRUCTIONS -->
-  <div id="install-section" style="display:none;width:100%;max-width:320px;flex-direction:column;align-items:center">
-    <div class="steps-section" id="steps-container"></div>
-    <div class="divider"></div>
+  <!-- ── CONFIRMATION ── -->
+  <div id="confirm-section" style="display:none">
+    <div class="confirm-wrap">
+      <div class="confirm-mark">✓</div>
+      <div class="confirm-title">Registration confirmed</div>
+      <div class="confirm-msg">
+        You successfully registered<br/>for General Anesthesia.<br/><br/>
+        Your appointment will take place at<br/>
+        <em id="confirm-time">17:00</em><br/>
+        on the 22nd of June 2026,<br/>
+        at Letzi MuST Studios.
+      </div>
+      <div class="confirm-sub">Now please add the app to your home screen<br/>using the instructions below.</div>
+    </div>
   </div>
 
-  <!-- ANDROID INSTALL BUTTON -->
-  <button class="install-btn" id="install-btn" onclick="doInstall()">Install App</button>
+  <!-- ── INSTALL INSTRUCTIONS ── -->
+  <div id="install-section" style="display:none;width:100%;max-width:300px;flex-direction:column;align-items:center">
+    <div class="steps-wrap" id="steps-container"></div>
+    <div class="divider"></div>
+    <button class="install-btn" id="install-btn" onclick="doInstall()">Install App</button>
+  </div>
 
-  <!-- OPEN BUTTON -->
-  <a class="open-btn" href="participant.html">Open App →</a>
-
-  <div class="footer">
+  <div class="footer" id="footer-text">
     tymoschodo.github.io/ga-flow<br/>
     Keep your screen unlocked during the performance
   </div>
@@ -157,66 +212,82 @@ firebase.initializeApp({
   messagingSenderId:"839292271507",
   appId:"1:839292271507:web:42a6028e0ff992afb50666"
 });
-const preregDb = firebase.database();
+const db = firebase.database();
 
 const PASSWORD = 'cerebrum';
 const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 const isAndroid = /android/i.test(navigator.userAgent);
-const isStandalone = window.navigator.standalone === true ||
-                     window.matchMedia('(display-mode: standalone)').matches;
+const isStandalone = window.navigator.standalone===true || window.matchMedia('(display-mode:standalone)').matches;
 
 let deferredPrompt = null;
 let selectedRole = null;
+let selectedTime = null;
+let techChecked = false;
 
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredPrompt = e;
-});
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; });
 
-function selectRole(role){
-  selectedRole = role;
-  document.getElementById('radio-'+role).checked = true;
-  document.getElementById('opt-active').className = 'role-opt' + (role==='active'?' selected-active':'');
-  document.getElementById('opt-observer').className = 'role-opt' + (role==='observer'?' selected-observer':'');
+function selectTime(t){
+  selectedTime = t;
+  document.querySelectorAll('.timeslot-btn').forEach(b=>{
+    b.classList.toggle('selected', b.textContent.trim().startsWith(t));
+  });
+}
+
+function selectRole(r){
+  selectedRole = r;
+  document.querySelector('input[value="'+r+'"]').checked = true;
+  document.getElementById('opt-active').className = 'role-opt'+(r==='active'?' sel-active':'');
+  document.getElementById('opt-observer').className = 'role-opt'+(r==='observer'?' sel-observer':'');
+}
+
+function toggleTech(){
+  techChecked = !techChecked;
+  document.getElementById('tech-check').checked = techChecked;
+  document.getElementById('tech-block').classList.toggle('checked', techChecked);
 }
 
 function doRegister(){
-  const nickname = document.getElementById('nickname-input').value.trim();
-  const password = document.getElementById('password-input').value.trim();
+  const nickname = document.getElementById('f-nickname').value.trim();
+  const password = document.getElementById('f-password').value.trim();
   const errEl = document.getElementById('form-err');
 
   if(!nickname){ errEl.textContent = 'Please enter your name or nickname.'; return; }
   if(password.toLowerCase() !== PASSWORD){ errEl.textContent = 'Incorrect password.'; return; }
+  if(!selectedTime){ errEl.textContent = 'Please choose your appointment time.'; return; }
   if(!selectedRole){ errEl.textContent = 'Please select your role preference.'; return; }
+  if(!techChecked){ errEl.textContent = 'Please confirm the tech requirements.'; return; }
 
   errEl.textContent = '';
 
   // Save to Firebase
-  const key = nickname.toLowerCase().replace(/[^a-z0-9]/g,'_').substring(0,32) + '_' + Date.now();
-  preregDb.ref('/preregistered/' + key).set({
-    nickname: nickname,
-    rolePreference: selectedRole,
-    registeredAt: Date.now(),
-    userAgent: navigator.userAgent.substring(0,120),
-    platform: isIOS?'ios':isAndroid?'android':'desktop',
+  const key = nickname.toLowerCase().replace(/[^a-z0-9]/g,'_').substring(0,32)+'_'+Date.now();
+  db.ref('/preregistered/'+key).set({
+    nickname, rolePreference:selectedRole, timeslot:selectedTime,
+    registeredAt:Date.now(),
+    platform:isIOS?'ios':isAndroid?'android':'desktop',
+    userAgent:navigator.userAgent.substring(0,120),
   }).catch(()=>{});
 
-  // Hide form, show install instructions
+  // Show confirmation
   document.getElementById('form-section').style.display = 'none';
-  const installSection = document.getElementById('install-section');
-  installSection.style.display = 'flex';
-  buildSteps();
+  document.getElementById('confirm-time').textContent = selectedTime;
+  document.getElementById('confirm-section').style.display = 'block';
 
-  // Show Android install button if available
-  if(isAndroid && deferredPrompt){
-    document.getElementById('install-btn').style.display = 'block';
-  }
+  // Show install after short delay
+  setTimeout(()=>{
+    const inst = document.getElementById('install-section');
+    inst.style.display = 'flex';
+    buildSteps();
+    if((isAndroid) && deferredPrompt){
+      document.getElementById('install-btn').style.display = 'block';
+    }
+  }, 600);
 }
 
 function doInstall(){
-  if(!deferredPrompt){ return; }
+  if(!deferredPrompt) return;
   deferredPrompt.prompt();
-  deferredPrompt.userChoice.then(()=>{ deferredPrompt = null; });
+  deferredPrompt.userChoice.then(()=>{ deferredPrompt=null; });
 }
 
 function buildSteps(){
@@ -225,55 +296,20 @@ function buildSteps(){
   let steps = [];
 
   if(isIOS){
-    steps = [
-      {
-        num:'01',
-        action:'Tap the Share button',
-        detail:'The square icon with an arrow — at the bottom of Safari.',
-      },
-      {
-        num:'02',
-        action:'Tap "Add to Home Screen"',
-        detail:'Scroll down in the share sheet until you see it.',
-      },
-      {
-        num:'03',
-        action:'Tap "Add"',
-        detail:'The General Anesthesia icon will appear on your home screen.',
-      },
-      {
-        num:'04',
-        action:'You\'re all set',
-        detail:'During the performance you\'ll be asked to open the app from your home screen and enter the code you will receive upon reception. We\'ll see you soon.',
-      }
+    steps=[
+      {num:'01',action:'Tap the Share button',detail:'The square icon with an arrow — at the bottom of your browser.',alt:'Safari: tap the share icon at the bottom\nChrome: tap the share icon at the bottom'},
+      {num:'02',action:'Tap "Add to Home Screen"',detail:'You may need to tap "View more" first to see this option.'},
+      {num:'03',action:'Tap "Add"',detail:'The General Anesthesia icon will appear on your home screen.'},
+      {num:'04',action:"You're all set",detail:"During the performance you'll be asked to open the app from your home screen and enter the code you will receive upon reception. We'll see you soon."},
     ];
   } else if(isAndroid){
-    steps = [
-      {
-        num:'01',
-        action:'Tap "Install App" below',
-        detail:'Or open your browser menu and tap "Add to Home Screen".',
-        alt:'Chrome: tap ⋮ → Add to Home Screen\nSamsung Browser: tap ⋮ → Add page to → Home screen\nFirefox: tap ⋮ → Install\nOpera: tap ··· → Home screen',
-      },
-      {
-        num:'02',
-        action:'Tap "Install" when prompted',
-        detail:'The app icon will appear on your home screen.',
-      },
-      {
-        num:'03',
-        action:'You\'re all set',
-        detail:'During the performance you\'ll be asked to open the app from your home screen and enter the code you will receive upon reception. We\'ll see you soon.',
-      }
+    steps=[
+      {num:'01',action:'Tap "Install App" below',detail:'Or open your browser menu and tap "Add to Home Screen".',alt:'Chrome: tap ⋮ → Add to Home Screen\nSamsung Browser: tap ⋮ → Add page to → Home screen\nFirefox: tap ⋮ → Install\nOpera: tap ··· → Home screen'},
+      {num:'02',action:'Tap "Install" when prompted',detail:'The app icon will appear on your home screen.'},
+      {num:'03',action:"You're all set",detail:"During the performance you'll be asked to open the app from your home screen and enter the code you will receive upon reception. We'll see you soon."},
     ];
   } else {
-    steps = [
-      {
-        num:'01',
-        action:'Open this page on your phone',
-        detail:'Use the QR code you received to open this page on your smartphone.',
-      }
-    ];
+    steps=[{num:'01',action:'Open this page on your phone',detail:'Use the QR code you received to open this page on your smartphone.'}];
   }
 
   container.innerHTML = steps.map(s=>`
@@ -288,21 +324,12 @@ function buildSteps(){
   `).join('');
 }
 
-// Handle Enter key
-document.addEventListener('DOMContentLoaded', ()=>{
-  ['nickname-input','password-input'].forEach(id=>{
-    document.getElementById(id)?.addEventListener('keydown', e=>{ if(e.key==='Enter') doRegister(); });
-  });
+// Enter key support
+['f-nickname','f-password'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('keydown',e=>{if(e.key==='Enter')doRegister();});
 });
 
-// If already standalone — skip everything
-if(isStandalone){
-  document.getElementById('form-section').style.display = 'none';
-}
-
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').catch(()=>{});
-}
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
 </script>
 </body>
 </html>
