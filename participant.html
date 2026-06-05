@@ -37,7 +37,16 @@ html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',mon
 .wa-btn-secondary:active{background:rgba(61,158,255,.08)}
 .wa-step{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:2px;color:#3a5068;text-transform:uppercase;margin-bottom:20px;text-align:center}
 
-/* role question moved to registration form */
+/* ROLE QUESTION */
+#screen-role{padding:40px 32px}
+#screen-role .q-title{font-size:9px;letter-spacing:3px;color:#5a7a98;text-transform:uppercase;margin-bottom:32px;text-align:center}
+#screen-role .q-text{font-size:13px;color:#dde4ee;line-height:1.9;text-align:center;margin-bottom:40px;max-width:320px}
+#screen-role .q-options{display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px}
+.role-btn{padding:16px 20px;border-radius:3px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;text-align:left;line-height:1.6;transition:all .2s;border:1px solid}
+.role-btn-active{color:#00e87a;border-color:#00e87a;background:rgba(0,232,122,.07)}
+.role-btn-active:hover{background:rgba(0,232,122,.14)}
+.role-btn-observer{color:#7a9ab8;border-color:#2a4060;background:rgba(61,158,255,.04)}
+.role-btn-observer:hover{background:rgba(61,158,255,.1)}
 
 /* MAIN */
 #screen-main{justify-content:space-between;padding:52px 32px 44px}
@@ -82,15 +91,31 @@ html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',mon
 
 <!-- WHATSAPP SETUP -->
 <div class="screen hidden" id="screen-whatsapp">
-  <div class="wa-title">⚕️ Step 1 of 2</div>
-  <div class="wa-subtitle">Connect via WhatsApp to receive instructions during the performance.</div>
+  <div class="wa-title">⚕️ Connect via WhatsApp</div>
+  <div class="wa-subtitle">1. Scan QR or tap below → send <strong style="color:#dde4ee">join certain-clean</strong><br/><br/>2. After connecting, send anything — e.g. say <strong style="color:#dde4ee">Hi</strong><br/><br/>3. You'll receive further instructions via WhatsApp.</div>
+
+  <div id="wa-id-display" style="font-size:36px;letter-spacing:8px;color:#00e87a;font-family:'IBM Plex Mono',monospace;font-weight:300;margin:16px 0 8px;text-align:center"></div>
+  <div style="font-size:8px;letter-spacing:2px;color:#3a5068;text-transform:uppercase;margin-bottom:24px;text-align:center">your participant ID</div>
+
   <div id="wa-qr"></div>
-  <div class="wa-step">Scan QR or tap button below</div>
+  <div class="wa-step" style="margin-top:12px">Scan QR or tap button below</div>
   <a id="wa-link" class="wa-btn wa-btn-primary" href="#" target="_blank">Open WhatsApp →</a>
-  <button class="wa-btn wa-btn-secondary" onclick="proceedToApp()">Already connected · Continue →</button>
+  <button class="wa-btn wa-btn-secondary" onclick="proceedToApp()">Skip · Continue in app →</button>
 </div>
 
-<!-- role question moved to registration form -->
+<!-- ROLE QUESTION -->
+<div class="screen hidden" id="screen-role">
+  <div class="q-title">Before you begin</div>
+  <div class="q-text">Some stations at this clinic include immersive, hands-on roles — for example, being the center of a simulated medical procedure.<br><br>Would you be comfortable taking on an active, immersive role if needed?</div>
+  <div class="q-options">
+    <button class="role-btn role-btn-active" onclick="setRole('active')">
+      Yes — I'm comfortable being an active participant or patient.
+    </button>
+    <button class="role-btn role-btn-observer" onclick="setRole('observer')">
+      No — I prefer to remain a pure observer.
+    </button>
+  </div>
+</div>
 
 <!-- MAIN -->
 <div class="screen hidden" id="screen-main">
@@ -188,6 +213,7 @@ function doLogin(){
 }
 
 function showWhatsAppScreen(id){
+  document.getElementById('wa-id-display').textContent = id;
   const TWILIO_NUMBER = '14155238886';
   const JOIN_CODE = 'join certain-clean';
   const msg = encodeURIComponent(JOIN_CODE);
@@ -233,7 +259,18 @@ function proceedToApp(){
   db.ref('/participants/'+pid).on('value', s=>{ if(s.exists()) render(s.val()); });
 }
 
-// setRole moved to registration form
+function setRole(role){
+  if(!pid) return;
+  db.ref('/participants/'+pid).update({
+    rolePreference: role,
+    status: 'waiting_s3',
+    currentStation: 's3',
+  });
+  db.ref('/occupancy/s3').transaction(v=>(v||0)+1);
+  generateQR(pid);
+  show('main');
+  db.ref('/participants/'+pid).on('value', s=>{ if(s.exists()) render(s.val()); });
+}
 
 function generateQR(id){
   if(qrGenerated) return;

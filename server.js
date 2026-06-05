@@ -74,12 +74,6 @@ app.post('/webhook', async (req, res) => {
   const linkedId = phoneSnap.val();
 
   if (!linkedId) {
-    // Handle sandbox join code
-    if (body.startsWith('JOIN ')) {
-      await sendWA(from, `⚕️ Welcome to General Anesthesia ⚕️\n\nYou are now connected. Please type in your ID code.`);
-      res.status(200).send('<Response></Response>'); return;
-    }
-
     // Not linked yet — expect participant ID
     const allowedSnap = await db.ref('/allowedIds/' + body).once('value');
     if (!allowedSnap.exists()) {
@@ -112,7 +106,7 @@ app.post('/webhook', async (req, res) => {
         whatsappLinked: true,
       });
       await db.ref('/occupancy/s3').transaction(v => (v||0)+1);
-      await sendWA(from, `Thank you. Please take a seat and wait for your appointment.`);
+      await sendWA(from, `Thank you. Please take a seat and wait for your appointment. You'll receive the notifications via WhatsApp.`);
     }
 
     res.set('Content-Type', 'text/xml').send('<Response></Response>'); return;
