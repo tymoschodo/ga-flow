@@ -117,44 +117,6 @@ app.post('/webhook', async (req, res) => {
   const pData = pSnap.val();
   if (!pData) { res.set('Content-Type', 'text/xml').send('<Response></Response>'); return; }
 
-  // If participant exists but no role yet — re-ask
-  if (!pData.rolePreference && pData.status !== 'role_pending_wa' && pData.status !== 'role_pending') {
-    await db.ref('/participants/' + linkedId).update({ status: 'role_pending_wa' });
-    await sendWA(from,
-      `⚕️ Welcome to General Anesthesia ⚕️\n\nSome stations include immersive, hands-on roles — for example, being the center of a simulated medical procedure. 💉\n\nWould you be comfortable taking on an active, immersive role if needed?\n\n🩻 Reply:\n*YES* — I'm comfortable being an active participant 🫀\n*NO* — I prefer to remain a pure observer 🩺`
-    );
-    res.status(200).send('<Response></Response>');
-    return;
-  }
-
-  // Role preference answer
-  if (pData.status === 'role_pending_wa' || pData.status === 'role_pending') {
-    if (body === 'YES' || body === 'Y') {
-      await db.ref('/participants/' + linkedId).update({
-        rolePreference: 'active',
-        status: 'waiting_s3',
-        currentStation: 's3',
-      });
-      await db.ref('/occupancy/s3').transaction(v => (v || 0) + 1);
-      await sendWA(from,
-        `Thank you. You have been registered as willing to take an active role.\n\nPlease take a seat and wait for your appointment. You will receive further instructions here.`
-      );
-    } else if (body === 'NO' || body === 'N') {
-      await db.ref('/participants/' + linkedId).update({
-        rolePreference: 'observer',
-        status: 'waiting_s3',
-        currentStation: 's3',
-      });
-      await db.ref('/occupancy/s3').transaction(v => (v || 0) + 1);
-      await sendWA(from,
-        `Thank you. You have been registered as a pure observer.\n\nPlease take a seat and wait for your appointment. You will receive further instructions here.`
-      );
-    } else {
-      await sendWA(from, `Please reply *YES* or *NO*.`);
-    }
-    res.set('Content-Type', 'text/xml').send('<Response></Response>'); return;
-  }
-
   // General replies — acknowledge
   await sendWA(from, `Stand by. Instructions will follow.`);
   res.set('Content-Type', 'text/xml').send('<Response></Response>');
