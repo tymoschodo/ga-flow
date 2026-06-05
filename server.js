@@ -74,10 +74,17 @@ app.post('/webhook', async (req, res) => {
   const linkedId = phoneSnap.val();
 
   if (!linkedId) {
-    // Not linked yet — expect participant ID
+    // Not linked yet — check if greeting or ID
+    const looksLikeId = /^[A-Z0-9]{4,10}$/.test(body);
+    if (!looksLikeId) {
+      await sendWA(from, `⚕️ Welcome to General Anesthesia ⚕️\n\nYou are now connected. Please type in your ID code.`);
+      res.set('Content-Type', 'text/xml').send('<Response></Response>'); return;
+    }
+
+    // Looks like an ID — try to match
     const allowedSnap = await db.ref('/allowedIds/' + body).once('value');
     if (!allowedSnap.exists()) {
-      await sendWA(from, `ID not recognised. Please send your participant ID exactly as given by staff.`);
+      await sendWA(from, `ID not recognised. Please check your code and try again.`);
       res.set('Content-Type', 'text/xml').send('<Response></Response>'); return;
     }
 
