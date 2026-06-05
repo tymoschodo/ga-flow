@@ -88,10 +88,16 @@ app.post('/webhook', async (req, res) => {
       res.set('Content-Type', 'text/xml').send('<Response></Response>'); return;
     }
 
-    // Check if ID already linked to another phone
+    // Check participant exists (must be registered by nurse first)
     const pSnap = await db.ref('/participants/' + body).once('value');
     const pData = pSnap.val();
-    if (pData?.phone && pData.phone !== from) {
+    if (!pData) {
+      await sendWA(from, `Your ID is valid but you have not been checked in yet. Please see the nurse at reception first.`);
+      res.set('Content-Type', 'text/xml').send('<Response></Response>'); return;
+    }
+
+    // Check if ID already linked to another phone
+    if (pData.phone && pData.phone !== from) {
       await sendWA(from, `This ID is already registered on another device. Please ask staff for help.`);
       res.set('Content-Type', 'text/xml').send('<Response></Response>'); return;
     }
@@ -99,22 +105,7 @@ app.post('/webhook', async (req, res) => {
     // Link phone to ID
     await db.ref('/phoneIndex/' + from.replace('+', '')).set(body);
     await db.ref('/participants/' + body).update({ phone: from, whatsappLinked: true });
-
-    // Check if role already answered
-    if (pData?.rolePreference) {
-      await sendWA(from, `Welcome back, ${body}. You are connected. Stand by for instructions.`);
-    } else {
-      // Ask role preference
-      // Role preference already collected at registration (index.html)
-      // Just confirm and set to waiting
-      await db.ref('/participants/' + body).update({
-        status: 'waiting_s3',
-        currentStation: 's3',
-        whatsappLinked: true,
-      });
-      await db.ref('/occupancy/s3').transaction(v => (v||0)+1);
-      await sendWA(from, `Thank you. Please take a seat and wait for your appointment. You'll receive the notifications via WhatsApp.`);
-    }
+    await sendWA(from, `Thank you. Please take a seat and wait for your appointment. You'll receive the notifications via WhatsApp.`);
 
     res.set('Content-Type', 'text/xml').send('<Response></Response>'); return;
   }
