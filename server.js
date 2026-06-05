@@ -76,7 +76,7 @@ app.post('/webhook', async (req, res) => {
   if (!linkedId) {
     // Handle sandbox join code
     if (body.startsWith('JOIN ')) {
-      await sendWA(from, `⚕️ Welcome to General Anesthesia.\n\nPlease send your *participant ID* — the code from your card.`);
+      await sendWA(from, `⚕️ Welcome to General Anesthesia ⚕️\n\nYou are now connected. Please type in your ID code.`);
       res.status(200).send('<Response></Response>'); return;
     }
 
@@ -112,9 +112,7 @@ app.post('/webhook', async (req, res) => {
         whatsappLinked: true,
       });
       await db.ref('/occupancy/s3').transaction(v => (v||0)+1);
-      await sendWA(from,
-        `⚕️ Welcome to General Anesthesia ⚕️\n\nYou are now connected. Please take a seat and wait for your appointment.\n\nYou will receive further instructions here during the show. 🩺`
-      );
+      await sendWA(from, `Thank you. Please take a seat and wait for your appointment.`);
     }
 
     res.set('Content-Type', 'text/xml').send('<Response></Response>'); return;
