@@ -4,8 +4,14 @@ const admin = require('firebase-admin');
 const bodyParser = require('body-parser');
 
 const app = express();
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+// Debug middleware — log every incoming request
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} | body keys: ${Object.keys(req.body||{}).join(',') || 'empty'}`);
+  next();
+});
 
 // ── CREDENTIALS (fill these in before deploying) ──────────────
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID || 'YOUR_SID';
