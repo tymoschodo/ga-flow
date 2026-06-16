@@ -1087,16 +1087,32 @@ function StationInterface({toast}){
         )}
 
         {/* Participant list with roles */}
-        <div className="sif-plist">
+        <div style={{width:'100%',maxWidth:300,marginBottom:16}}>
+          {arrivedHere.length===0&&<div className="dim" style={{textAlign:'center',padding:'8px 0'}}>No participants yet — scan QR codes</div>}
           {arrivedHere.map(p=>(
-            <div key={p.id} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
-              <span className={`badge ${p.status==='active'?'bg-g':p.checkedIn?'bg-a':'bg-x'}`}>{p.id}</span>
-              {p.assignedRole&&<span style={{fontFamily:'var(--mono)',fontSize:7,color:p.assignedRole==='active'?'var(--green)':'var(--t2)',letterSpacing:1}}>{p.assignedRole}</span>}
-              {!p.checkedIn&&<span style={{fontFamily:'var(--mono)',fontSize:7,color:'var(--t3)'}}>not scanned</span>}
-              <span className={`role-pill ${p.rolePreference==='active'?'role-active':'role-observer'}`} style={{fontSize:7}}>{p.rolePreference==='active'?'willing':'observer'}</span>
+            <div key={p.id} style={{
+              display:'flex',alignItems:'center',justifyContent:'space-between',
+              padding:'10px 14px',marginBottom:6,borderRadius:3,
+              background: p.checkedIn?'rgba(0,232,122,.06)':'var(--bg3)',
+              border:`1px solid ${p.checkedIn?'rgba(0,232,122,.25)':'var(--line)'}`,
+            }}>
+              <div style={{display:'flex',alignItems:'center',gap:10}}>
+                <div style={{
+                  width:8,height:8,borderRadius:'50%',flexShrink:0,
+                  background:p.checkedIn?'var(--green)':'var(--t3)',
+                }}/>
+                <span style={{fontFamily:'var(--mono)',fontSize:12,color:'var(--text)',letterSpacing:2}}>{p.id}</span>
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:8}}>
+                {p.assignedRole
+                  ? <span style={{fontFamily:'var(--mono)',fontSize:9,color:p.assignedRole==='active'?'var(--green)':'var(--blue)',letterSpacing:1,textTransform:'uppercase'}}>{p.assignedRole==='active'?'● ACTIVE':'○ OBSERVER'}</span>
+                  : <span className={`role-pill ${p.rolePreference==='active'?'role-active':'role-observer'}`}>
+                      {p.rolePreference==='active'?'● willing active':'○ observer'}
+                    </span>
+                }
+              </div>
             </div>
           ))}
-          {arrivedHere.length===0&&<span className="dim">no participants</span>}
         </div>
 
         {/* SCAN AREA */}
