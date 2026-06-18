@@ -813,6 +813,44 @@ function ConfigTab({config,toast}){
 
   const updateTransit=(key,val)=>setCfg(prev=>({...prev,transit:{...prev.transit,[key]:+val}}));
 
+  const addStation=()=>{
+    const ids=Object.keys(cfg.stations||{});
+    const nums=ids.map(id=>parseInt(id.replace('s',''))).filter(n=>!isNaN(n));
+    const nextNum=nums.length>0?Math.max(...nums)+1:8;
+    const newId='s'+nextNum;
+    setCfg(prev=>({...prev,stations:{...prev.stations,[newId]:{
+      id:newId,num:nextNum,name:`Station ${String(nextNum).padStart(2,'0')}`,
+      activeRoles:1,observerRoles:3,dur:240,enabled:true,
+      messageActive:'Please take your position.',
+      messageObserver:'Please observe quietly.',
+    }}}));
+  };
+
+  const removeStation=(id)=>{
+    if(!window.confirm(`Remove station ${id}?`)) return;
+    setCfg(prev=>{
+      const newStations={...prev.stations};
+      delete newStations[id];
+      // Also remove from all paths
+      const newPaths={};
+      for(const [k,p] of Object.entries(prev.paths||{})){
+        newPaths[k]={...p,seq:p.seq.filter(s=>s!==id)};
+      }
+      return{...prev,stations:newStations,paths:newPaths};
+    });
+  };
+
+  const addPath=()=>{
+    const keys=Object.keys(cfg.paths||{});
+    const nextLabel=String.fromCharCode(65+keys.length);
+    setCfg(prev=>({...prev,paths:{...prev.paths,[nextLabel]:{label:nextLabel,seq:['s3','s7']}}}));
+  };
+
+  const removePath=(key)=>{
+    if(!window.confirm(`Remove path ${key}?`)) return;
+    setCfg(prev=>{const p={...prev.paths};delete p[key];return{...prev,paths:p};});
+  };
+
   const updatePathSeq=(pathKey,idx,val)=>{
     setCfg(prev=>{const newSeq=[...prev.paths[pathKey].seq];newSeq[idx]=val;return{...prev,paths:{...prev.paths,[pathKey]:{...prev.paths[pathKey],seq:newSeq}}};});
   };
@@ -836,33 +874,51 @@ function ConfigTab({config,toast}){
 
       {/* STATIONS */}
       <div className="panel mb14">
-        <div className="ph"><span className="pt">Stations</span><span className="dim">type = solo if 1 active+0 observer, group otherwise</span></div>
+        <div className="ph"><span className="pt">Stations</span><span className="dim">type = solo if 1 active+0 observer, group otherwise</span><button className="btn bg sm" onClick={addStation}>+ Add Station</button></div>
         <div className="pb">
           {Object.values(stations).map(s=>{
             const cap=stCap(s);
             const type=cap===1?'solo':s.isWaiting?'waiting':s.isFinal?'finale':'group';
             return(
               <div key={s.id} className="panel mb8" style={{background:'var(--bg3)'}}>
-                <div style={{display:'grid',gridTemplateColumns:'auto 1fr repeat(4,70px) auto',gap:8,alignItems:'center',padding:'8px 12px'}}>
-                  <input type="checkbox" checked={s.enabled!==false} onChange={e=>updateStation(s.id,'enabled',e.target.checked)} style={{width:14,height:14}}/>
-                  <input value={s.name} onChange={e=>updateStation(s.id,'name',e.target.value)} style={{fontSize:10,padding:'4px 7px'}} disabled={s.isWaiting||s.isFinal}/>
+                <div style={{display:'grid',gridTemplateColumns:'16px 1fr 65px 65px 65px 65px auto auto',gap:6,alignItems:'center',padding:'8px 12px'}}>
+                  {/* Enable toggle */}
+                  <input type="checkbox" checked={s.enabled!==false} onChange={e=>updateStation(s.id,'enabled',e.target.checked)} style={{width:14,height:14,cursor:'pointer'}}/>
+                  {/* Name */}
+                  <input value={s.name} onChange={e=>updateStation(s.id,'name',e.target.value)} style={{fontSize:10,padding:'4px 7px'}}/>
+                  {/* Active roles */}
                   <div style={{textAlign:'center'}}>
-                    <div className="dim" style={{marginBottom:2}}>Active</div>
-                    <input type="number" value={s.activeRoles||0} min={0} max={30} onChange={e=>updateStation(s.id,'activeRoles',e.target.value)} style={{fontSize:10,padding:'4px 6px',textAlign:'center'}} disabled={s.isWaiting||s.isFinal}/>
+                    <div className="dim" style={{marginBottom:2,fontSize:7}}>Active</div>
+                    <input type="number" value={s.activeRoles||0} min={0} max={30}
+                      onChange={e=>updateStation(s.id,'activeRoles',e.target.value)}
+                      style={{fontSize:10,padding:'4px 4px',textAlign:'center',width:'100%'}}
+                      disabled={s.isWaiting||s.isFinal}/>
                   </div>
+                  {/* Observer roles */}
                   <div style={{textAlign:'center'}}>
-                    <div className="dim" style={{marginBottom:2}}>Observers</div>
-                    <input type="number" value={s.observerRoles||0} min={0} max={30} onChange={e=>updateStation(s.id,'observerRoles',e.target.value)} style={{fontSize:10,padding:'4px 6px',textAlign:'center'}} disabled={s.isWaiting||s.isFinal}/>
+                    <div className="dim" style={{marginBottom:2,fontSize:7}}>Observers</div>
+                    <input type="number" value={s.observerRoles||0} min={0} max={30}
+                      onChange={e=>updateStation(s.id,'observerRoles',e.target.value)}
+                      style={{fontSize:10,padding:'4px 4px',textAlign:'center',width:'100%'}}
+                      disabled={s.isWaiting||s.isFinal}/>
                   </div>
+                  {/* Duration */}
                   <div style={{textAlign:'center'}}>
-                    <div className="dim" style={{marginBottom:2}}>Dur (s)</div>
-                    <input type="number" value={s.dur} min={0} onChange={e=>updateStation(s.id,'dur',e.target.value)} style={{fontSize:10,padding:'4px 6px',textAlign:'center'}} disabled={s.isWaiting||s.isFinal}/>
+                    <div className="dim" style={{marginBottom:2,fontSize:7}}>Dur (s)</div>
+                    <input type="number" value={s.dur||0} min={0}
+                      onChange={e=>updateStation(s.id,'dur',e.target.value)}
+                      style={{fontSize:10,padding:'4px 4px',textAlign:'center',width:'100%'}}
+                      disabled={s.isWaiting||s.isFinal}/>
                   </div>
+                  {/* Auto type badge */}
                   <div style={{textAlign:'center'}}>
-                    <div className="dim" style={{marginBottom:2}}>Cap/Type</div>
-                    <span className={`badge ${type==='solo'?'bg-b':type==='group'?'bg-p':type==='waiting'?'bg-a':'bg-x'}`}>{cap} · {type}</span>
+                    <div className="dim" style={{marginBottom:2,fontSize:7}}>Cap · Type</div>
+                    <span className={`badge ${type==='solo'?'bg-b':type==='group'?'bg-p':type==='waiting'?'bg-a':'bg-x'}`} style={{fontSize:7}}>{cap}·{type}</span>
                   </div>
-                  <span className={`badge ${s.enabled!==false?'bg-g':'bg-x'}`}>{s.enabled!==false?'on':'off'}</span>
+                  {/* Enabled badge */}
+                  <span className={`badge ${s.enabled!==false?'bg-g':'bg-x'}`} style={{fontSize:7}}>{s.enabled!==false?'on':'off'}</span>
+                  {/* Remove */}
+                  {!s.isWaiting&&!s.isFinal&&<button onClick={()=>removeStation(s.id)} style={{background:'none',border:'none',color:'var(--red)',cursor:'pointer',fontSize:14,padding:'0 2px'}} title="Remove">✕</button>}
                 </div>
                 {!s.isWaiting&&!s.isFinal&&s.activeRoles>0&&(
                   <div style={{padding:'0 12px 10px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
@@ -884,7 +940,7 @@ function ConfigTab({config,toast}){
 
       {/* PATHS */}
       <div className="panel mb14">
-        <div className="ph"><span className="pt">Paths</span></div>
+        <div className="ph"><span className="pt">Paths</span><button className="btn bg sm" onClick={addPath}>+ Add Path</button></div>
         <div className="pb">
           {Object.entries(paths).map(([pathKey,path])=>(
             <div key={pathKey} className="mb16">
@@ -892,6 +948,7 @@ function ConfigTab({config,toast}){
                 <span className={`badge ${pathKey==='A'?'bg-b':pathKey==='B'?'bg-p':'bg-a'}`}>{pathKey}</span>
                 <span className="dim">base delay: {fmtSec(delays[pathKey]||0)}</span>
                 <button className="btn bg sm" onClick={()=>addPathStep(pathKey)}>+ Step</button>
+                <button className="btn br sm" onClick={()=>removePath(pathKey)}>✕ Path</button>
               </div>
               <div style={{display:'flex',flexDirection:'column',gap:4}}>
                 {path.seq.map((sid,i)=>(
