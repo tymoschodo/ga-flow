@@ -892,7 +892,7 @@ function ConfigTab({config,toast}){
                     <input type="number" value={s.activeRoles||0} min={0} max={30}
                       onChange={e=>updateStation(s.id,'activeRoles',e.target.value)}
                       style={{fontSize:10,padding:'4px 4px',textAlign:'center',width:'100%'}}
-                      disabled={s.isWaiting||s.isFinal}/>
+                      />
                   </div>
                   {/* Observer roles */}
                   <div style={{textAlign:'center'}}>
@@ -900,7 +900,7 @@ function ConfigTab({config,toast}){
                     <input type="number" value={s.observerRoles||0} min={0} max={30}
                       onChange={e=>updateStation(s.id,'observerRoles',e.target.value)}
                       style={{fontSize:10,padding:'4px 4px',textAlign:'center',width:'100%'}}
-                      disabled={s.isWaiting||s.isFinal}/>
+                      />
                   </div>
                   {/* Duration */}
                   <div style={{textAlign:'center'}}>
@@ -908,7 +908,7 @@ function ConfigTab({config,toast}){
                     <input type="number" value={s.dur||0} min={0}
                       onChange={e=>updateStation(s.id,'dur',e.target.value)}
                       style={{fontSize:10,padding:'4px 4px',textAlign:'center',width:'100%'}}
-                      disabled={s.isWaiting||s.isFinal}/>
+                      />
                   </div>
                   {/* Auto type badge */}
                   <div style={{textAlign:'center'}}>
