@@ -7,6 +7,7 @@
 <script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
 <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
 <script src="https://unpkg.com/@babel/standalone@7.23.0/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -973,7 +974,10 @@ function StationInterface({toast}){
   const stationList=Object.values(stations).filter(s=>s.enabled!==false&&!s.isWaiting);
 
   const handleScan=async(raw)=>{
-    const id=raw.trim().toUpperCase().split(/[^A-Z0-9]/)[0];
+    let id=raw.trim().toUpperCase();
+    const urlMatch=id.match(/[?&]ID=([A-Z0-9]+)/);
+    if(urlMatch) id=urlMatch[1];
+    else id=id.split(/[^A-Z0-9]/)[0];
     if(!id||!sel) return;
     setScanVal('');
     const p=participants[id];
@@ -988,22 +992,53 @@ function StationInterface({toast}){
     setTimeout(()=>setScanFeedback(''),2500);
   };
 
+  const canvasRef=useRef(null);
+
   const startScan=async()=>{
     setScanning(true);
     try{
       const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
       streamRef.current=stream;
-      if(videoRef.current){videoRef.current.srcObject=stream;videoRef.current.play();videoRef.current.style.display='block';}
+      if(videoRef.current){
+        videoRef.current.srcObject=stream;
+        videoRef.current.play();
+        videoRef.current.style.display='block';
+      }
       if('BarcodeDetector' in window){
+        // Native API — Android Chrome
         const det=new BarcodeDetector({formats:['qr_code']});
         const scan=async()=>{
           if(!streamRef.current) return;
-          try{const bc=await det.detect(videoRef.current);if(bc.length>0){await handleScan(bc[0].rawValue);stopScan();}else requestAnimationFrame(scan);}
-          catch{requestAnimationFrame(scan);}
+          try{
+            const bc=await det.detect(videoRef.current);
+            if(bc.length>0){await handleScan(bc[0].rawValue);stopScan();}
+            else requestAnimationFrame(scan);
+          }catch{requestAnimationFrame(scan);}
         };
         requestAnimationFrame(scan);
+      } else if(typeof jsQR !== 'undefined'){
+        // jsQR fallback — all browsers
+        const canvas=document.createElement('canvas');
+        const ctx=canvas.getContext('2d');
+        const scan=()=>{
+          if(!streamRef.current||!videoRef.current) return;
+          const v=videoRef.current;
+          if(v.readyState===v.HAVE_ENOUGH_DATA){
+            canvas.width=v.videoWidth;
+            canvas.height=v.videoHeight;
+            ctx.drawImage(v,0,0,canvas.width,canvas.height);
+            const imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
+            const code=jsQR(imageData.data,imageData.width,imageData.height);
+            if(code){handleScan(code.data);stopScan();return;}
+          }
+          requestAnimationFrame(scan);
+        };
+        requestAnimationFrame(scan);
+      } else {
+        toast.add('QR scanning not supported — type ID manually','warn');
+        stopScan();
       }
-    }catch{toast.add('Camera denied','err');setScanning(false);}
+    }catch{toast.add('Camera denied — type ID manually','err');setScanning(false);}
   };
 
   const stopScan=()=>{
