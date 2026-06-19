@@ -105,7 +105,7 @@ app.post('/webhook', async (req, res) => {
     // Link phone to ID
     await db.ref('/phoneIndex/' + from.replace('+', '')).set(body);
     await db.ref('/participants/' + body).update({ phone: from, whatsappLinked: true });
-    await sendWA(from, `Thank you. Please take a seat and wait for your appointment. You'll be receiving notifications via WhatsApp. You can also decide to receive them in the GA phone app`);
+    await sendWA(from, `Thank you. Please take a seat and wait for your appointment. You'll receive the notifications via WhatsApp.`);
 
     res.set('Content-Type', 'text/xml').send('<Response></Response>'); return;
   }
