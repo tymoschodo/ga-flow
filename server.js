@@ -305,7 +305,6 @@ async function dispatchGroupToStation(group, toSid, cfg) {
     updates[`/participants/${p.id}/assignedRole`]     = null;
     updates[`/participants/${p.id}/holdUntil`]        = null;
     updates[`/participants/${p.id}/waitingEnteredAt`] = null;
-    updates[`/participants/${p.id}/instruction`]      = `Proceed to ${toSt.name}.\nPlease keep your GA app open for scanning.`;
     updates[`/participants/${p.id}/instructionAt`]    = t;
 
     dispatched.push(p);
@@ -314,6 +313,14 @@ async function dispatchGroupToStation(group, toSid, cfg) {
   if (!dispatched.length) {
     console.log('[dispatch] No participants eligible after re-verification, aborting');
     return;
+  }
+
+  // Build instruction — include group note when more than one person is dispatched
+  const groupNote = dispatched.length > 1
+    ? '\nYour appointment coincides with other patients — this is expected.'
+    : '';
+  for (const p of dispatched) {
+    updates[`/participants/${p.id}/instruction`] = `Proceed to ${toSt.name}.${groupNote}\nPlease keep your GA app open for scanning.`;
   }
 
   // Reset the roster-change timestamp so remaining waiting participants'
