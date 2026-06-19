@@ -1042,11 +1042,22 @@ function StationInterface({toast}){
     setScanVal('');
     const p=participants[id];
     if(!p){setScanFeedback(`${id} — not found`);setTimeout(()=>setScanFeedback(''),2500);return;}
-    if(p.currentStation!==sel&&p.status!=='arrived'){
+    const headingHere=p.status==='transit'&&p.transitTo===sel;
+    if(p.currentStation!==sel&&p.status!=='arrived'&&!headingHere){
       setScanFeedback(`${id} — not at this station`);setTimeout(()=>setScanFeedback(''),2500);return;}
     if(p.checkedIn){setScanFeedback(`${id} — already checked in`);setTimeout(()=>setScanFeedback(''),2500);return;}
-    // Mark as checked in (arrived + checkedIn=true)
-    await dbUpdate('/participants/'+id,{checkedIn:true});
+    // If still in transit, complete the arrival immediately on scan
+    if(headingHere){
+      await dbUpdate('/participants/'+id,{
+        status:'arrived',currentStation:sel,
+        transitTo:null,transitStartedAt:null,transitDur:null,
+        instruction:`You have arrived at ${station?.name||sel}.\nWait for check-in.`,
+        instructionAt:now(),checkedIn:true,
+      });
+      await dbTx('/occupancy/'+sel,v=>(v||0)+1);
+    } else {
+      await dbUpdate('/participants/'+id,{checkedIn:true});
+    }
     setScanFeedback(`${id} ✓ checked in`);
     if('vibrate' in navigator) navigator.vibrate([60,30,60]);
     setTimeout(()=>setScanFeedback(''),2500);
@@ -1248,7 +1259,7 @@ function StationInterface({toast}){
 function GuestsTab({toast}){
   const preregistered = useFirebase('/preregistered')||{};
   const participants = useFirebase('/participants')||{};
-  const guestList = Object.values(preregistered).sort((a,b)=>a.registeredAt-b.registeredAt);
+  const guestList = Object.values(preregistered).sort((a,b)=>{const ta=a.timeslot||'99:99',tb=b.timeslot||'99:99';return ta!==tb?ta.localeCompare(tb):(a.registeredAt||0)-(b.registeredAt||0);});
   const totalParticipants = Object.keys(participants).length;
 
   const clearGuests = async()=>{
