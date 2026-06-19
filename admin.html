@@ -697,6 +697,7 @@ function ParticipantsTab({pList,finishAndAdvance,doRemove,config,toast}){
                     <div className="row" style={{gap:4}}>
                       {p.status==='waiting_s3'&&<button className="btn bg sm" onClick={()=>{dispatchFromS3(p.id,false,config);toast.add(p.id,'ok');}}>Send</button>}
                       {p.status==='s3_holding'&&<button className="btn ba sm" onClick={()=>{dispatchFromS3(p.id,true,config);toast.add(p.id+' forced','ok');}}>Force</button>}
+                      {p.status==='arrived'&&<button className="btn bg sm" onClick={()=>{advanceParticipant(p.id,config);toast.add(p.id+' →','ok');}}>Skip →</button>}
                       {p.status==='active'&&<button className="btn ba sm" onClick={()=>finishAndAdvance(p.id)}>End →</button>}
                       <button className="btn br sm" onClick={()=>doRemove(p.id)}>✕</button>
                     </div>
