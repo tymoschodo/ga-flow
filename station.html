@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GA — Station</title>
+<script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.23.0/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050709;--bg2:#0e1116;--bg3:#141820;
+  --line:#1e2840;--line2:#2a3850;
+  --green:#00e87a;--gbg:rgba(0,232,122,.07);--gbr:rgba(0,232,122,.18);
+  --red:#ff3c3c;--rbg:rgba(255,60,60,.07);
+  --amber:#ffaa00;--abg:rgba(255,170,0,.07);
+  --blue:#3d9eff;
+  --text:#dde4ee;--t2:#7a8fa8;--t3:#4a6a88;
+  --mono:'IBM Plex Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:2px}
+input,select{background:var(--bg3);border:1px solid var(--line);border-radius:2px;color:var(--text);font-family:var(--mono);font-size:11px;padding:7px 10px;width:100%;outline:none;transition:border-color .15s}
+input:focus{border-color:var(--green)}
+
+/* ── STATION INTERFACE ── */
+.sif{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;position:relative}
+.sif-nav{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #0e1822}
+.sif-nav-btn{background:none;border:1px solid #1e3050;color:#5a7a98;font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:6px 14px;cursor:pointer;border-radius:2px;transition:all .15s}
+.sif-nav-btn:hover{border-color:var(--t2);color:var(--t2)}.sif-nav-btn:disabled{opacity:.3;cursor:not-allowed}
+.sif-station-name{font-family:var(--mono);font-size:9px;letter-spacing:3px;color:#5a7a98;text-transform:uppercase}
+.sif-hd{font-family:var(--mono);font-size:8px;letter-spacing:3px;color:#3a5068;text-transform:uppercase;margin-bottom:20px;text-align:center}
+.sif-name{font-family:var(--mono);font-size:26px;font-weight:300;color:#dde4ee;margin-bottom:3px;text-align:center}
+.sif-cap{font-family:var(--mono);font-size:9px;color:#3a5068;text-align:center;letter-spacing:2px;margin-bottom:6px}
+.sif-occ{font-family:var(--mono);font-size:44px;font-weight:300;text-align:center;margin:10px 0 3px}
+.sif-timer{font-family:var(--mono);font-size:13px;text-align:center;letter-spacing:3px;margin-bottom:4px}
+.sif-tbar{width:200px;height:2px;background:#0e1822;border-radius:1px;overflow:hidden;margin:0 auto 14px}
+.sif-tfill{height:100%;border-radius:1px;transition:width .5s linear}
+.sif-act{width:100%;max-width:300px;display:flex;flex-direction:column;gap:10px}
+.sif-btn{width:100%;padding:14px;font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;border-radius:3px;cursor:pointer;border:1px solid;transition:all .15s}
+.sif-begin{color:#00e87a;border-color:#00e87a;background:rgba(0,232,122,.08)}.sif-begin:hover{background:rgba(0,232,122,.16)}.sif-begin:disabled{opacity:.3;cursor:not-allowed}
+.sif-fn{color:#ff3c3c;border-color:#ff3c3c;background:rgba(255,60,60,.06)}.sif-fn:hover{background:rgba(255,60,60,.14)}
+.sif-scan-area{width:100%;max-width:280px;margin-bottom:12px}
+.sif-scan-label{font-family:var(--mono);font-size:8px;letter-spacing:2px;color:#3a5068;text-transform:uppercase;margin-bottom:6px;text-align:center}
+.scan-feedback{font-family:var(--mono);font-size:10px;text-align:center;margin:6px 0;min-height:16px;letter-spacing:2px}
+.role-pill{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:2px}
+.role-active{color:#00e87a;background:rgba(0,232,122,.1);border:1px solid rgba(0,232,122,.2)}
+.role-observer{color:#7a9ab8;background:rgba(61,158,255,.07);border:1px solid rgba(61,158,255,.15)}
+
+/* ── STATION SELECT GRID ── */
+.station-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:9px;max-width:520px;width:100%}
+.station-btn{background:var(--bg3);border-radius:4px;padding:16px;cursor:pointer;font-family:var(--mono);color:var(--text);text-align:center;transition:all .15s}
+
+/* ── TOASTS ── */
+.toasts{position:fixed;top:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:10px 16px;background:var(--bg2);border:1px solid var(--line2);border-radius:3px;color:var(--t2);animation:tIn .25s ease}
+.toast.ok{border-left:2px solid var(--green)}.toast.warn{border-left:2px solid var(--amber)}.toast.err{border-left:2px solid var(--red)}
+@keyframes tIn{from{transform:translateX(24px);opacity:0}to{transform:translateX(0);opacity:1}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useCallback,useRef} = React;
+
+/* ── FIREBASE ── */
+firebase.initializeApp({
+  apiKey:"AIzaSyBzo6qVmam_u-H2asl3GIPRU_JBbMCPN9g",
+  authDomain:"general-anesthesia-cf511.firebaseapp.com",
+  databaseURL:"https://general-anesthesia-cf511-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"general-anesthesia-cf511",
+  storageBucket:"general-anesthesia-cf511.firebasestorage.app",
+  messagingSenderId:"839292271507",
+  appId:"1:839292271507:web:42a6028e0ff992afb50666"
+});
+const fdb=firebase.database();
+const dbSet=(p,v)=>fdb.ref(p).set(v);
+const dbUpdate=(p,v)=>fdb.ref(p).update(v);
+const dbGet=p=>fdb.ref(p).once('value').then(s=>s.val());
+const dbTx=(p,fn)=>fdb.ref(p).transaction(fn);
+
+/* ── HELPERS ── */
+const now=()=>Date.now();
+const fmtSec=s=>{s=Math.max(0,Math.round(s));return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;};
+const getT=(transit,a,b)=>transit?.[`${a}-${b}`]||transit?.[`${b}-${a}`]||90;
+const stCap=s=>(s.activeRoles||0)+(s.observerRoles||0);
+
+/* ── DEFAULT CONFIG (fallback only) ── */
+const DEFAULT_CONFIG={
+  stations:{
+    s2:{id:'s2',num:2,name:'Station 02',activeRoles:1,observerRoles:2,dur:480,enabled:true},
+    s3:{id:'s3',num:3,name:'Waiting Room',activeRoles:0,observerRoles:10,dur:0,enabled:true,isWaiting:true},
+  },
+  paths:{A:{label:'A',seq:['s3','s2']}},
+  transit:{'s3-s2':80},
+  maxParticipants:30,
+  regInterval:60,
+  doneMessage:'Your experience has come to an end. If you wish, you can return to the waiting area and have a drink.',
+};
+
+/* ── ROLE ASSIGNMENT ── */
+function assignRoles(participants,station){
+  const activeNeeded=station.activeRoles||0;
+  const willing=participants.filter(p=>p.rolePreference==='active');
+  const shuffled=[...willing].sort(()=>Math.random()-.5);
+  const activeAssigned=shuffled.slice(0,activeNeeded).map(p=>p.id);
+  const shortfall=activeNeeded-activeAssigned.length;
+  const result={};
+  participants.forEach(p=>{result[p.id]='observer';});
+  activeAssigned.forEach(id=>{result[id]='active';});
+  return{roles:result,shortfall};
+}
+
+/* ── HANDLE ARRIVAL ── */
+async function handleArrival(pid,sid,config=null){
+  const cfg=config||(await dbGet('/config'))||DEFAULT_CONFIG;
+  const p=await dbGet('/participants/'+pid);
+  if(!p||p.transitTo!==sid) return;
+  const s=cfg.stations[sid];if(!s) return;
+  await dbUpdate('/participants/'+pid,{
+    status:'arrived',currentStation:sid,transitTo:null,transitStartedAt:null,transitDur:null,
+    instruction:`You have arrived at ${s.name}.\nWait for check-in.`,instructionAt:now(),checkedIn:false,
+  });
+  await dbTx('/occupancy/'+sid,v=>(v||0)+1);
+}
+
+/* ── CALC BASE DELAYS ── */
+function calcBaseDelays(config){
+  const{stations,transit,paths}=config;
+  function pathTime(k){
+    const seq=paths[k].seq;let t=0;
+    for(let i=1;i<seq.length;i++){
+      const sid=seq[i];const s=stations[sid];
+      if(!s||!s.enabled) continue;
+      t+=getT(transit,seq[i-1],sid);
+      if(!s.isFinal&&!s.isWaiting) t+=s.dur||0;
+    }
+    return t;
+  }
+  const keys=Object.keys(paths);
+  const times={};keys.forEach(k=>times[k]=pathTime(k));
+  const maxT=Math.max(...Object.values(times));
+  const delays={};keys.forEach(k=>delays[k]=Math.round(maxT-times[k]));
+  return delays;
+}
+
+/* ── DISPATCH FROM S3 ── */
+async function dispatchFromS3(pid,forced=false,config=null){
+  const cfg=config||(await dbGet('/config'))||DEFAULT_CONFIG;
+  const p=await dbGet('/participants/'+pid);
+  if(!p||(p.status!=='waiting_s3'&&p.status!=='s3_holding')) return;
+  const path=cfg.paths[p.path];if(!path) return;
+  const nextIdx=(p.stepIndex??0)+1;
+  if(nextIdx>=path.seq.length) return;
+  let targetIdx=nextIdx;
+  while(targetIdx<path.seq.length){
+    const sid=path.seq[targetIdx];
+    const s=cfg.stations[sid];
+    if(s&&s.enabled) break;
+    targetIdx++;
+  }
+  if(targetIdx>=path.seq.length) return;
+  const fromSid='s3',toSid=path.seq[targetIdx];
+  const toSt=cfg.stations[toSid];if(!toSt) return;
+  const tDur=getT(cfg.transit,fromSid,toSid);
+  const delays=calcBaseDelays(cfg);
+  if(!forced){
+    const earliest=(p.registeredAt||now())+(delays[p.path]||0)*1000;
+    if(now()<earliest){
+      await dbUpdate('/participants/'+pid,{status:'s3_holding',holdUntil:earliest});
+      setTimeout(()=>dispatchFromS3(pid,true,cfg),earliest-now()+100);
+      return;
+    }
+  }
+  if(!toSt.isWaiting&&(toSt.activeRoles||0)+(toSt.observerRoles||0)===1){
+    const soloFreeAt=(await dbGet('/soloFreeAt/'+toSid))||0;
+    const arrivalTime=now()+tDur*1000;
+    if(!forced&&arrivalTime<soloFreeAt-5000){
+      await dbUpdate('/participants/'+pid,{status:'s3_holding',holdUntil:soloFreeAt-tDur*1000});
+      setTimeout(()=>dispatchFromS3(pid,true,cfg),Math.max(100,soloFreeAt-tDur*1000-now()));
+      return;
+    }
+    await dbSet('/soloFreeAt/'+toSid,arrivalTime+toSt.dur*1000);
+  }
+  await dbTx('/occupancy/s3',v=>Math.max(0,(v||0)-1));
+  await dbUpdate('/participants/'+pid,{
+    status:'transit',transitStartedAt:now(),transitDur:tDur,transitTo:toSid,
+    transitToName:toSt.name,
+    stepIndex:targetIdx,currentStation:null,stationStartedAt:null,
+    holdUntil:null,instruction:`Proceed to ${toSt.name}.\nPlease keep your GA app open for scanning.`,instructionAt:now(),checkedIn:false,assignedRole:null,
+  });
+  setTimeout(()=>handleArrival(pid,toSid,cfg),tDur*1000+200);
+}
+
+/* ── ADVANCE PARTICIPANT ── */
+async function advanceParticipant(pid,cfg=null){
+  const config=cfg||(await dbGet('/config'))||DEFAULT_CONFIG;
+  const p=await dbGet('/participants/'+pid);
+  if(!p||p.status==='done') return;
+  const path=config.paths[p.path];if(!path) return;
+  const curIdx=p.stepIndex??0,nextIdx=curIdx+1;
+  if(p.currentStation) await dbTx('/occupancy/'+p.currentStation,v=>Math.max(0,(v||0)-1));
+  if(nextIdx>=path.seq.length){
+    await dbUpdate('/participants/'+pid,{status:'done',currentStation:null,stationStartedAt:null,
+      instruction:config.doneMessage||DEFAULT_CONFIG.doneMessage,instructionAt:now()});
+    return;
+  }
+  let targetIdx=nextIdx;
+  while(targetIdx<path.seq.length){
+    const sid=path.seq[targetIdx];
+    const s=config.stations[sid];
+    if(s&&s.enabled) break;
+    targetIdx++;
+  }
+  if(targetIdx>=path.seq.length){
+    await dbUpdate('/participants/'+pid,{status:'done',currentStation:null,stationStartedAt:null,
+      instruction:config.doneMessage||DEFAULT_CONFIG.doneMessage,instructionAt:now()});
+    return;
+  }
+  const fromSid=path.seq[curIdx],toSid=path.seq[targetIdx];
+  const toSt=config.stations[toSid];if(!toSt) return;
+  const tDur=getT(config.transit,fromSid,toSid);
+  if(!toSt.isWaiting&&stCap(toSt)===1){
+    const soloFreeAt=(await dbGet('/soloFreeAt/'+toSid))||0;
+    const arrivalTime=now()+tDur*1000;
+    if(arrivalTime<soloFreeAt-5000){
+      const s3occ=(await dbGet('/occupancy/s3'))||0;
+      if(s3occ<stCap(config.stations.s3||{observerRoles:10})){
+        await dbTx('/occupancy/s3',v=>(v||0)+1);
+        await dbUpdate('/participants/'+pid,{status:'s3_holding',currentStation:'s3',stationStartedAt:null,
+          stepIndex:curIdx,holdUntil:soloFreeAt-tDur*1000,transitTo:null,
+          instruction:'Please take a seat and wait for your appointment.',instructionAt:now()});
+        setTimeout(()=>dispatchFromS3(pid,true,config),Math.max(100,soloFreeAt-tDur*1000-now()));
+        return;
+      }
+    }
+    await dbSet('/soloFreeAt/'+toSid,now()+tDur*1000+toSt.dur*1000);
+  }
+  await dbUpdate('/participants/'+pid,{
+    status:'transit',transitStartedAt:now(),transitDur:tDur,transitTo:toSid,
+    transitToName:toSt.name,
+    stepIndex:targetIdx,currentStation:null,stationStartedAt:null,
+    instruction:`Proceed to ${toSt.name}.\nPlease keep your GA app open for scanning.`,instructionAt:now(),checkedIn:false,assignedRole:null,
+  });
+  setTimeout(()=>handleArrival(pid,toSid,config),tDur*1000+200);
+}
+
+/* ── BEGIN SESSION ── */
+async function beginSession(sid,checkedInPids,config=null){
+  const cfg=config||(await dbGet('/config'))||DEFAULT_CONFIG;
+  const s=cfg.stations[sid];if(!s) return;
+  const pData=[];
+  for(const pid of checkedInPids){
+    const p=await dbGet('/participants/'+pid);
+    if(p) pData.push(p);
+  }
+  const{roles,shortfall}=assignRoles(pData,s);
+  const t=now();
+  for(const p of pData){
+    const role=roles[p.id]||'observer';
+    const msg=role==='active'?s.messageActive:s.messageObserver;
+    await dbUpdate('/participants/'+p.id,{
+      status:'active',stationStartedAt:t,assignedRole:role,
+      instruction:msg||`Session started at ${s.name}.`,instructionAt:t,
+    });
+  }
+  if(s.dur>0){
+    setTimeout(async()=>{
+      for(const p of pData) await fdb.ref('/notifications/'+now()+Math.random()).set({pid:p.id,msg:`${p.id} — time up · ${s.name}`,time:now(),type:'warn'});
+    },s.dur*1000);
+  }
+}
+
+/* ── HOOKS ── */
+function useFirebase(path){
+  const[val,setVal]=useState(null);
+  useEffect(()=>{const ref=fdb.ref(path);ref.on('value',s=>setVal(s.val()));return()=>ref.off();},[path]);
+  return val;
+}
+function useToast(){
+  const[ts,setTs]=useState([]);
+  const add=useCallback((msg,type='ok')=>{const id=now();setTs(t=>[...t,{id,msg,type}]);setTimeout(()=>setTs(t=>t.filter(x=>x.id!==id)),3400);},[]);
+  return{ts,add};
+}
+
+/* ── APP ── */
+function App(){
+  const toast=useToast();
+  const[sel,setSel]=useState(null);
+  const[selIdx,setSelIdx]=useState(0);
+  const[scanVal,setScanVal]=useState('');
+  const[scanFeedback,setScanFeedback]=useState('');
+  const[scanning,setScanning]=useState(false);
+  const[,setT]=useState(0);
+  useEffect(()=>{const t=setInterval(()=>setT(x=>x+1),1000);return()=>clearInterval(t);},[]);
+
+  const videoRef=useRef(null);
+  const streamRef=useRef(null);
+  const occupancy=useFirebase('/occupancy')||{};
+  const participants=useFirebase('/participants')||{};
+  const config=useFirebase('/config')||DEFAULT_CONFIG;
+  const pList=Object.values(participants);
+  const stations=config.stations||DEFAULT_CONFIG.stations;
+  const stationList=Object.values(stations)
+    .filter(s=>s.enabled!==false&&!s.isWaiting)
+    .sort((a,b)=>(a.num||0)-(b.num||0));
+
+  const station=sel?stations[sel]:null;
+
+  const handleScan=async(raw)=>{
+    let id=raw.trim().toUpperCase();
+    const urlMatch=id.match(/[?&]ID=([A-Z0-9]+)/);
+    if(urlMatch) id=urlMatch[1];
+    else id=id.split(/[^A-Z0-9]/)[0];
+    if(!id||!sel) return;
+    setScanVal('');
+    const p=participants[id];
+    if(!p){setScanFeedback(`${id} — not found`);setTimeout(()=>setScanFeedback(''),2500);return;}
+    const headingHere=p.status==='transit'&&p.transitTo===sel;
+    if(p.currentStation!==sel&&p.status!=='arrived'&&!headingHere){
+      setScanFeedback(`${id} — not at this station`);setTimeout(()=>setScanFeedback(''),2500);return;}
+    if(p.checkedIn){setScanFeedback(`${id} — already checked in`);setTimeout(()=>setScanFeedback(''),2500);return;}
+    if(headingHere){
+      await dbUpdate('/participants/'+id,{
+        status:'arrived',currentStation:sel,
+        transitTo:null,transitStartedAt:null,transitDur:null,
+        instruction:`You have arrived at ${station?.name||sel}.\nWait for check-in.`,
+        instructionAt:now(),checkedIn:true,
+      });
+      await dbTx('/occupancy/'+sel,v=>(v||0)+1);
+    } else {
+      await dbUpdate('/participants/'+id,{checkedIn:true});
+    }
+    setScanFeedback(`${id} ✓ checked in`);
+    if('vibrate' in navigator) navigator.vibrate([60,30,60]);
+    setTimeout(()=>setScanFeedback(''),2500);
+  };
+
+  const startScan=async()=>{
+    setScanning(true);
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+      streamRef.current=stream;
+      if(videoRef.current){videoRef.current.srcObject=stream;videoRef.current.play();videoRef.current.style.display='block';}
+      if('BarcodeDetector' in window){
+        const det=new BarcodeDetector({formats:['qr_code']});
+        const scan=async()=>{
+          if(!streamRef.current) return;
+          try{const bc=await det.detect(videoRef.current);
+            if(bc.length>0){await handleScan(bc[0].rawValue);stopScan();}
+            else requestAnimationFrame(scan);
+          }catch{requestAnimationFrame(scan);}
+        };
+        requestAnimationFrame(scan);
+      } else if(typeof jsQR!=='undefined'){
+        const canvas=document.createElement('canvas');
+        const ctx=canvas.getContext('2d');
+        const scan=()=>{
+          if(!streamRef.current||!videoRef.current) return;
+          const v=videoRef.current;
+          if(v.readyState===v.HAVE_ENOUGH_DATA){
+            canvas.width=v.videoWidth;canvas.height=v.videoHeight;
+            ctx.drawImage(v,0,0,canvas.width,canvas.height);
+            const imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
+            const code=jsQR(imageData.data,imageData.width,imageData.height);
+            if(code){handleScan(code.data);stopScan();return;}
+          }
+          requestAnimationFrame(scan);
+        };
+        requestAnimationFrame(scan);
+      } else {
+        toast.add('QR scanning not supported — type ID manually','warn');
+        stopScan();
+      }
+    }catch{toast.add('Camera denied — type ID manually','err');setScanning(false);}
+  };
+
+  const stopScan=()=>{
+    setScanning(false);
+    if(streamRef.current){streamRef.current.getTracks().forEach(t=>t.stop());streamRef.current=null;}
+    if(videoRef.current){videoRef.current.style.display='none';}
+  };
+
+  useEffect(()=>()=>stopScan(),[]);
+
+  /* ── STATION SELECT ── */
+  if(!sel||!stationList.length){
+    return(
+      <div className="sif">
+        <div className="toasts">{toast.ts.map(t=><div key={t.id} className={`toast ${t.type}`}>{t.msg}</div>)}</div>
+        <div className="sif-hd">General Anesthesia · Station Interface</div>
+        <div className="station-grid">
+          {stationList.map((s,i)=>{
+            const occ=occupancy[s.id]||0;const cap=stCap(s);const full=occ>=cap;
+            return(
+              <button key={s.id} className="station-btn" onClick={()=>{setSel(s.id);setSelIdx(i);}}
+                style={{border:`1px solid ${full?'var(--red)':occ>0?'var(--green)':'var(--line)'}` }}>
+                <div style={{fontSize:8,color:'var(--t2)',marginBottom:5,letterSpacing:2,textTransform:'uppercase'}}>{s.name}</div>
+                <div style={{fontSize:24,color:full?'var(--red)':occ>0?'var(--green)':'var(--t3)',fontWeight:300}}>{occ}</div>
+                <div style={{fontSize:8,color:'var(--t3)'}}>/{cap}</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  const cap=stCap(station);
+  const occ=occupancy[sel]||0;
+  const full=occ>=cap;
+
+  const arrivedHere=pList.filter(p=>p.currentStation===sel&&(p.status==='arrived'||p.status==='active'));
+  const checkedInHere=arrivedHere.filter(p=>p.checkedIn);
+  const activePpl=arrivedHere.filter(p=>p.status==='active');
+  const sessionStarted=activePpl.length>0;
+
+  const elapsed=activePpl[0]?.stationStartedAt?Math.floor((now()-activePpl[0].stationStartedAt)/1000):0;
+  const pct=station.dur>0?Math.min(100,(elapsed/station.dur)*100):0;
+  const over=station.dur>0&&elapsed>station.dur;
+
+  const doBeginSession=async()=>{
+    if(checkedInHere.length===0){toast.add('No one checked in yet','err');return;}
+    await beginSession(sel,checkedInHere.map(p=>p.id),config);
+    toast.add(`Session started — ${checkedInHere.length} participants`,'ok');
+  };
+
+  const doEndSession=async()=>{
+    if(activePpl.length===0){toast.add('No active session','err');return;}
+    for(const p of activePpl) await advanceParticipant(p.id,config);
+    if('vibrate' in navigator) navigator.vibrate([200,100,200]);
+    toast.add(`Session ended — ${activePpl.length} advancing`,'ok');
+  };
+
+  return(
+    <div className="sif">
+      <div className="toasts">{toast.ts.map(t=><div key={t.id} className={`toast ${t.type}`}>{t.msg}</div>)}</div>
+
+      {/* NAV */}
+      <div className="sif-nav">
+        <button className="sif-nav-btn"
+          onClick={()=>{stopScan();const prev=stationList[selIdx-1];if(prev){setSel(prev.id);setSelIdx(selIdx-1);}}}
+          disabled={selIdx===0}>← Prev</button>
+        <span className="sif-station-name">{station.name}</span>
+        <button className="sif-nav-btn"
+          onClick={()=>{stopScan();const next=stationList[selIdx+1];if(next){setSel(next.id);setSelIdx(selIdx+1);}}}
+          disabled={selIdx===stationList.length-1}>Next →</button>
+      </div>
+
+      <div style={{marginTop:56,display:'flex',flexDirection:'column',alignItems:'center',width:'100%'}}>
+        <div className="sif-hd">Performer Interface</div>
+        <div className="sif-name">{station.name}</div>
+        <div className="sif-cap">
+          {station.activeRoles>0?`${station.activeRoles} active · ${station.observerRoles} observer`:`${cap} observer`}
+        </div>
+        <div className="sif-occ" style={{color:full?'var(--red)':occ>0?'var(--green)':'var(--t3)'}}>{occ}</div>
+
+        {/* Timer */}
+        {sessionStarted&&station.dur>0&&(
+          <>
+            <div className="sif-timer" style={{color:over?'var(--red)':pct>80?'var(--amber)':'var(--green)'}}>
+              {over?'+':''}{fmtSec(elapsed)} / {fmtSec(station.dur)}
+            </div>
+            <div className="sif-tbar">
+              <div className="sif-tfill" style={{width:pct+'%',background:over?'var(--red)':pct>80?'var(--amber)':'var(--green)'}}/>
+            </div>
+          </>
+        )}
+
+        {/* Participant list */}
+        <div style={{width:'100%',maxWidth:320,marginBottom:16}}>
+          {arrivedHere.length===0&&(
+            <div style={{textAlign:'center',padding:'8px 0',color:'var(--t3)',fontSize:9,letterSpacing:2}}>
+              No participants yet — scan QR codes
+            </div>
+          )}
+          {arrivedHere.map(p=>{
+            // Dot colour: green for active role, grey for observer/passive
+            const isActive=p.assignedRole==='active'||(p.assignedRole===null&&p.rolePreference==='active')||(!p.assignedRole&&p.rolePreference==='active');
+            const roleLabel=p.assignedRole
+              ? (p.assignedRole==='active'?'● ACTIVE':'○ OBSERVER')
+              : (p.rolePreference==='active'?'● active':'○ observer');
+            const roleColor=p.assignedRole
+              ? (p.assignedRole==='active'?'var(--green)':'var(--blue)')
+              : (p.rolePreference==='active'?'var(--green)':'var(--t3)');
+
+            return(
+              <div key={p.id} style={{
+                display:'flex',alignItems:'center',justifyContent:'space-between',
+                padding:'10px 14px',marginBottom:6,borderRadius:3,
+                background:p.checkedIn?'rgba(0,232,122,.06)':'var(--bg3)',
+                border:`1px solid ${p.checkedIn?'rgba(0,232,122,.25)':'var(--line)'}`,
+              }}>
+                {/* Left: dot + ID + nickname */}
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <div style={{
+                    width:8,height:8,borderRadius:'50%',flexShrink:0,
+                    background:isActive?'var(--green)':'var(--t3)',
+                  }}/>
+                  <span style={{fontFamily:'var(--mono)',fontSize:13,color:'var(--text)',letterSpacing:2}}>
+                    {p.id}
+                    {p.nickname&&<span style={{color:'var(--t3)',fontSize:10,letterSpacing:1,marginLeft:7}}>({p.nickname})</span>}
+                  </span>
+                </div>
+                {/* Right: role label */}
+                <span style={{fontFamily:'var(--mono)',fontSize:9,color:roleColor,letterSpacing:1,textTransform:'uppercase',flexShrink:0}}>
+                  {roleLabel}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Scan area */}
+        <div className="sif-scan-area">
+          <div className="sif-scan-label">Scan participant QR code</div>
+          <video ref={videoRef} style={{display:'none',width:'100%',borderRadius:4,border:'1px solid #0e1822'}} playsInline muted/>
+          {scanFeedback&&<div className="scan-feedback" style={{color:scanFeedback.includes('✓')?'var(--green)':'var(--red)'}}>{scanFeedback}</div>}
+          <div style={{display:'flex',gap:6,marginBottom:6}}>
+            {!scanning
+              ?<button className="sif-btn sif-begin" style={{padding:'10px',flex:1}} onClick={startScan}>📷 Scan QR</button>
+              :<button className="sif-btn" style={{padding:'10px',flex:1,color:'var(--amber)',borderColor:'var(--amber)',background:'var(--abg)'}} onClick={stopScan}>Stop</button>
+            }
+          </div>
+          <div style={{display:'flex',gap:6}}>
+            <input
+              style={{background:'#050709',border:'1px solid #0e1822',color:'#dde4ee',textAlign:'center',fontSize:12,letterSpacing:2,padding:'8px',fontFamily:'var(--mono)',borderRadius:2,flex:1}}
+              placeholder="or type ID" value={scanVal}
+              onChange={e=>setScanVal(e.target.value.toUpperCase())}
+              onKeyDown={e=>e.key==='Enter'&&handleScan(scanVal)}
+              autoComplete="off"/>
+            {scanVal&&<button className="sif-btn sif-begin" style={{padding:'8px 12px',width:'auto'}} onClick={()=>handleScan(scanVal)}>✓</button>}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="sif-act">
+          {!sessionStarted&&(
+            <button className="sif-btn sif-begin" onClick={doBeginSession} disabled={checkedInHere.length===0}>
+              ▶ Begin Session ({checkedInHere.length} checked in)
+            </button>
+          )}
+          {sessionStarted&&(
+            <button className="sif-btn sif-fn" onClick={doEndSession}>
+              ✕ End Session
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
