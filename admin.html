@@ -1244,15 +1244,16 @@ function StationInterface({toast}){
         </div>
 
         <div className="sif-act">
-          {!sessionStarted&&(
-            {inTransitHere.length>0&&(
+          {!sessionStarted&&inTransitHere.length>0&&(
               <div style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--amber)',letterSpacing:2,textAlign:'center',marginBottom:8}}>
                 ⟳ {inTransitHere.length} still arriving...
               </div>
             )}
-            <button className="sif-btn sif-begin" onClick={doBeginSession} disabled={checkedInHere.length===0||inTransitHere.length>0}>
-              ▶ Begin Session ({checkedInHere.length} checked in)
-            </button>
+            {!sessionStarted&&(
+              <button className="sif-btn sif-begin" onClick={doBeginSession} disabled={checkedInHere.length===0||inTransitHere.length>0}>
+                ▶ Begin Session ({checkedInHere.length} checked in)
+              </button>
+            )}
           )}
           {sessionStarted&&(
             <button className="sif-btn sif-fn" onClick={doEndSession}>
