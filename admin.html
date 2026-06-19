@@ -177,6 +177,7 @@ const DEFAULT_CONFIG = {
   },
   maxParticipants:30,
   regInterval:60,
+  doneMessage:'Your experience has come to an end. If you wish, you can return to the waiting area and have a drink.',
 };
 
 /* ── HELPERS ──────────────────────────────────────────────────── */
@@ -274,7 +275,7 @@ async function dispatchFromS3(pid,forced=false,config=null){
     status:'transit',transitStartedAt:now(),transitDur:tDur,transitTo:toSid,
     transitToName:toSt.name,
     stepIndex:targetIdx,currentStation:null,stationStartedAt:null,
-    holdUntil:null,instruction:`Proceed to ${toSt.name}.`,instructionAt:now(),checkedIn:false,assignedRole:null,
+    holdUntil:null,instruction:`Proceed to ${toSt.name}.\nPlease keep your GA app open for scanning.`,instructionAt:now(),checkedIn:false,assignedRole:null,
   });
   setTimeout(()=>handleArrival(pid,toSid,cfg),tDur*1000+200);
 }
@@ -300,7 +301,7 @@ async function advanceParticipant(pid,cfg=null){
   if(p.currentStation) await dbTx('/occupancy/'+p.currentStation,v=>Math.max(0,(v||0)-1));
   if(nextIdx>=path.seq.length){
     await dbUpdate('/participants/'+pid,{status:'done',currentStation:null,stationStartedAt:null,
-      instruction:'Your experience has concluded.',instructionAt:now()});
+      instruction:config.doneMessage||DEFAULT_CONFIG.doneMessage,instructionAt:now()});
     return;
   }
   // Find next enabled
@@ -313,7 +314,7 @@ async function advanceParticipant(pid,cfg=null){
   }
   if(targetIdx>=path.seq.length){
     await dbUpdate('/participants/'+pid,{status:'done',currentStation:null,stationStartedAt:null,
-      instruction:'Your experience has concluded.',instructionAt:now()});
+      instruction:config.doneMessage||DEFAULT_CONFIG.doneMessage,instructionAt:now()});
     return;
   }
   const fromSid=path.seq[curIdx],toSid=path.seq[targetIdx];
@@ -341,7 +342,7 @@ async function advanceParticipant(pid,cfg=null){
     status:'transit',transitStartedAt:now(),transitDur:tDur,transitTo:toSid,
     transitToName:toSt.name,
     stepIndex:targetIdx,currentStation:null,stationStartedAt:null,
-    instruction:`Proceed to ${toSt.name}.`,instructionAt:now(),checkedIn:false,assignedRole:null,
+    instruction:`Proceed to ${toSt.name}.\nPlease keep your GA app open for scanning.`,instructionAt:now(),checkedIn:false,assignedRole:null,
   });
   setTimeout(()=>handleArrival(pid,toSid,config),tDur*1000+200);
 }
@@ -1005,6 +1006,7 @@ function ConfigTab({config,toast}){
           <div className="g3">
             <div><label>Max participants</label><input type="number" value={cfg.maxParticipants||30} min={1} max={100} onChange={e=>setCfg(prev=>({...prev,maxParticipants:+e.target.value}))}/></div>
             <div><label>Avg. registration pace (s) — used for dispatch timing</label><input type="number" value={cfg.regInterval||60} min={10} onChange={e=>setCfg(prev=>({...prev,regInterval:+e.target.value}))}/></div>
+            <div style={{gridColumn:"1/-1"}}><label>End-of-experience message</label><textarea rows={2} value={cfg.doneMessage||DEFAULT_CONFIG.doneMessage} onChange={e=>setCfg(prev=>({...prev,doneMessage:e.target.value}))} style={{fontSize:11,padding:"5px 8px"}}/></div>
           </div>
         </div>
       </div>
@@ -1150,9 +1152,9 @@ function StationInterface({toast}){
 
   const doEndSession=async()=>{
     if(activePpl.length===0){toast.add('No active session','err');return;}
-    for(const p of activePpl) await addNotif(p.id,`${p.id} finished ${station.name}`,'warn');
+    for(const p of activePpl) await advanceParticipant(p.id,config);
     if('vibrate' in navigator) navigator.vibrate([200,100,200]);
-    toast.add('Admin notified','ok');
+    toast.add(`Session ended — ${activePpl.length} advancing`,'ok');
   };
 
   return(
