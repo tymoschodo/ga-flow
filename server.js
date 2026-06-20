@@ -14,6 +14,7 @@ app.use((req, res, next) => {
 });
 
 // ── CREDENTIALS ───────────────────────────────────────────────────────────────
+const GA_BASE_URL = 'https://tymoschodo.github.io/ga-flow';
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID || 'YOUR_SID';
 const TWILIO_AUTH_TOKEN  = process.env.TWILIO_AUTH_TOKEN  || 'YOUR_TOKEN';
 const TWILIO_WA_NUMBER   = process.env.TWILIO_WA_NUMBER   || 'whatsapp:+14155238886';
@@ -319,6 +320,10 @@ async function dispatchGroupToStation(group, toSid, cfg) {
   const groupNote = dispatched.length > 1
     ? '\nYour appointment coincides with other patients — this is expected.'
     : '';
+
+  // Check if this station has a video URL
+  const stationVideoUrl = toSt.videoUrl || null;
+
   for (const p of dispatched) {
     updates[`/participants/${p.id}/instruction`] = `Proceed to ${toSt.name}.${groupNote}\nPlease keep your GA app open for scanning.`;
   }
@@ -346,6 +351,26 @@ async function dispatchGroupToStation(group, toSid, cfg) {
 
   const ids = dispatched.map(p => p.id).join(', ');
   console.log(`[dispatch] [${ids}] → ${toSid} | transit ${tDur}s | arrival in ~${Math.round(arrivalDelayMs / 1000)}s`);
+
+  // Send video via WhatsApp if station has one
+  if (stationVideoUrl) {
+    for (const p of dispatched) {
+      const pData = (await db.ref('/participants/' + p.id).once('value')).val();
+      if (pData?.phone) {
+        try {
+          await client.messages.create({
+            from: TWILIO_WA_NUMBER,
+            to: `whatsapp:${pData.phone}`,
+            body: `Proceed to ${toSt.name}. Here is a short video showing where to go:`,
+            mediaUrl: [stationVideoUrl],
+          });
+          console.log(`[dispatch] Sent video to ${p.id}`);
+        } catch(e) {
+          console.error(`[dispatch] Video WA error for ${p.id}:`, e.message);
+        }
+      }
+    }
+  }
 }
 
 // ── WAITING ROOM WATCHER ──────────────────────────────────────────────────────
@@ -378,6 +403,23 @@ function watchWaitingRoom() {
   });
 
   console.log('Watching waiting room for new arrivals...');
+}
+
+// ── STATION READY WATCHER ─────────────────────────────────────────────────────
+// When performer clicks "Ready for next session", triggers dispatch immediately
+// rather than waiting for the next 5s loop tick.
+function watchStationReady() {
+  if (!db) return;
+  db.ref('/stationReady').on('child_changed', async snap => {
+    const data = snap.val();
+    if (!data?.readyAt) return;
+    console.log(`[ready] Station ${data.stationId} marked ready — triggering dispatch`);
+    // Small delay to let Firebase settle
+    setTimeout(() => runDispatchLoop(), 500);
+    // Clear the ready flag
+    await db.ref('/stationReady/' + snap.key).remove();
+  });
+  console.log('Watching station ready signals...');
 }
 
 // ── DISPATCH LOOP ─────────────────────────────────────────────────────────────
@@ -524,7 +566,8 @@ app.get('/ping', (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`GA WhatsApp Bot running on port ${PORT}`);
-  watchParticipants();                     // existing: WA on instruction change
-  watchWaitingRoom();                      // new: stamp waitingEnteredAt + roster clock
-  setInterval(runDispatchLoop, 5000);      // new: auto-dispatch loop every 5s
+  watchParticipants();                     // WA on instruction change
+  watchWaitingRoom();                      // stamp waitingEnteredAt + roster clock
+  watchStationReady();                     // trigger dispatch when station resets
+  setInterval(runDispatchLoop, 5000);      // auto-dispatch loop every 5s
 });

@@ -48,6 +48,7 @@ input:focus{border-color:var(--green)}
 .sif-scan-area{width:100%;max-width:280px;margin-bottom:12px}
 .sif-scan-label{font-family:var(--mono);font-size:8px;letter-spacing:2px;color:#3a5068;text-transform:uppercase;margin-bottom:6px;text-align:center}
 .scan-feedback{font-family:var(--mono);font-size:10px;text-align:center;margin:6px 0;min-height:16px;letter-spacing:2px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 .role-pill{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:2px}
 .role-active{color:#00e87a;background:rgba(0,232,122,.1);border:1px solid rgba(0,232,122,.2)}
 .role-observer{color:#7a9ab8;background:rgba(61,158,255,.07);border:1px solid rgba(61,158,255,.15)}
@@ -309,6 +310,7 @@ function App(){
   const[scanVal,setScanVal]=useState('');
   const[scanFeedback,setScanFeedback]=useState('');
   const[scanning,setScanning]=useState(false);
+  const[sessionEnded,setSessionEnded]=useState(false);
   const[,setT]=useState(0);
   useEffect(()=>{const t=setInterval(()=>setT(x=>x+1),1000);return()=>clearInterval(t);},[]);
 
@@ -429,6 +431,9 @@ function App(){
   const full=occ>=cap;
 
   const arrivedHere=pList.filter(p=>p.currentStation===sel&&(p.status==='arrived'||p.status==='active'));
+  const dispatchedHere=pList.filter(p=>p.status==='transit'&&p.transitTo===sel);
+  const allExpected=[...dispatchedHere,...arrivedHere];
+  const allScanned=allExpected.length>0&&allExpected.every(p=>p.checkedIn||p.status==='active');
   const checkedInHere=arrivedHere.filter(p=>p.checkedIn);
   const activePpl=arrivedHere.filter(p=>p.status==='active');
   const sessionStarted=activePpl.length>0;
@@ -437,6 +442,7 @@ function App(){
     (p.status==='transit'&&p.transitTo===sel)||
     (p.currentStation===sel&&p.status==='arrived'&&!p.checkedIn)
   );
+  const stillOnWay=dispatchedHere.length;
 
   const elapsed=activePpl[0]?.stationStartedAt?Math.floor((now()-activePpl[0].stationStartedAt)/1000):0;
   const pct=station.dur>0?Math.min(100,(elapsed/station.dur)*100):0;
@@ -452,7 +458,15 @@ function App(){
     if(activePpl.length===0){toast.add('No active session','err');return;}
     for(const p of activePpl) await advanceParticipant(p.id,config);
     if('vibrate' in navigator) navigator.vibrate([200,100,200]);
-    toast.add(`Session ended — ${activePpl.length} advancing`,'ok');
+    toast.add(`Session ended — participants advancing`,'ok');
+    setSessionEnded(true);
+  };
+
+  const doReadyForNext=async()=>{
+    setSessionEnded(false);
+    toast.add('Station ready — next group will be dispatched','ok');
+    // Write to Firebase so server dispatch loop knows station is ready
+    await dbUpdate('/stationReady/'+sel,{readyAt:now(),stationId:sel});
   };
 
   return(
@@ -492,11 +506,34 @@ function App(){
 
         {/* Participant list */}
         <div style={{width:'100%',maxWidth:320,marginBottom:16}}>
-          {arrivedHere.length===0&&(
+          {allExpected.length===0&&(
             <div style={{textAlign:'center',padding:'8px 0',color:'var(--t3)',fontSize:9,letterSpacing:2}}>
-              No participants yet — scan QR codes
+              No participants dispatched yet
             </div>
           )}
+          {dispatchedHere.length>0&&(
+            <div style={{fontFamily:'var(--mono)',fontSize:8,letterSpacing:2,color:'var(--amber)',textTransform:'uppercase',marginBottom:8,textAlign:'center'}}>
+              ⟳ {dispatchedHere.length} on the way — waiting for arrival
+            </div>
+          )}
+          {dispatchedHere.map(p=>(
+            <div key={p.id+'_transit'} style={{
+              display:'flex',alignItems:'center',justifyContent:'space-between',
+              padding:'10px 14px',marginBottom:6,borderRadius:3,
+              background:'rgba(255,170,0,.04)',
+              border:'1px solid rgba(255,170,0,.2)',
+              opacity:0.7,
+            }}>
+              <div style={{display:'flex',alignItems:'center',gap:10}}>
+                <div style={{width:8,height:8,borderRadius:'50%',flexShrink:0,background:'var(--amber)',animation:'blink 1s infinite'}}/>
+                <span style={{fontFamily:'var(--mono)',fontSize:13,color:'var(--t2)',letterSpacing:2}}>
+                  {p.id}
+                  {p.nickname&&<span style={{color:'var(--t3)',fontSize:10,marginLeft:7}}>({p.nickname})</span>}
+                </span>
+              </div>
+              <span style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--amber)',letterSpacing:1}}>IN TRANSIT</span>
+            </div>
+          ))}
           {arrivedHere.map(p=>{
             // Dot colour: green for active role, grey for observer/passive
             const isActive=p.assignedRole==='active'||(p.assignedRole===null&&p.rolePreference==='active')||(!p.assignedRole&&p.rolePreference==='active');
@@ -558,59 +595,70 @@ function App(){
 
         {/* Actions */}
         <div className="sif-act">
-          {!sessionStarted&&inTransitHere.length>0&&(
-            <div style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--amber)',letterSpacing:2,textAlign:'center',marginBottom:8}}>
-              ⟳ {inTransitHere.length} still arriving...
-            </div>
+
+          {/* PRE-SESSION */}
+          {!sessionStarted&&!sessionEnded&&(()=>{
+            const activeCheckedIn=checkedInHere.filter(p=>p.rolePreference==='active');
+            const needsPick=activeCheckedIn.length>1&&!checkedInHere.some(p=>p.assignedRole==='active');
+            const waitingForTransit=stillOnWay>0;
+            return(<>
+              {/* Role picker */}
+              {needsPick&&(
+                <div style={{marginBottom:10}}>
+                  <div style={{fontFamily:'var(--mono)',fontSize:8,letterSpacing:2,color:'var(--amber)',textTransform:'uppercase',marginBottom:8,textAlign:'center'}}>
+                    ⚠ Multiple active participants — select who takes the active role:
+                  </div>
+                  {activeCheckedIn.map(p=>(
+                    <button key={p.id} onClick={async()=>{
+                      for(const pp of checkedInHere){
+                        await dbUpdate('/participants/'+pp.id,{assignedRole:pp.id===p.id?'active':'observer'});
+                      }
+                    }} style={{
+                      width:'100%',padding:'10px',marginBottom:6,
+                      fontFamily:'var(--mono)',fontSize:10,letterSpacing:2,textTransform:'uppercase',
+                      border:'1px solid var(--amber)',color:'var(--amber)',
+                      background:p.assignedRole==='active'?'rgba(255,170,0,.15)':'transparent',
+                      cursor:'pointer',borderRadius:2,
+                    }}>
+                      {p.assignedRole==='active'?'● ':'○ '}{p.id}{p.nickname?` (${p.nickname})`:''} — set as ACTIVE
+                    </button>
+                  ))}
+                </div>
+              )}
+              {waitingForTransit&&(
+                <div style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--amber)',letterSpacing:2,textAlign:'center',marginBottom:8}}>
+                  ⟳ {stillOnWay} still on the way...
+                </div>
+              )}
+              <button className="sif-btn sif-begin" onClick={doBeginSession}
+                disabled={checkedInHere.length===0||waitingForTransit||needsPick}>
+                {needsPick?'⚠ Select active role first'
+                  :waitingForTransit?`Waiting for ${stillOnWay} to arrive...`
+                  :checkedInHere.length===0?'No participants scanned yet'
+                  :`▶ Begin Session (${checkedInHere.length} / ${allExpected.length} scanned)`}
+              </button>
+            </>);
+          })()}
+
+          {/* ACTIVE SESSION */}
+          {sessionStarted&&!sessionEnded&&(
+            <button className="sif-btn sif-fn" onClick={doEndSession}>
+              ✕ End Session — audience may leave
+            </button>
           )}
 
-          {/* Role picker — only when 2+ willing-active participants checked in */}
-          {!sessionStarted&&(()=>{
-            const activeCheckedIn=checkedInHere.filter(p=>p.rolePreference==='active');
-            const needsPick=activeCheckedIn.length>1&&!checkedInHere.some(p=>p.assignedRole==='active');
-            if(!needsPick) return null;
-            return(
-              <div style={{marginBottom:10}}>
-                <div style={{fontFamily:'var(--mono)',fontSize:8,letterSpacing:2,color:'var(--amber)',textTransform:'uppercase',marginBottom:8,textAlign:'center'}}>
-                  ⚠ Multiple active participants — select who takes the active role:
-                </div>
-                {activeCheckedIn.map(p=>(
-                  <button key={p.id} onClick={async()=>{
-                    for(const pp of checkedInHere){
-                      await dbUpdate('/participants/'+pp.id,{assignedRole:pp.id===p.id?'active':'observer'});
-                    }
-                  }} style={{
-                    width:'100%',padding:'10px',marginBottom:6,
-                    fontFamily:'var(--mono)',fontSize:10,letterSpacing:2,textTransform:'uppercase',
-                    border:'1px solid var(--amber)',color:'var(--amber)',
-                    background:p.assignedRole==='active'?'rgba(255,170,0,.15)':'transparent',
-                    cursor:'pointer',borderRadius:2,
-                  }}>
-                    {p.assignedRole==='active'?'● ':'○ '}{p.id}{p.nickname?` (${p.nickname})`:''} — set as ACTIVE
-                  </button>
-                ))}
+          {/* POST SESSION — waiting for reset */}
+          {sessionEnded&&(
+            <>
+              <div style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--t3)',letterSpacing:2,textAlign:'center',marginBottom:10,lineHeight:1.8}}>
+                Session ended. Reset the space,<br/>then mark station as ready.
               </div>
-            );
-          })()}
-
-          {!sessionStarted&&(()=>{
-            const activeCheckedIn=checkedInHere.filter(p=>p.rolePreference==='active');
-            const needsPick=activeCheckedIn.length>1&&!checkedInHere.some(p=>p.assignedRole==='active');
-            return(
-              <button className="sif-btn sif-begin" onClick={doBeginSession}
-                disabled={checkedInHere.length===0||inTransitHere.length>0||needsPick}>
-                {needsPick?'⚠ Select active role first'
-                  :inTransitHere.length>0?`Waiting for ${inTransitHere.length} to arrive...`
-                  :checkedInHere.length===0?'Scan participants first'
-                  :`▶ Begin Session (${checkedInHere.length} checked in)`}
+              <button className="sif-btn" onClick={doReadyForNext} style={{
+                color:'var(--green)',borderColor:'var(--green)',background:'rgba(0,232,122,.08)',
+              }}>
+                ✓ Ready for next session
               </button>
-            );
-          })()}
-
-          {sessionStarted&&(
-            <button className="sif-btn sif-fn" onClick={doEndSession}>
-              ✕ End Session
-            </button>
+            </>
           )}
         </div>
       </div>

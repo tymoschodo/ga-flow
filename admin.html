@@ -149,6 +149,7 @@ const DEFAULT_CONFIG = {
         messageActive:'Please lie on the table. Your procedure will begin shortly.',
         messageObserver:'You are about to observe a procedure. Please do not interfere.'},
     s2:{id:'s2',num:2,name:'Station 02',activeRoles:1,observerRoles:0,dur:300,enabled:true,
+        videoUrl:'https://tymoschodo.github.io/ga-flow/st2.mp4',
         messageActive:'Please take your position. The session is beginning.',
         messageObserver:'Please observe quietly.'},
     s3:{id:'s3',num:3,name:'Waiting Room',activeRoles:0,observerRoles:10,dur:0,enabled:true,isWaiting:true,
@@ -931,6 +932,10 @@ function ConfigTab({config,toast}){
                     <div>
                       <div className="dim" style={{marginBottom:3}}>Message — Observer role</div>
                       <textarea rows={2} value={s.messageObserver||''} onChange={e=>updateStation(s.id,'messageObserver',e.target.value)} style={{fontSize:9,padding:'5px 8px'}}/>
+                    </div>
+                    <div style={{gridColumn:'1/-1'}}>
+                      <div className="dim" style={{marginBottom:3}}>Navigation video URL (shown when dispatched)</div>
+                      <input value={s.videoUrl||''} onChange={e=>updateStation(s.id,'videoUrl',e.target.value)} style={{fontSize:9,padding:'5px 8px'}} placeholder="https://...mp4"/>
                     </div>
                   </div>
                 )}
