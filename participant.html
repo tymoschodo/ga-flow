@@ -58,9 +58,9 @@ html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',mon
 .instruction-text.new{animation:fadeup .5s ease}
 @keyframes fadeup{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 .status-dot{width:4px;height:4px;border-radius:50%;margin:24px auto 0;background:#3a5068}
-.status-dot.waiting{animation:blink 2.5s 5}
+.status-dot.waiting{animation:blink 2.5s infinite}
 .status-dot.active{background:#00e87a}
-.status-dot.transit{background:#ffaa00;animation:blink .8s 5}
+.status-dot.transit{background:#ffaa00;animation:blink .8s infinite}
 @keyframes blink{0%,100%{opacity:.2}50%{opacity:.7}}
 .qr-section{display:flex;flex-direction:column;align-items:center;gap:8px}
 .qr-label{font-size:7px;letter-spacing:3px;color:#2a4060;text-transform:uppercase}
@@ -135,7 +135,7 @@ html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',mon
 <!-- DONE -->
 <div class="screen hidden" id="screen-done">
   <div class="done-mark">✓</div>
-  <div class="done-msg">Your experience<br/>has concluded.<br/><br/>Please remain<br/>in place.</div>
+  <div class="done-msg">Your experience<br/>has concluded.<br/><br/>You may return to<br/>the waiting area,<br/>have a drink, and wait<br/>for the performance to end.</div>
 </div>
 
 <div id="flash-overlay"></div>
@@ -298,16 +298,12 @@ function render(data){
     void itxt.offsetWidth;
     itxt.classList.add('new');
     if(!isIOS){ try{ navigator.vibrate([300,100,300,100,500]); }catch(e){} }
+    triggerFlash();
   }
   prevInstruction = instruction;
   itxt.textContent = instruction;
 
-  // Flash loop: keep flashing while in transit or arrived (until performer begins session)
-  if(status === 'transit' || status === 'arrived'){
-    if(!flashInterval) startFlashLoop();
-  } else {
-    stopFlashLoop();
-  }
+  // Flash handled by triggerFlash on new instruction only
 
   // Status dot
   dot.className = 'status-dot';
@@ -329,20 +325,20 @@ function defaultInstruction(status, data){
   return 'Please take a seat and wait for your appointment.';
 }
 
-function startFlashLoop(){
-  if(flashInterval) return;
+function triggerFlash(){
+  if(flashInterval) clearInterval(flashInterval);
   const overlay = document.getElementById('flash-overlay');
-  const interval = Math.round(1000/1.5); // 667ms
+  let count = 0;
+  const interval = Math.round(1000/1.5); // 667ms — 1.5x per second
   flashInterval = setInterval(()=>{
-    overlay.style.transition = 'opacity .08s';
     overlay.style.opacity = '0.85';
     setTimeout(()=>{ overlay.style.opacity='0'; }, 180);
+    count++;
+    if(count >= 5){
+      clearInterval(flashInterval);
+      flashInterval = null;
+    }
   }, interval);
-}
-
-function stopFlashLoop(){
-  if(flashInterval){ clearInterval(flashInterval); flashInterval=null; }
-  document.getElementById('flash-overlay').style.opacity='0';
 }
 
 function show(name){
