@@ -73,11 +73,13 @@ html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',mon
 
 /* FLASH */
 /* VIDEO */
-#screen-video{padding:40px 24px;justify-content:flex-start}
-.video-label{font-size:8px;letter-spacing:3px;color:#4a6a88;text-transform:uppercase;margin-bottom:12px;text-align:center}
-.video-title{font-size:14px;color:#dde4ee;text-align:center;margin-bottom:24px;line-height:1.8}
-#station-video{width:100%;max-width:340px;border-radius:4px;border:1px solid #1a2e44;background:#000}
-.video-skip{background:none;border:none;color:#3a5068;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;margin-top:20px;padding:8px}
+#screen-video{padding:0;justify-content:center;height:100vh;overflow:hidden}
+.video-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:24px;gap:16px}
+.video-label{font-size:8px;letter-spacing:3px;color:#4a6a88;text-transform:uppercase;text-align:center}
+.video-title{font-size:12px;color:#dde4ee;text-align:center;line-height:1.8;max-width:280px}
+#station-video{width:100%;max-width:340px;max-height:45vh;border-radius:4px;border:1px solid #1a2e44;background:#000;object-fit:contain}
+.video-continue{display:block;width:100%;max-width:280px;padding:14px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;text-align:center;border:1px solid #00e87a;color:#00e87a;background:rgba(0,232,122,.07);border-radius:2px;cursor:pointer;margin-top:4px}
+.video-skip{background:none;border:none;color:#3a5068;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;padding:8px}
 
 #flash-overlay{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:999}
 </style>
@@ -141,12 +143,15 @@ html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',mon
 
 <!-- VIDEO (shown when dispatched to station with video) -->
 <div class="screen hidden" id="screen-video">
-  <div class="video-label">Instructions</div>
-  <div class="video-title" id="video-title">Proceed to Station 02.</div>
-  <video id="station-video" controls playsinline>
-    <source id="video-src" src="" type="video/mp4">
-  </video>
-  <button class="video-skip" onclick="skipVideo()">Skip → Continue to app</button>
+  <div class="video-inner">
+    <div class="video-label">Navigation instructions</div>
+    <div class="video-title" id="video-title">Proceed to Station 02.</div>
+    <video id="station-video" controls playsinline autoplay>
+      <source id="video-src" src="" type="video/mp4">
+    </video>
+    <button class="video-continue" onclick="skipVideo()">Continue to app →</button>
+    <button class="video-skip" onclick="skipVideo()">Skip video</button>
+  </div>
 </div>
 
 <!-- DONE -->
