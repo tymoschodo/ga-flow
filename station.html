@@ -259,7 +259,20 @@ async function beginSession(sid,checkedInPids,config=null){
     const p=await dbGet('/participants/'+pid);
     if(p) pData.push(p);
   }
-  const{roles,shortfall}=assignRoles(pData,s);
+  // Use manual role assignments if performer set them, otherwise auto-assign
+  const hasManualAssignment=pData.some(p=>p.assignedRole);
+  let roles={};
+  if(hasManualAssignment){
+    pData.forEach(p=>{roles[p.id]=p.assignedRole||'observer';});
+  } else {
+    const{roles:autoRoles,shortfall}=assignRoles(pData,s);
+    roles=autoRoles;
+    if(shortfall>0){
+      await fdb.ref('/notifications/'+now()+Math.random()).set({
+        pid:null,msg:`${s.name}: needs ${shortfall} more willing active participant(s). Session started anyway.`,time:now(),type:'warn'
+      });
+    }
+  }
   const t=now();
   for(const p of pData){
     const role=roles[p.id]||'observer';
@@ -546,15 +559,54 @@ function App(){
         {/* Actions */}
         <div className="sif-act">
           {!sessionStarted&&inTransitHere.length>0&&(
-              <div style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--amber)',letterSpacing:2,textAlign:'center',marginBottom:8}}>
-                ⟳ {inTransitHere.length} still arriving...
+            <div style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--amber)',letterSpacing:2,textAlign:'center',marginBottom:8}}>
+              ⟳ {inTransitHere.length} still arriving...
+            </div>
+          )}
+
+          {/* Role picker — only when 2+ willing-active participants checked in */}
+          {!sessionStarted&&(()=>{
+            const activeCheckedIn=checkedInHere.filter(p=>p.rolePreference==='active');
+            const needsPick=activeCheckedIn.length>1&&!checkedInHere.some(p=>p.assignedRole==='active');
+            if(!needsPick) return null;
+            return(
+              <div style={{marginBottom:10}}>
+                <div style={{fontFamily:'var(--mono)',fontSize:8,letterSpacing:2,color:'var(--amber)',textTransform:'uppercase',marginBottom:8,textAlign:'center'}}>
+                  ⚠ Multiple active participants — select who takes the active role:
+                </div>
+                {activeCheckedIn.map(p=>(
+                  <button key={p.id} onClick={async()=>{
+                    for(const pp of checkedInHere){
+                      await dbUpdate('/participants/'+pp.id,{assignedRole:pp.id===p.id?'active':'observer'});
+                    }
+                  }} style={{
+                    width:'100%',padding:'10px',marginBottom:6,
+                    fontFamily:'var(--mono)',fontSize:10,letterSpacing:2,textTransform:'uppercase',
+                    border:'1px solid var(--amber)',color:'var(--amber)',
+                    background:p.assignedRole==='active'?'rgba(255,170,0,.15)':'transparent',
+                    cursor:'pointer',borderRadius:2,
+                  }}>
+                    {p.assignedRole==='active'?'● ':'○ '}{p.id}{p.nickname?` (${p.nickname})`:''} — set as ACTIVE
+                  </button>
+                ))}
               </div>
-            )}
-            {!sessionStarted&&(
-              <button className="sif-btn sif-begin" onClick={doBeginSession} disabled={checkedInHere.length===0||inTransitHere.length>0}>
-                ▶ Begin Session ({checkedInHere.length} checked in)
+            );
+          })()}
+
+          {!sessionStarted&&(()=>{
+            const activeCheckedIn=checkedInHere.filter(p=>p.rolePreference==='active');
+            const needsPick=activeCheckedIn.length>1&&!checkedInHere.some(p=>p.assignedRole==='active');
+            return(
+              <button className="sif-btn sif-begin" onClick={doBeginSession}
+                disabled={checkedInHere.length===0||inTransitHere.length>0||needsPick}>
+                {needsPick?'⚠ Select active role first'
+                  :inTransitHere.length>0?`Waiting for ${inTransitHere.length} to arrive...`
+                  :checkedInHere.length===0?'Scan participants first'
+                  :`▶ Begin Session (${checkedInHere.length} checked in)`}
               </button>
-            )}
+            );
+          })()}
+
           {sessionStarted&&(
             <button className="sif-btn sif-fn" onClick={doEndSession}>
               ✕ End Session

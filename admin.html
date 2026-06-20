@@ -1005,9 +1005,47 @@ function ConfigTab({config,toast}){
         <div className="pb">
           <div className="g3">
             <div><label>Max participants</label><input type="number" value={cfg.maxParticipants||30} min={1} max={100} onChange={e=>setCfg(prev=>({...prev,maxParticipants:+e.target.value}))}/></div>
-            <div><label>Avg. registration pace (s) — used for dispatch timing</label><input type="number" value={cfg.regInterval||60} min={10} onChange={e=>setCfg(prev=>({...prev,regInterval:+e.target.value}))}/></div>
+            <div><label>Avg. registration pace (s)</label><input type="number" value={cfg.regInterval||60} min={10} onChange={e=>setCfg(prev=>({...prev,regInterval:+e.target.value}))}/></div>
             <div style={{gridColumn:"1/-1"}}><label>End-of-experience message</label><textarea rows={2} value={cfg.doneMessage||DEFAULT_CONFIG.doneMessage} onChange={e=>setCfg(prev=>({...prev,doneMessage:e.target.value}))} style={{fontSize:11,padding:"5px 8px"}}/></div>
           </div>
+        </div>
+      </div>
+
+      {/* DISPATCH RULES */}
+      <div className="panel mb14">
+        <div className="ph">
+          <span className="pt">Auto-dispatch rules</span>
+          <span className="dim">server reads these every 5s</span>
+        </div>
+        <div className="pb">
+          <div className="dim mb12">Rules checked in order — first match triggers dispatch. Always sends 1 active (longest waiting) + up to 2 observers. Never dispatches without an active participant.</div>
+          {(()=>{
+            const targetSt=Object.values(cfg.stations||{}).find(s=>s.dispatchRules)||
+              Object.values(cfg.stations||{}).find(s=>!s.isWaiting&&!s.isFinal&&s.enabled);
+            if(!targetSt) return <div className="dim">No eligible station found</div>;
+            const rules=targetSt.dispatchRules||[
+              {minActive:1,minPassive:2,waitSeconds:30},
+              {minActive:1,minPassive:1,waitSeconds:60},
+              {minActive:1,minPassive:0,waitSeconds:90},
+            ];
+            const updateRules=(newRules)=>{
+              setCfg(prev=>({...prev,stations:{...prev.stations,[targetSt.id]:{...prev.stations[targetSt.id],dispatchRules:newRules}}}));
+            };
+            return(
+              <div>
+                <div className="dim mb8">Station: <span style={{color:'var(--text)'}}>{targetSt.name}</span></div>
+                {rules.map((rule,i)=>(
+                  <div key={i} style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:8,alignItems:'center',marginBottom:8,padding:'8px',background:'var(--bg3)',borderRadius:3}}>
+                    <div><label>Min active</label><input type="number" value={rule.minActive??1} min={1} max={5} style={{fontSize:10,padding:'4px 6px'}} onChange={e=>{const r=[...rules];r[i]={...r[i],minActive:+e.target.value};updateRules(r);}}/></div>
+                    <div><label>Min observers</label><input type="number" value={rule.minPassive??0} min={0} max={10} style={{fontSize:10,padding:'4px 6px'}} onChange={e=>{const r=[...rules];r[i]={...r[i],minPassive:+e.target.value};updateRules(r);}}/></div>
+                    <div><label>Wait (seconds)</label><input type="number" value={rule.waitSeconds??30} min={0} style={{fontSize:10,padding:'4px 6px'}} onChange={e=>{const r=[...rules];r[i]={...r[i],waitSeconds:+e.target.value};updateRules(r);}}/></div>
+                    <button onClick={()=>{const r=rules.filter((_,j)=>j!==i);updateRules(r);}} style={{background:'none',border:'none',color:'var(--red)',cursor:'pointer',fontSize:14,padding:'0 4px',marginTop:14}}>✕</button>
+                  </div>
+                ))}
+                <button className="btn bg sm" onClick={()=>updateRules([...rules,{minActive:1,minPassive:0,waitSeconds:120}])}>+ Add rule</button>
+              </div>
+            );
+          })()}
         </div>
       </div>
     </div>
