@@ -280,16 +280,30 @@ function proceedToApp(){
   generateQR(pid);
   show('main');
   db.ref('/participants/'+pid).on('value', s=>{ if(s.exists()) render(s.val()); });
+  // Stamp waitingEnteredAt — dispatch timer starts NOW (participant is seated with app open)
+  const t = Date.now();
+  db.ref('/participants/'+pid).once('value').then(snap=>{
+    const p = snap.val();
+    if(p && (p.status==='waiting_s3'||p.status==='role_pending') && !p.waitingEnteredAt){
+      db.ref('/participants/'+pid).update({
+        waitingEnteredAt: t,
+      });
+      db.ref('/waitingRoom/lastRosterChangeAt').set(t);
+    }
+  });
 }
 
 function setRole(role){
   if(!pid) return;
+  const t = Date.now();
   db.ref('/participants/'+pid).update({
     rolePreference: role,
     status: 'waiting_s3',
     currentStation: 's3',
+    waitingEnteredAt: t,
   });
   db.ref('/occupancy/s3').transaction(v=>(v||0)+1);
+  db.ref('/waitingRoom/lastRosterChangeAt').set(t);
   generateQR(pid);
   show('main');
   db.ref('/participants/'+pid).on('value', s=>{ if(s.exists()) render(s.val()); });

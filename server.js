@@ -97,7 +97,31 @@ app.post('/webhook', async (req, res) => {
 
     await db.ref('/phoneIndex/' + from.replace('+', '')).set(body);
     await db.ref('/participants/' + body).update({ phone: from, whatsappLinked: true });
-    await sendWA(from, `Thank you. Please take a seat and wait for your appointment. You'll be receiving notifications via WhatsApp. You can also decide to receive them in the GA phone app`);
+
+    // If already dispatched — send current instruction immediately
+    if (pData.instruction && ['transit','arrived','active'].includes(pData.status)) {
+      // Send instruction
+      await sendWA(from, pData.instruction);
+      // If in transit to a station with a video — send video too
+      if (pData.status === 'transit' && pData.transitTo) {
+        const cfgSnap = await db.ref('/config/stations/' + pData.transitTo + '/videoUrl').once('value');
+        const videoUrl = cfgSnap.val();
+        if (videoUrl) {
+          try {
+            await client.messages.create({
+              from: TWILIO_WA_NUMBER,
+              to: `whatsapp:${from}`,
+              body: `Here is a short video showing where to go:`,
+              mediaUrl: [videoUrl],
+            });
+          } catch(e) {
+            console.error(`[link] Video WA error:`, e.message);
+          }
+        }
+      }
+    } else {
+      await sendWA(from, `Thank you. Please take a seat and wait for your appointment. You'll be receiving notifications via WhatsApp. You can also decide to receive them in the GA phone app.`);
+    }
 
     res.set('Content-Type', 'text/xml').send('<Response></Response>'); return;
   }
@@ -422,8 +446,9 @@ async function dispatchGroupToStation(group, toSid, cfg) {
 //   2. Updates /waitingRoom/lastRosterChangeAt to start the dispatch timer.
 //
 // Infinite-loop guard: we only act when status==='waiting_s3' AND !waitingEnteredAt.
-// When we write waitingEnteredAt, Firebase fires child_changed again — but now
-// waitingEnteredAt is set, so the condition is false and we do not act again.
+// Primary stamping happens in participant.html (proceedToApp) — this is a server-side
+// fallback for participants who were registered but never opened the app, or for
+// server restarts where in-memory state was lost.
 function watchWaitingRoom() {
   if (!db) return;
 
