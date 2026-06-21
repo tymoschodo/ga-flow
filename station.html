@@ -511,34 +511,49 @@ function App(){
               No participants dispatched yet
             </div>
           )}
-          {dispatchedHere.length>0&&(
-            <div style={{fontFamily:'var(--mono)',fontSize:8,letterSpacing:2,color:'var(--amber)',textTransform:'uppercase',marginBottom:8,textAlign:'center'}}>
-              ⟳ {dispatchedHere.length} on the way — waiting for arrival
-            </div>
-          )}
-          {dispatchedHere.map(p=>(
-            <div key={p.id+'_transit'} style={{
-              display:'flex',alignItems:'center',justifyContent:'space-between',
-              padding:'10px 14px',marginBottom:6,borderRadius:3,
-              background:'rgba(255,170,0,.04)',
-              border:'1px solid rgba(255,170,0,.2)',
-              opacity:0.7,
+          {/* Arrival status banner */}
+          {allExpected.length>0&&!sessionStarted&&!sessionEnded&&(
+            <div style={{
+              padding:'14px 16px',marginBottom:12,borderRadius:3,
+              background: checkedInHere.length===allExpected.length
+                ?'rgba(0,232,122,.07)':'rgba(255,170,0,.05)',
+              border:`1px solid ${checkedInHere.length===allExpected.length
+                ?'rgba(0,232,122,.3)':'rgba(255,170,0,.25)'}`,
             }}>
-              <div style={{display:'flex',alignItems:'center',gap:10}}>
-                <div style={{width:8,height:8,borderRadius:'50%',flexShrink:0,background:'var(--amber)',animation:'blink 1s infinite'}}/>
-                <span style={{fontFamily:'var(--mono)',fontSize:13,color:'var(--t2)',letterSpacing:2}}>
-                  {p.id}
-                  {p.nickname&&<span style={{color:'var(--t3)',fontSize:10,marginLeft:7}}>({p.nickname})</span>}
+              {/* Progress line */}
+              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+                <div style={{
+                  width:8,height:8,borderRadius:'50%',flexShrink:0,
+                  background:checkedInHere.length===allExpected.length?'var(--green)':'var(--amber)',
+                  animation:checkedInHere.length<allExpected.length?'blink 1s infinite':'none',
+                }}/>
+                <span style={{fontFamily:'var(--mono)',fontSize:13,letterSpacing:2,
+                  color:checkedInHere.length===allExpected.length?'var(--green)':'var(--amber)'}}>
+                  {checkedInHere.length} / {allExpected.length} scanned
+                </span>
+                <span style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--t3)',letterSpacing:1,marginLeft:'auto'}}>
+                  {checkedInHere.length<allExpected.length
+                    ?`${allExpected.length-checkedInHere.length} still to scan`
+                    :'all present'}
                 </span>
               </div>
-              <span style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--amber)',letterSpacing:1}}>IN TRANSIT</span>
+              {/* Progress bar */}
+              <div style={{height:2,background:'rgba(255,255,255,.08)',borderRadius:1}}>
+                <div style={{
+                  height:'100%',borderRadius:1,
+                  width:`${allExpected.length>0?(checkedInHere.length/allExpected.length)*100:0}%`,
+                  background:checkedInHere.length===allExpected.length?'var(--green)':'var(--amber)',
+                  transition:'width .3s ease',
+                }}/>
+              </div>
             </div>
-          ))}
+          )}
           {arrivedHere.map(p=>{
-            const roleLabel=p.assignedRole
+            const isAssigned=!!p.assignedRole;
+            const roleLabel=isAssigned
               ? (p.assignedRole==='active'?'● ACTIVE':'○ OBSERVER')
-              : (p.rolePreference==='active'?'● active':'○ observer');
-            const roleColor=p.assignedRole
+              : (p.rolePreference==='active'?'● willing active':'○ observer');
+            const roleColor=isAssigned
               ? (p.assignedRole==='active'?'var(--green)':'var(--blue)')
               : (p.rolePreference==='active'?'var(--green)':'var(--t3)');
 
@@ -546,30 +561,46 @@ function App(){
               <div key={p.id} style={{
                 display:'flex',alignItems:'center',justifyContent:'space-between',
                 padding:'10px 14px',marginBottom:6,borderRadius:3,
-                background:p.checkedIn?'rgba(0,232,122,.06)':'rgba(61,158,255,.04)',
-                border:`1px solid ${p.checkedIn?'rgba(0,232,122,.3)':'rgba(61,158,255,.2)'}`,
+                background:p.checkedIn
+                  ?isAssigned?'rgba(0,232,122,.08)':'rgba(0,232,122,.04)'
+                  :'rgba(61,158,255,.04)',
+                border:`1px solid ${p.checkedIn
+                  ?isAssigned?'rgba(0,232,122,.35)':'rgba(0,232,122,.2)'
+                  :'rgba(61,158,255,.15)'}`,
+                transition:'all .2s',
               }}>
-                {/* Left: scan status dot + ID + nickname */}
                 <div style={{display:'flex',alignItems:'center',gap:10}}>
                   <div style={{
                     width:8,height:8,borderRadius:'50%',flexShrink:0,
                     background:p.checkedIn?'var(--green)':'var(--blue)',
-                    opacity:p.checkedIn?1:0.6,
+                    opacity:p.checkedIn?1:0.5,
                   }}/>
                   <div>
-                    <span style={{fontFamily:'var(--mono)',fontSize:13,color:'var(--text)',letterSpacing:2}}>
+                    <div style={{fontFamily:'var(--mono)',fontSize:13,color:'var(--text)',letterSpacing:2}}>
                       {p.id}
                       {p.nickname&&<span style={{color:'var(--t3)',fontSize:10,letterSpacing:1,marginLeft:7}}>({p.nickname})</span>}
-                    </span>
-                    <div style={{fontFamily:'var(--mono)',fontSize:8,letterSpacing:1,color:p.checkedIn?'var(--green)':'var(--blue)',marginTop:2}}>
+                    </div>
+                    <div style={{fontFamily:'var(--mono)',fontSize:8,letterSpacing:1,marginTop:2,
+                      color:p.checkedIn?'var(--green)':'var(--blue)'}}>
                       {p.checkedIn?'✓ scanned':'waiting to be scanned'}
                     </div>
                   </div>
                 </div>
-                {/* Right: role preference */}
-                <span style={{fontFamily:'var(--mono)',fontSize:9,color:roleColor,letterSpacing:1,textTransform:'uppercase',flexShrink:0}}>
-                  {roleLabel}
-                </span>
+                {p.checkedIn&&(
+                  <span style={{
+                    fontFamily:'var(--mono)',fontSize:9,letterSpacing:1,
+                    textTransform:'uppercase',flexShrink:0,
+                    color:roleColor,
+                    padding:'3px 8px',
+                    border:`1px solid ${roleColor}`,
+                    borderRadius:2,
+                    background:isAssigned
+                      ?p.assignedRole==='active'?'rgba(0,232,122,.1)':'rgba(61,158,255,.1)'
+                      :'transparent',
+                  }}>
+                    {roleLabel}
+                  </span>
+                )}
               </div>
             );
           })}
@@ -608,9 +639,16 @@ function App(){
             return(<>
               {/* Role picker */}
               {needsPick&&(
-                <div style={{marginBottom:10}}>
-                  <div style={{fontFamily:'var(--mono)',fontSize:8,letterSpacing:2,color:'var(--amber)',textTransform:'uppercase',marginBottom:8,textAlign:'center'}}>
-                    ⚠ Multiple active participants — select who takes the active role:
+                <div style={{
+                  marginBottom:12,padding:'14px',borderRadius:3,
+                  background:'rgba(255,170,0,.06)',
+                  border:'1px solid rgba(255,170,0,.3)',
+                }}>
+                  <div style={{fontFamily:'var(--mono)',fontSize:9,letterSpacing:2,color:'var(--amber)',textTransform:'uppercase',marginBottom:8,textAlign:'center'}}>
+                    Choose who takes the active role
+                  </div>
+                  <div style={{fontFamily:'var(--mono)',fontSize:8,color:'var(--t3)',letterSpacing:1,textAlign:'center',marginBottom:10}}>
+                    {activeCheckedIn.length} willing-active scanned — tap to assign:
                   </div>
                   {activeCheckedIn.map(p=>(
                     <button key={p.id} onClick={async()=>{
@@ -618,13 +656,20 @@ function App(){
                         await dbUpdate('/participants/'+pp.id,{assignedRole:pp.id===p.id?'active':'observer'});
                       }
                     }} style={{
-                      width:'100%',padding:'10px',marginBottom:6,
-                      fontFamily:'var(--mono)',fontSize:10,letterSpacing:2,textTransform:'uppercase',
-                      border:'1px solid var(--amber)',color:'var(--amber)',
-                      background:p.assignedRole==='active'?'rgba(255,170,0,.15)':'transparent',
+                      width:'100%',padding:'12px 14px',marginBottom:6,
+                      fontFamily:'var(--mono)',fontSize:11,letterSpacing:2,
+                      textTransform:'uppercase',textAlign:'left',
+                      border:`1px solid ${p.assignedRole==='active'?'var(--green)':'rgba(255,170,0,.4)'}`,
+                      color:p.assignedRole==='active'?'var(--green)':'var(--amber)',
+                      background:p.assignedRole==='active'?'rgba(0,232,122,.1)':'transparent',
                       cursor:'pointer',borderRadius:2,
+                      display:'flex',alignItems:'center',gap:10,
                     }}>
-                      {p.assignedRole==='active'?'● ':'○ '}{p.id}{p.nickname?` (${p.nickname})`:''} — set as ACTIVE
+                      <span style={{fontSize:16}}>{p.assignedRole==='active'?'●':'○'}</span>
+                      <div>
+                        <div>{p.id}{p.nickname?` — ${p.nickname}`:''}</div>
+                        {p.assignedRole==='active'&&<div style={{fontSize:8,color:'var(--green)',marginTop:2}}>assigned as active</div>}
+                      </div>
                     </button>
                   ))}
                 </div>
