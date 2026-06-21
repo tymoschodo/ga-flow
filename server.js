@@ -526,10 +526,20 @@ async function runDispatchLoop() {
       const minPassive = rule.minPassive ?? 0;
 
       if (elapsedMs >= waitMs && actives.length >= minActive && passives.length >= minPassive) {
-        const selectedActive   = actives[0];
-        const selectedPassives = passives.slice(0, 2); // Up to 2 passives, FIFO
+        const cap = 3; // Station cap
+        const maxActives = 2; // Never send more than 2 actives
 
-        selectedGroup = [selectedActive, ...selectedPassives];
+        // Fill group: 1 active first, then passives, then a 2nd active if slots remain
+        const primaryActive = actives[0];
+        const selectedPassives = passives.slice(0, cap - 1); // up to 2 passives
+        const slotsRemaining = cap - 1 - selectedPassives.length;
+
+        // Fill remaining slots with a 2nd active (but never a 3rd)
+        const extraActives = slotsRemaining > 0 && actives.length > 1
+          ? actives.slice(1, 1 + Math.min(slotsRemaining, maxActives - 1))
+          : [];
+
+        selectedGroup = [primaryActive, ...selectedPassives, ...extraActives];
 
         console.log(
           `[loop] Rule matched | elapsed=${Math.round(elapsedMs / 1000)}s ` +
