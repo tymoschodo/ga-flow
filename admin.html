@@ -472,6 +472,8 @@ function AdminDashboard({toast}){
     await fdb.ref('/showStartAt').remove();
     await fdb.ref('/soloFreeAt').remove();
     await fdb.ref('/phoneIndex').remove();
+    await fdb.ref('/waitingRoom').remove();
+    await fdb.ref('/stationReady').remove();
     toast.add('Show reset — clean slate','ok');
   };
   const finishAndAdvance=async(pid)=>{await advanceParticipant(pid,config);toast.add(`${pid} → next`,'ok');};

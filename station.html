@@ -535,8 +535,6 @@ function App(){
             </div>
           ))}
           {arrivedHere.map(p=>{
-            // Dot colour: green for active role, grey for observer/passive
-            const isActive=p.assignedRole==='active'||(p.assignedRole===null&&p.rolePreference==='active')||(!p.assignedRole&&p.rolePreference==='active');
             const roleLabel=p.assignedRole
               ? (p.assignedRole==='active'?'● ACTIVE':'○ OBSERVER')
               : (p.rolePreference==='active'?'● active':'○ observer');
@@ -548,21 +546,27 @@ function App(){
               <div key={p.id} style={{
                 display:'flex',alignItems:'center',justifyContent:'space-between',
                 padding:'10px 14px',marginBottom:6,borderRadius:3,
-                background:p.checkedIn?'rgba(0,232,122,.06)':'var(--bg3)',
-                border:`1px solid ${p.checkedIn?'rgba(0,232,122,.25)':'var(--line)'}`,
+                background:p.checkedIn?'rgba(0,232,122,.06)':'rgba(61,158,255,.04)',
+                border:`1px solid ${p.checkedIn?'rgba(0,232,122,.3)':'rgba(61,158,255,.2)'}`,
               }}>
-                {/* Left: dot + ID + nickname */}
+                {/* Left: scan status dot + ID + nickname */}
                 <div style={{display:'flex',alignItems:'center',gap:10}}>
                   <div style={{
                     width:8,height:8,borderRadius:'50%',flexShrink:0,
-                    background:isActive?'var(--green)':'var(--t3)',
+                    background:p.checkedIn?'var(--green)':'var(--blue)',
+                    opacity:p.checkedIn?1:0.6,
                   }}/>
-                  <span style={{fontFamily:'var(--mono)',fontSize:13,color:'var(--text)',letterSpacing:2}}>
-                    {p.id}
-                    {p.nickname&&<span style={{color:'var(--t3)',fontSize:10,letterSpacing:1,marginLeft:7}}>({p.nickname})</span>}
-                  </span>
+                  <div>
+                    <span style={{fontFamily:'var(--mono)',fontSize:13,color:'var(--text)',letterSpacing:2}}>
+                      {p.id}
+                      {p.nickname&&<span style={{color:'var(--t3)',fontSize:10,letterSpacing:1,marginLeft:7}}>({p.nickname})</span>}
+                    </span>
+                    <div style={{fontFamily:'var(--mono)',fontSize:8,letterSpacing:1,color:p.checkedIn?'var(--green)':'var(--blue)',marginTop:2}}>
+                      {p.checkedIn?'✓ scanned':'waiting to be scanned'}
+                    </div>
+                  </div>
                 </div>
-                {/* Right: role label */}
+                {/* Right: role preference */}
                 <span style={{fontFamily:'var(--mono)',fontSize:9,color:roleColor,letterSpacing:1,textTransform:'uppercase',flexShrink:0}}>
                   {roleLabel}
                 </span>

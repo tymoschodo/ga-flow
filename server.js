@@ -232,19 +232,32 @@ async function handleArrivalServer(pid, sid) {
     const stationName = station.name || sid;
     const t           = Date.now();
 
+    const arrivalInstruction = `You have arrived at ${stationName}.
+Wait for the performer to check you in.`;
+
     await db.ref('/participants/' + pid).update({
       status:            'arrived',
       currentStation:    sid,
       transitTo:         null,
       transitStartedAt:  null,
       transitDur:        null,
-      instruction:       `You have arrived at ${stationName}.\nWait for check-in.`,
+      instruction:       arrivalInstruction,
       instructionAt:     t,
       checkedIn:         false,
     });
 
     // Increment occupancy for the station now that participant has physically arrived
     await db.ref('/occupancy/' + sid).transaction(v => (v || 0) + 1);
+
+    // Send WA arrival notification explicitly
+    if (p.phone) {
+      try {
+        await sendWA(p.phone, arrivalInstruction);
+        console.log(`[arrival] Sent WA to ${pid}`);
+      } catch(e) {
+        console.error(`[arrival] WA error for ${pid}:`, e.message);
+      }
+    }
 
     console.log(`[arrival] ${pid} arrived at ${sid}`);
   } catch (e) {
@@ -332,44 +345,74 @@ async function dispatchGroupToStation(group, toSid, cfg) {
   // timer starts fresh from this moment
   updates['/waitingRoom/lastRosterChangeAt'] = t;
 
+  // Read phone numbers BEFORE atomic update (fresh from DB)
+  const phoneMap = {};
+  for (const p of dispatched) {
+    try {
+      const pSnap = await db.ref('/participants/' + p.id).once('value');
+      const pData = pSnap.val();
+      if (pData?.phone) phoneMap[p.id] = pData.phone;
+    } catch(e) {
+      console.error(`[dispatch] phone read error for ${p.id}:`, e.message);
+    }
+  }
+
   // Write all participant updates in a single atomic multi-path operation
   await db.ref('/').update(updates);
 
-  // Decrement waiting-room occupancy per dispatched participant (use transaction
-  // to be safe against concurrent updates from admin.html)
+  // Decrement waiting-room occupancy per dispatched participant
   for (const p of dispatched) {
     await db.ref('/occupancy/s3').transaction(v => Math.max(0, (v || 0) - 1));
   }
 
   // Schedule arrival handlers — fire after transit duration
-  // Extra 500ms buffer so Firebase write above has fully propagated
   const arrivalDelayMs = tDur * 1000 + 500;
   for (const p of dispatched) {
-    const pid = p.id; // capture for async closure
+    const pid = p.id;
     setTimeout(() => handleArrivalServer(pid, toSid), arrivalDelayMs);
   }
 
   const ids = dispatched.map(p => p.id).join(', ');
   console.log(`[dispatch] [${ids}] → ${toSid} | transit ${tDur}s | arrival in ~${Math.round(arrivalDelayMs / 1000)}s`);
 
-  // Send video via WhatsApp if station has one
-  if (stationVideoUrl) {
-    for (const p of dispatched) {
-      const pData = (await db.ref('/participants/' + p.id).once('value')).val();
-      if (pData?.phone) {
+  // Send WhatsApp notifications explicitly (don't rely on watchParticipants for dispatch)
+  // Multi-path updates don't always trigger child_changed listeners reliably
+  const instruction = updates[`/participants/${dispatched[0].id}/instruction`];
+  for (const p of dispatched) {
+    const phone = phoneMap[p.id];
+    if (!phone) { console.log(`[dispatch] No phone for ${p.id} — skipping WA`); continue; }
+
+    if (stationVideoUrl) {
+      // Send video message
+      try {
+        await client.messages.create({
+          from: TWILIO_WA_NUMBER,
+          to: `whatsapp:${phone}`,
+          body: `Proceed to ${toSt.name}. Watch this short video to find your way:`,
+          mediaUrl: [stationVideoUrl],
+        });
+        console.log(`[dispatch] Sent video WA to ${p.id}`);
+      } catch(e) {
+        console.error(`[dispatch] Video WA error for ${p.id}:`, e.message);
+        // Fallback: send text only
         try {
-          await client.messages.create({
-            from: TWILIO_WA_NUMBER,
-            to: `whatsapp:${pData.phone}`,
-            body: `Proceed to ${toSt.name}. Here is a short video showing where to go:`,
-            mediaUrl: [stationVideoUrl],
-          });
-          console.log(`[dispatch] Sent video to ${p.id}`);
-        } catch(e) {
-          console.error(`[dispatch] Video WA error for ${p.id}:`, e.message);
+          await sendWA(phone, updates[`/participants/${p.id}/instruction`]);
+        } catch(e2) {
+          console.error(`[dispatch] Fallback WA error for ${p.id}:`, e2.message);
         }
       }
+    } else {
+      // Text only
+      try {
+        await sendWA(phone, updates[`/participants/${p.id}/instruction`]);
+        console.log(`[dispatch] Sent text WA to ${p.id}`);
+      } catch(e) {
+        console.error(`[dispatch] Text WA error for ${p.id}:`, e.message);
+      }
     }
+
+    // Rate limit between messages
+    await new Promise(r => setTimeout(r, 300));
   }
 }
 
@@ -526,15 +569,15 @@ async function runDispatchLoop() {
       const minPassive = rule.minPassive ?? 0;
 
       if (elapsedMs >= waitMs && actives.length >= minActive && passives.length >= minPassive) {
-        const cap = 3; // Station cap
+        const cap = 4; // Station cap
         const maxActives = 2; // Never send more than 2 actives
 
         // Fill group: 1 active first, then passives, then a 2nd active if slots remain
         const primaryActive = actives[0];
-        const selectedPassives = passives.slice(0, cap - 1); // up to 2 passives
+        const selectedPassives = passives.slice(0, cap - 1); // up to 3 passives
         const slotsRemaining = cap - 1 - selectedPassives.length;
 
-        // Fill remaining slots with a 2nd active (but never a 3rd)
+        // Fill remaining slots with a 2nd active (but never more)
         const extraActives = slotsRemaining > 0 && actives.length > 1
           ? actives.slice(1, 1 + Math.min(slotsRemaining, maxActives - 1))
           : [];
