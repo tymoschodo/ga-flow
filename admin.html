@@ -271,7 +271,10 @@ async function dispatchFromS3(pid,forced=false,config=null){
     await dbSet('/soloFreeAt/'+toSid,arrivalTime+toSt.dur*1000);
   }
 
+  // App instruction — always full text
   const instruction=`Proceed to ${toSt.name}. Please keep your GA app open for scanning. For instructions, watch the video.`;
+  // WA message — concise
+  const waInstruction=`Proceed to ${toSt.name}. For instructions, watch the video.`;
   const t=now();
   await dbTx('/occupancy/s3',v=>Math.max(0,(v||0)-1));
   await dbUpdate('/participants/'+pid,{
@@ -286,21 +289,25 @@ async function dispatchFromS3(pid,forced=false,config=null){
   await dbSet('/waitingRoom/lastRosterChangeAt', t);
 
   // Send WA via server endpoint
+  console.log('[dispatch] phone=', p.phone, 'toSid=', toSid);
   if(p.phone){
-    // Get videoUrl from station config — fallback to Firebase direct read if missing
-    let videoUrl=toSt.videoUrl||null;
-    if(!videoUrl && toSid==='s2'){
-      try{
-        const cfgSnap=await fdb.ref('/config/stations/s2/videoUrl').once('value');
-        videoUrl=cfgSnap.val()||null;
-      }catch(e){}
-    }
-    console.log('[dispatch] videoUrl for',toSid,':',videoUrl);
-    fetch('https://ga-flow.onrender.com/dispatch-wa',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({phone:p.phone,instruction,videoUrl}),
-    }).catch(e=>console.warn('WA send failed:',e));
+    let videoUrl=null;
+    try{
+      const vSnap=await fdb.ref('/config/stations/'+toSid+'/videoUrl').once('value');
+      videoUrl=vSnap.val()||null;
+      console.log('[dispatch] videoUrl=', videoUrl);
+    }catch(e){ console.warn('[dispatch] videoUrl read error:', e); }
+    try{
+      const resp=await fetch('https://ga-flow.onrender.com/dispatch-wa',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({phone:p.phone,instruction:waInstruction,videoUrl}),
+      });
+      const result=await resp.json();
+      console.log('[dispatch] WA result:', result);
+    }catch(e){ console.warn('[dispatch] WA fetch error:', e); }
+  } else {
+    console.warn('[dispatch] No phone for participant — WA skipped');
   }
 
   setTimeout(()=>handleArrival(pid,toSid,cfg),tDur*1000+200);

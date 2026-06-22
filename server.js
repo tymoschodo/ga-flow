@@ -379,6 +379,7 @@ async function dispatchGroupToStation(group, toSid, cfg) {
   const stationVideoUrl = toSt.videoUrl || null;
 
   for (const p of dispatched) {
+    // App instruction — always includes "keep app open"
     updates[`/participants/${p.id}/instruction`] = `Proceed to ${toSt.name}. Please keep your GA app open for scanning. For instructions, watch the video.`;
   }
 
@@ -424,8 +425,8 @@ async function dispatchGroupToStation(group, toSid, cfg) {
     if (!phone) { console.log(`[dispatch] No phone for ${p.id} — skipping WA`); continue; }
 
     try {
-      // Send text first
-      await sendWA(phone, updates[`/participants/${p.id}/instruction`]);
+      // WA message — concise, no "keep app open"
+      await sendWA(phone, `Proceed to ${toSt.name}. For instructions, watch the video.`);
       console.log(`[dispatch] Sent text WA to ${p.id}`);
       // Then video separately
       if (stationVideoUrl) {
