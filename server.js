@@ -593,41 +593,67 @@ async function runDispatchLoop() {
     const firstActiveEnteredAt = actives.length > 0 ? byEntry(actives[0]) : now;
     const elapsedMs = now - firstActiveEnteredAt;
 
-    // ── Evaluate dispatch rules in order (first match wins) ──────────────────
+    // ── Group formation helper ────────────────────────────────────────────────
+    const buildGroup = () => {
+      const cap = 4;
+      const primary = actives[0];
+      const selPassives = passives.slice(0, cap - 1);
+      const slotsLeft = cap - 1 - selPassives.length;
+      const extra = slotsLeft > 0 && actives.length > 1 ? actives.slice(1, 2) : [];
+      return [primary, ...selPassives, ...extra];
+    };
+
+    // ── Two independent dispatch conditions ───────────────────────────────────
+    //
+    // Condition A — FULL GROUP: 1A + 3P ready → dispatch after 30s
+    // This fires as soon as a full group assembles, regardless of how long
+    // anyone has been waiting.
+    //
+    // Condition B — TIMEOUT: oldest active has waited too long → dispatch
+    // whatever is available. Uses the active's personal waitingEnteredAt,
+    // NOT the roster change time — so new arrivals don't reset this clock.
+    // Rules define how long to wait based on how many passives are available.
+
     const rules = targetStation.dispatchRules;
     let selectedGroup = null;
+    let matchReason = '';
 
-    for (const rule of rules) {
-      const waitMs     = (rule.waitSeconds || 0) * 1000;
-      const minActive  = rule.minActive  ?? 1;
-      const minPassive = rule.minPassive ?? 0;
-
-      if (elapsedMs >= waitMs && actives.length >= minActive && passives.length >= minPassive) {
-        const cap = 4; // Station cap
-        const maxActives = 2; // Never send more than 2 actives
-
-        // Fill group: 1 active first, then passives, then a 2nd active if slots remain
-        const primaryActive = actives[0];
-        const selectedPassives = passives.slice(0, cap - 1); // up to 3 passives
-        const slotsRemaining = cap - 1 - selectedPassives.length;
-
-        // Fill remaining slots with a 2nd active (but never more)
-        const extraActives = slotsRemaining > 0 && actives.length > 1
-          ? actives.slice(1, 1 + Math.min(slotsRemaining, maxActives - 1))
-          : [];
-
-        selectedGroup = [primaryActive, ...selectedPassives, ...extraActives];
-
-        console.log(
-          `[loop] Rule matched | elapsed=${Math.round(elapsedMs / 1000)}s ` +
-          `waitSeconds=${rule.waitSeconds} minPassive=${minPassive} | ` +
-          `group=[${selectedGroup.map(p => p.id + '(' + p.rolePreference + ')').join(', ')}]`
-        );
-        break;
+    // Condition A: full group
+    if (actives.length >= 1 && passives.length >= 3) {
+      const tentative = buildGroup();
+      if (tentative.length >= 4) {
+        // Wait 30s after the 4th person entered
+        const allFour = [...actives.slice(0,1), ...passives.slice(0,3)];
+        const lastOfFour = Math.max(...allFour.map(p => byEntry(p)));
+        if (now - lastOfFour >= 80000) {
+          selectedGroup = tentative;
+          matchReason = 'full group (30s)';
+        }
       }
     }
 
-    if (!selectedGroup) { dispatchLoopRunning = false; return; } // No rule triggered yet
+    // Condition B: timeout based on oldest active's personal wait time
+    if (!selectedGroup) {
+      for (const rule of rules) {
+        const waitMs     = (rule.waitSeconds || 0) * 1000;
+        const minActive  = rule.minActive  ?? 1;
+        const minPassive = rule.minPassive ?? 0;
+
+        if (actives.length >= minActive && passives.length >= minPassive) {
+          // Use oldest active's personal wait time — NOT reset by new arrivals
+          const oldestActiveWait = now - byEntry(actives[0]);
+          if (oldestActiveWait >= waitMs) {
+            selectedGroup = buildGroup();
+            matchReason = `timeout ${Math.round(oldestActiveWait/1000)}s (rule: ${rule.waitSeconds}s, minP=${minPassive})`;
+            break;
+          }
+        }
+      }
+    }
+
+    if (!selectedGroup) { dispatchLoopRunning = false; return; } // No condition triggered yet
+
+    console.log(`[loop] Dispatch triggered: ${matchReason} | group=[${selectedGroup.map(p => p.id + '(' + p.rolePreference + ')').join(', ')}]`);
 
     // ── Dispatch ─────────────────────────────────────────────────────────────
     await dispatchGroupToStation(selectedGroup, toSid, cfg);
