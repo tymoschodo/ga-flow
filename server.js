@@ -256,8 +256,7 @@ async function handleArrivalServer(pid, sid) {
     const stationName = station.name || sid;
     const t           = Date.now();
 
-    const arrivalInstruction = `You have arrived at ${stationName}.
-Wait for the performer to check you in.`;
+    const arrivalInstruction = `Please show your QR code to the anesthesiologist Somina.`;
 
     await db.ref('/participants/' + pid).update({
       status:            'arrived',
@@ -362,7 +361,7 @@ async function dispatchGroupToStation(group, toSid, cfg) {
   const stationVideoUrl = toSt.videoUrl || null;
 
   for (const p of dispatched) {
-    updates[`/participants/${p.id}/instruction`] = `Proceed to ${toSt.name}.${groupNote}\nPlease keep your GA app open for scanning.`;
+    updates[`/participants/${p.id}/instruction`] = `Proceed to ${toSt.name}. Please keep your GA app open for scanning. For instructions, watch the video.`;
   }
 
   // Reset the roster-change timestamp so remaining waiting participants'
@@ -412,7 +411,7 @@ async function dispatchGroupToStation(group, toSid, cfg) {
         await client.messages.create({
           from: TWILIO_WA_NUMBER,
           to: `whatsapp:${phone}`,
-          body: `Proceed to ${toSt.name}. Watch this short video to find your way:`,
+          body: `Proceed to ${toSt.name}. Please keep your GA app open for scanning. For instructions, watch the video:`,
           mediaUrl: [stationVideoUrl],
         });
         console.log(`[dispatch] Sent video WA to ${p.id}`);
