@@ -282,6 +282,9 @@ async function dispatchFromS3(pid,forced=false,config=null){
     waitingEnteredAt:null,
   });
 
+  // Reset roster timer so remaining participants' dispatch clock starts fresh
+  await dbSet('/waitingRoom/lastRosterChangeAt', t);
+
   // Send WA via server endpoint
   if(p.phone){
     const videoUrl=toSt.videoUrl||null;
