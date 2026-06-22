@@ -272,13 +272,20 @@ async function handleArrivalServer(pid, sid) {
     // Increment occupancy for the station now that participant has physically arrived
     await db.ref('/occupancy/' + sid).transaction(v => (v || 0) + 1);
 
-    // Send WA arrival notification explicitly
+    // Send WA arrival notification + QR code image
     if (p.phone) {
       try {
-        await sendWA(p.phone, arrivalInstruction);
-        console.log(`[arrival] Sent WA to ${pid}`);
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(pid)}&format=jpg&margin=10`;
+        await client.messages.create({
+          from: TWILIO_WA_NUMBER,
+          to: `whatsapp:${p.phone}`,
+          body: arrivalInstruction,
+          mediaUrl: [qrUrl],
+        });
+        console.log(`[arrival] Sent WA + QR image to ${pid}`);
       } catch(e) {
-        console.error(`[arrival] WA error for ${pid}:`, e.message);
+        console.error(`[arrival] WA + QR error for ${pid}:`, e.message);
+        try { await sendWA(p.phone, arrivalInstruction); } catch(e2) {}
       }
     }
 
