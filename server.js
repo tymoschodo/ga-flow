@@ -184,10 +184,10 @@ function watchParticipants() {
     // Only send if instruction was set in the last 10 seconds
     if (Date.now() - p.instructionAt > 10000) return;
 
-    // Don't send WA for done status — participant sees it on screen,
-    // and dispatch/arrival messages are sent explicitly to avoid doubles
-    if (p.status === 'done' || p.status === 'transit' || p.status === 'arrived') return;
+    // Transit and arrived are sent explicitly to avoid doubles
+    if (p.status === 'transit' || p.status === 'arrived') return;
 
+    // Send for all other statuses including done
     await sendWA(p.phone, p.instruction);
   });
   console.log('Watching participants for instruction changes...');
