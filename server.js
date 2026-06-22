@@ -575,13 +575,7 @@ async function runDispatchLoop() {
     // Skip this cycle after stamping so timers start cleanly next tick
     if (didStamp) { dispatchLoopRunning = false; return; }
 
-    // ── Read roster-change timestamp ─────────────────────────────────────────
-    const lastChange = (await db.ref('/waitingRoom/lastRosterChangeAt').once('value')).val() || 0;
-    const elapsedMs  = now - lastChange;
-
     // ── Separate by role, FIFO within each group ─────────────────────────────
-    // FIFO = longest-waiting first (earliest waitingEnteredAt).
-    // waitingEnteredAt is guaranteed to be present at this point (backfill above).
     const byEntry = p => p.waitingEnteredAt || p.registeredAt || 0;
 
     const actives = waiting
@@ -592,9 +586,14 @@ async function runDispatchLoop() {
       .filter(p => p.rolePreference !== 'active')
       .sort((a, b) => byEntry(a) - byEntry(b));
 
+    // ── Elapsed time = time since FIRST active entered the waiting room ───────
+    // This way the timer is NOT reset by new arrivals — it counts from when
+    // the first active person sat down. This ensures the algo dispatches
+    // after a predictable wait regardless of how many people keep trickling in.
+    const firstActiveEnteredAt = actives.length > 0 ? byEntry(actives[0]) : now;
+    const elapsedMs = now - firstActiveEnteredAt;
+
     // ── Evaluate dispatch rules in order (first match wins) ──────────────────
-    // Selection always sends: 1 active (longest-waiting) + up to 2 passives (longest-waiting).
-    // The rule's minPassive is the THRESHOLD to trigger; we always try to fill up to 2 passives.
     const rules = targetStation.dispatchRules;
     let selectedGroup = null;
 
