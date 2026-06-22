@@ -130,7 +130,7 @@ html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',mon
 <div class="screen hidden" id="screen-main">
   <div class="main-id" id="main-id"></div>
   <div class="instruction-block">
-    <div class="instruction-label">Instructions</div>
+    <div class="instruction-label" id="instruction-label">Instructions</div>
     <div class="instruction-text" id="instruction-text">Please take a seat and wait for your appointment.</div>
     <div class="status-dot waiting" id="status-dot"></div>
   </div>
@@ -345,7 +345,15 @@ function render(data){
   // Status dot
   dot.className = 'status-dot';
   if(status==='active'){ dot.classList.add('active'); itxt.classList.add('active'); }
-  else if(status==='transit'||status==='arrived'){ dot.classList.add('transit'); }
+  else if(status==='transit'||status==='arrived'){
+    dot.classList.add('transit');
+    // Hide instruction text and label — just show QR + arrival message below
+    itxt.textContent = 'Please show your QR code to the anesthesiologist Somina.';
+    itxt.style.fontSize = '12px';
+    itxt.style.marginTop = '16px';
+    itxt.style.color = '#7a9ab8';
+    document.getElementById('instruction-label').style.display = 'none';
+  }
   else{ dot.classList.add('waiting'); itxt.classList.remove('active'); }
 
   if(status==='done'){ stopFlashLoop(); show('done'); }
