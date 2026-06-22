@@ -514,11 +514,11 @@ async function runDispatchLoop() {
 
     // ── Gate 1: show must be running ────────────────────────────────────────
     const showStarted = (await db.ref('/showStarted').once('value')).val();
-    if (!showStarted) return;
+    if (!showStarted) { dispatchLoopRunning = false; return; }
 
     // ── Gate 2: config must exist ────────────────────────────────────────────
     const cfg = (await db.ref('/config').once('value')).val();
-    if (!cfg) return;
+    if (!cfg) { dispatchLoopRunning = false; return; }
 
     // ── Gate 3: a station with dispatchRules must be configured ─────────────
     // The first enabled, non-waiting, non-final station that has dispatchRules
@@ -530,7 +530,7 @@ async function runDispatchLoop() {
       !s.isWaiting &&
       !s.isFinal
     );
-    if (!targetStation) return;
+    if (!targetStation) { dispatchLoopRunning = false; return; }
 
     const toSid = targetStation.id;
 
@@ -547,7 +547,7 @@ async function runDispatchLoop() {
       (p.currentStation === toSid && (p.status === 'arrived' || p.status === 'active')) ||
       (p.transitTo === toSid && p.status === 'transit')
     );
-    if (stationBusy) return;
+    if (stationBusy) { dispatchLoopRunning = false; return; }
 
     // ── Collect eligible waiting room participants ────────────────────────────
     const now = Date.now();
@@ -557,7 +557,7 @@ async function runDispatchLoop() {
       if (p.status === 's3_holding' && (!p.holdUntil || now >= p.holdUntil)) return true;
       return false;
     });
-    if (!waiting.length) return;
+    if (!waiting.length) { dispatchLoopRunning = false; return; }
 
     // ── Backfill: stamp any unstamped waitingEnteredAt ───────────────────────
     // This handles the server-restart edge case where participants entered
@@ -573,7 +573,7 @@ async function runDispatchLoop() {
       }
     }
     // Skip this cycle after stamping so timers start cleanly next tick
-    if (didStamp) return;
+    if (didStamp) { dispatchLoopRunning = false; return; }
 
     // ── Read roster-change timestamp ─────────────────────────────────────────
     const lastChange = (await db.ref('/waitingRoom/lastRosterChangeAt').once('value')).val() || 0;
@@ -628,7 +628,7 @@ async function runDispatchLoop() {
       }
     }
 
-    if (!selectedGroup) return; // No rule triggered yet
+    if (!selectedGroup) { dispatchLoopRunning = false; return; } // No rule triggered yet
 
     // ── Dispatch ─────────────────────────────────────────────────────────────
     await dispatchGroupToStation(selectedGroup, toSid, cfg);
