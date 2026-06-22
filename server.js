@@ -551,6 +551,20 @@ async function runDispatchLoop() {
     const all     = allSnap.val() || {};
     const allList = Object.values(all);
 
+    // ── Recovery: fix stuck transit participants ──────────────────────────────
+    // If server restarted during transit, setTimeout was lost — participant
+    // stays in transit forever. Detect and fix: if transitStartedAt + transitDur
+    // has passed, fire arrival now.
+    for (const p of allList) {
+      if (p.status === 'transit' && p.transitTo && p.transitStartedAt && p.transitDur) {
+        const expectedArrival = p.transitStartedAt + p.transitDur * 1000 + 500;
+        if (Date.now() > expectedArrival + 5000) { // 5s grace period
+          console.log(`[recovery] ${p.id} stuck in transit → firing arrival now`);
+          handleArrivalServer(p.id, p.transitTo);
+        }
+      }
+    }
+
     // ── Gate 5: target station must be clear ─────────────────────────────────
     // "Clear" means: nobody arrived/active there AND nobody in transit heading there.
     // We check participant statuses directly rather than the /occupancy counter,
