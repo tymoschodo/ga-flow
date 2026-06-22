@@ -287,7 +287,15 @@ async function dispatchFromS3(pid,forced=false,config=null){
 
   // Send WA via server endpoint
   if(p.phone){
-    const videoUrl=toSt.videoUrl||null;
+    // Get videoUrl from station config — fallback to Firebase direct read if missing
+    let videoUrl=toSt.videoUrl||null;
+    if(!videoUrl && toSid==='s2'){
+      try{
+        const cfgSnap=await fdb.ref('/config/stations/s2/videoUrl').once('value');
+        videoUrl=cfgSnap.val()||null;
+      }catch(e){}
+    }
+    console.log('[dispatch] videoUrl for',toSid,':',videoUrl);
     fetch('https://ga-flow.onrender.com/dispatch-wa',{
       method:'POST',
       headers:{'Content-Type':'application/json'},

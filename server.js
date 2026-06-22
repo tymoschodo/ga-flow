@@ -416,33 +416,23 @@ async function dispatchGroupToStation(group, toSid, cfg) {
     const phone = phoneMap[p.id];
     if (!phone) { console.log(`[dispatch] No phone for ${p.id} — skipping WA`); continue; }
 
-    if (stationVideoUrl) {
-      // Send video message
-      try {
+    try {
+      // Send text first
+      await sendWA(phone, updates[`/participants/${p.id}/instruction`]);
+      console.log(`[dispatch] Sent text WA to ${p.id}`);
+      // Then video separately
+      if (stationVideoUrl) {
+        await new Promise(r => setTimeout(r, 500));
         await client.messages.create({
           from: TWILIO_WA_NUMBER,
           to: `whatsapp:${phone}`,
-          body: `Proceed to ${toSt.name}. Please keep your GA app open for scanning. For instructions, watch the video:`,
+          body: '',
           mediaUrl: [stationVideoUrl],
         });
         console.log(`[dispatch] Sent video WA to ${p.id}`);
-      } catch(e) {
-        console.error(`[dispatch] Video WA error for ${p.id}:`, e.message);
-        // Fallback: send text only
-        try {
-          await sendWA(phone, updates[`/participants/${p.id}/instruction`]);
-        } catch(e2) {
-          console.error(`[dispatch] Fallback WA error for ${p.id}:`, e2.message);
-        }
       }
-    } else {
-      // Text only
-      try {
-        await sendWA(phone, updates[`/participants/${p.id}/instruction`]);
-        console.log(`[dispatch] Sent text WA to ${p.id}`);
-      } catch(e) {
-        console.error(`[dispatch] Text WA error for ${p.id}:`, e.message);
-      }
+    } catch(e) {
+      console.error(`[dispatch] WA error for ${p.id}:`, e.message);
     }
 
     // Rate limit between messages
@@ -671,21 +661,22 @@ app.post('/dispatch-wa', async (req, res) => {
   const { phone, instruction, videoUrl } = req.body;
   if (!phone) { res.json({ sent: false }); return; }
   try {
+    // Send text instruction first
+    await sendWA(phone, instruction);
+    // Then send video separately if available
     if (videoUrl) {
+      await new Promise(r => setTimeout(r, 500)); // small delay
       await client.messages.create({
         from: TWILIO_WA_NUMBER,
         to: `whatsapp:${phone}`,
-        body: instruction,
+        body: '',
         mediaUrl: [videoUrl],
       });
-    } else {
-      await sendWA(phone, instruction);
     }
     console.log(`[manual-dispatch] WA sent to ${phone}`);
     res.json({ sent: true });
   } catch(e) {
     console.error(`[manual-dispatch] WA error:`, e.message);
-    try { await sendWA(phone, instruction); } catch(e2) {}
     res.json({ sent: false, error: e.message });
   }
 });
