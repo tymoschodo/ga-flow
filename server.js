@@ -640,6 +640,53 @@ async function runDispatchLoop() {
   }
 }
 
+// ── MANUAL DISPATCH WA ENDPOINT ──────────────────────────────────────────────
+// Called by admin.html when manually dispatching a participant
+app.post('/dispatch-wa', async (req, res) => {
+  const { phone, instruction, videoUrl } = req.body;
+  if (!phone) { res.json({ sent: false }); return; }
+  try {
+    if (videoUrl) {
+      await client.messages.create({
+        from: TWILIO_WA_NUMBER,
+        to: `whatsapp:${phone}`,
+        body: instruction,
+        mediaUrl: [videoUrl],
+      });
+    } else {
+      await sendWA(phone, instruction);
+    }
+    console.log(`[manual-dispatch] WA sent to ${phone}`);
+    res.json({ sent: true });
+  } catch(e) {
+    console.error(`[manual-dispatch] WA error:`, e.message);
+    try { await sendWA(phone, instruction); } catch(e2) {}
+    res.json({ sent: false, error: e.message });
+  }
+});
+
+// ── MANUAL ARRIVAL WA ENDPOINT ────────────────────────────────────────────────
+// Called by admin.html handleArrival — sends arrival message + QR code
+app.post('/arrival-wa', async (req, res) => {
+  const { phone, pid, instruction } = req.body;
+  if (!phone || !pid) { res.json({ sent: false }); return; }
+  try {
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(pid)}&format=jpg&margin=10`;
+    await client.messages.create({
+      from: TWILIO_WA_NUMBER,
+      to: `whatsapp:${phone}`,
+      body: instruction,
+      mediaUrl: [qrUrl],
+    });
+    console.log(`[manual-arrival] WA + QR sent to ${phone} for ${pid}`);
+    res.json({ sent: true });
+  } catch(e) {
+    console.error(`[manual-arrival] WA error:`, e.message);
+    try { await sendWA(phone, instruction); } catch(e2) {}
+    res.json({ sent: false, error: e.message });
+  }
+});
+
 // ── HEALTH CHECK ──────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
   res.json({ status: 'ok', service: 'GA WhatsApp Bot', uptime: process.uptime() });

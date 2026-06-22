@@ -271,13 +271,27 @@ async function dispatchFromS3(pid,forced=false,config=null){
     await dbSet('/soloFreeAt/'+toSid,arrivalTime+toSt.dur*1000);
   }
 
+  const instruction=`Proceed to ${toSt.name}. Please keep your GA app open for scanning. For instructions, watch the video.`;
+  const t=now();
   await dbTx('/occupancy/s3',v=>Math.max(0,(v||0)-1));
   await dbUpdate('/participants/'+pid,{
-    status:'transit',transitStartedAt:now(),transitDur:tDur,transitTo:toSid,
+    status:'transit',transitStartedAt:t,transitDur:tDur,transitTo:toSid,
     transitToName:toSt.name,
     stepIndex:targetIdx,currentStation:null,stationStartedAt:null,
-    holdUntil:null,instruction:`Proceed to ${toSt.name}.\nPlease keep your GA app open for scanning.`,instructionAt:now(),checkedIn:false,assignedRole:null,
+    holdUntil:null,instruction,instructionAt:t,checkedIn:false,assignedRole:null,
+    waitingEnteredAt:null,
   });
+
+  // Send WA via server endpoint
+  if(p.phone){
+    const videoUrl=toSt.videoUrl||null;
+    fetch('https://ga-flow.onrender.com/dispatch-wa',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({phone:p.phone,instruction,videoUrl}),
+    }).catch(e=>console.warn('WA send failed:',e));
+  }
+
   setTimeout(()=>handleArrival(pid,toSid,cfg),tDur*1000+200);
 }
 
@@ -286,11 +300,22 @@ async function handleArrival(pid,sid,config=null){
   const p=await dbGet('/participants/'+pid);
   if(!p||p.transitTo!==sid) return;
   const s=cfg.stations[sid];if(!s) return;
+  const arrivalInstruction=`Please show your QR code to the anesthesiologist Somina.`;
+  const t=now();
   await dbUpdate('/participants/'+pid,{
     status:'arrived',currentStation:sid,transitTo:null,transitStartedAt:null,transitDur:null,
-    instruction:`You have arrived at ${s.name}.\nWait for check-in.`,instructionAt:now(),checkedIn:false,
+    instruction:arrivalInstruction,instructionAt:t,checkedIn:false,
   });
   await dbTx('/occupancy/'+sid,v=>(v||0)+1);
+
+  // Send WA arrival + QR code via server endpoint
+  if(p.phone){
+    fetch('https://ga-flow.onrender.com/arrival-wa',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({phone:p.phone,pid,instruction:arrivalInstruction}),
+    }).catch(e=>console.warn('Arrival WA send failed:',e));
+  }
 }
 
 async function advanceParticipant(pid,cfg=null){
