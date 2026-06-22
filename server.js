@@ -105,26 +105,40 @@ app.post('/webhook', async (req, res) => {
     await db.ref('/phoneIndex/' + from.replace('+', '')).set(body);
     await db.ref('/participants/' + body).update({ phone: from, whatsappLinked: true });
 
-    // If already dispatched — send current instruction immediately
+    // If already dispatched — send relevant current instruction
     if (pData.instruction && ['transit','arrived','active'].includes(pData.status)) {
-      // Send instruction
-      await sendWA(from, pData.instruction);
-      // If in transit to a station with a video — send video too
-      if (pData.status === 'transit' && pData.transitTo) {
-        const cfgSnap = await db.ref('/config/stations/' + pData.transitTo + '/videoUrl').once('value');
-        const videoUrl = cfgSnap.val();
+      const stationId = pData.transitTo || pData.currentStation;
+
+      // Get video URL if applicable
+      let videoUrl = null;
+      if (stationId && (pData.status === 'transit' || pData.status === 'arrived')) {
+        try {
+          const cfgSnap = await db.ref('/config/stations/' + stationId + '/videoUrl').once('value');
+          videoUrl = cfgSnap.val() || null;
+        } catch(e) {}
+      }
+
+      // Send appropriate WA message
+      if (pData.status === 'transit') {
+        await sendWA(from, `Proceed to ${pData.transitToName || stationId}. For instructions, watch the video.`);
         if (videoUrl) {
           try {
-            await client.messages.create({
-              from: TWILIO_WA_NUMBER,
-              to: `whatsapp:${from}`,
-              body: `Here is a short video showing where to go:`,
-              mediaUrl: [videoUrl],
-            });
-          } catch(e) {
-            console.error(`[link] Video WA error:`, e.message);
-          }
+            await new Promise(r => setTimeout(r, 500));
+            await client.messages.create({ from: TWILIO_WA_NUMBER, to: `whatsapp:${from}`, body: '', mediaUrl: [videoUrl] });
+          } catch(e) { console.error('[link] video error:', e.message); }
         }
+      } else if (pData.status === 'arrived') {
+        // Send video first so they can still find the station, then arrival message
+        if (videoUrl) {
+          try {
+            await client.messages.create({ from: TWILIO_WA_NUMBER, to: `whatsapp:${from}`, body: 'For instructions on finding the station, watch this video:', mediaUrl: [videoUrl] });
+            await new Promise(r => setTimeout(r, 500));
+          } catch(e) {}
+        }
+        await sendWA(from, `Please show your QR code to the anesthesiologist Somina.`);
+      } else {
+        // active — send current role instruction
+        await sendWA(from, pData.instruction);
       }
     } else {
       await sendWA(from, `Thank you. Please take a seat and wait for your appointment. You'll be receiving notifications via WhatsApp. You can also decide to receive them in the GA phone app.`);
