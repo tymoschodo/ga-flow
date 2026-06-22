@@ -30,10 +30,12 @@ html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',mon
 .wa-choice{width:100%;max-width:300px;display:flex;flex-direction:column;gap:12px;margin-bottom:0}
 .wa-option{padding:20px 18px;border-radius:3px;cursor:pointer;text-align:left;border:1px solid #1e3050;background:transparent;font-family:'IBM Plex Mono',monospace;transition:all .2s;display:flex;flex-direction:column;gap:6px}
 .wa-option:active{background:rgba(255,255,255,.03)}
-.wa-option-wa{border-color:#1e3050}
-.wa-option-wa:hover{border-color:#00e87a}
-.wa-option-app{border-color:#1e3050}
-.wa-option-app:hover{border-color:#3d9eff}
+.wa-option-wa{border-color:rgba(0,232,122,.3);background:rgba(0,232,122,.04)}
+.wa-option-wa:hover{border-color:#00e87a;background:rgba(0,232,122,.08)}
+.wa-option-wa .wa-option-title{color:#00e87a}
+.wa-option-app{border-color:#1a2e44}
+.wa-option-app:hover{border-color:#2a4060}
+.wa-option-app .wa-option-title{color:#5a7a98}
 .wa-option-title{font-size:12px;color:#dde4ee;letter-spacing:1px;line-height:1.5}
 .wa-option-desc{font-size:9px;color:#4a6a88;letter-spacing:.5px;line-height:1.7}
 .wa-option-icon{font-size:20px;margin-bottom:4px}
@@ -119,14 +121,14 @@ html,body{width:100%;height:100%;background:#000;font-family:'IBM Plex Mono',mon
 
       <button class="wa-option wa-option-wa" onclick="showWASetup()">
         <div class="wa-option-icon">📱</div>
-        <div class="wa-option-title">Use WhatsApp</div>
-        <div class="wa-option-desc">Receive notifications and vibrations via WhatsApp — even when your screen is off.</div>
+        <div class="wa-option-title">Also use WhatsApp</div>
+        <div class="wa-option-desc">Get extra notifications and vibrations via WhatsApp — even when your screen is locked. You'll still use the GA app normally.</div>
       </button>
 
       <button class="wa-option wa-option-app" onclick="proceedToApp()">
         <div class="wa-option-icon">⚕️</div>
-        <div class="wa-option-title">Stay in the app</div>
-        <div class="wa-option-desc">Keep this app open with your screen unlocked to receive notifications.</div>
+        <div class="wa-option-title">GA app only</div>
+        <div class="wa-option-desc">Keep this app open with your screen unlocked.</div>
       </button>
 
     </div>
