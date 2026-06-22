@@ -687,6 +687,14 @@ app.post('/arrival-wa', async (req, res) => {
   }
 });
 
+// ── RESET LOOP FLAG ──────────────────────────────────────────────────────────
+// Called by admin.html Reset button to unstick the dispatch loop mutex
+app.post('/reset-loop', (req, res) => {
+  dispatchLoopRunning = false;
+  console.log('[reset] dispatch loop flag cleared');
+  res.json({ ok: true });
+});
+
 // ── HEALTH CHECK ──────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
   res.json({ status: 'ok', service: 'GA WhatsApp Bot', uptime: process.uptime() });

@@ -499,6 +499,8 @@ function AdminDashboard({toast}){
     await fdb.ref('/phoneIndex').remove();
     await fdb.ref('/waitingRoom').remove();
     await fdb.ref('/stationReady').remove();
+    // Reset server-side dispatch loop flag
+    fetch('https://ga-flow.onrender.com/reset-loop',{method:'POST'}).catch(()=>{});
     toast.add('Show reset — clean slate','ok');
   };
   const finishAndAdvance=async(pid)=>{await advanceParticipant(pid,config);toast.add(`${pid} → next`,'ok');};
