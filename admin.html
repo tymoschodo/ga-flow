@@ -250,6 +250,16 @@ async function dispatchFromS3(pid,forced=false,config=null){
   const tDur=getT(cfg.transit,fromSid,toSid);
   const delays=calcBaseDelays(cfg);
 
+  // Station busy check
+  const allP=await dbGet('/participants')||{};
+  const stationBusy=Object.values(allP).some(x=>
+    (x.currentStation===toSid&&(x.status==='arrived'||x.status==='active'))||
+    (x.transitTo===toSid&&x.status==='transit')
+  );
+  if(stationBusy&&!forced){
+    if(!window.confirm(`⚠️ Station ${toSt.name} is currently occupied.\n\nSend anyway?`)) return;
+  }
+
   if(!forced){
     const earliest=(p.registeredAt||now())+(delays[p.path]||0)*1000;
     if(now()<earliest){
