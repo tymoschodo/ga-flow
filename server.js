@@ -425,7 +425,7 @@ async function dispatchGroupToStation(group, toSid, cfg) {
   const arrivalDelayMs = tDur * 1000 + 500;
   for (const p of dispatched) {
     const pid = p.id;
-    setTimeout(() => handleArrivalServer(pid, toSid), arrivalDelayMs);
+    safeSetTimeout(() => handleArrivalServer(pid, toSid), arrivalDelayMs);
   }
 
   const ids = dispatched.map(p => p.id).join(', ');
@@ -517,6 +517,16 @@ function watchStationReady() {
 // Guards: show must be started, target station must have dispatchRules,
 //         station must be clear, there must be eligible waiting participants.
 let dispatchLoopRunning = false;
+const pendingTimeouts = new Set(); // track all arrival timeouts for cancellation on reset
+
+function safeSetTimeout(fn, ms) {
+  const t = setTimeout(() => {
+    pendingTimeouts.delete(t);
+    fn();
+  }, ms);
+  pendingTimeouts.add(t);
+  return t;
+}
 
 async function runDispatchLoop() {
   if (!db || dispatchLoopRunning) return;
@@ -553,14 +563,23 @@ async function runDispatchLoop() {
 
     // ── Recovery: fix stuck transit participants ──────────────────────────────
     // If server restarted during transit, setTimeout was lost — participant
-    // stays in transit forever. Detect and fix: if transitStartedAt + transitDur
-    // has passed, fire arrival now.
+    // stays in transit forever. Only fire arrival if station is currently free.
     for (const p of allList) {
       if (p.status === 'transit' && p.transitTo && p.transitStartedAt && p.transitDur) {
         const expectedArrival = p.transitStartedAt + p.transitDur * 1000 + 500;
-        if (Date.now() > expectedArrival + 5000) { // 5s grace period
-          console.log(`[recovery] ${p.id} stuck in transit → firing arrival now`);
-          handleArrivalServer(p.id, p.transitTo);
+        if (Date.now() > expectedArrival + 5000) {
+          // Check station is not occupied before firing arrival
+          const stationOccupied = allList.some(other =>
+            other.id !== p.id &&
+            other.currentStation === p.transitTo &&
+            (other.status === 'arrived' || other.status === 'active')
+          );
+          if (!stationOccupied) {
+            console.log(`[recovery] ${p.id} stuck in transit → firing arrival now`);
+            handleArrivalServer(p.id, p.transitTo);
+          } else {
+            console.log(`[recovery] ${p.id} stuck in transit but station occupied — waiting`);
+          }
         }
       }
     }
@@ -740,10 +759,13 @@ app.post('/arrival-wa', async (req, res) => {
 });
 
 // ── RESET LOOP FLAG ──────────────────────────────────────────────────────────
-// Called by admin.html Reset button to unstick the dispatch loop mutex
+// Called by admin.html Reset button — clears loop mutex AND all pending arrival timeouts
 app.post('/reset-loop', (req, res) => {
   dispatchLoopRunning = false;
-  console.log('[reset] dispatch loop flag cleared');
+  // Cancel all pending arrival timeouts so stale transits don't fire after reset
+  for (const t of pendingTimeouts) clearTimeout(t);
+  pendingTimeouts.clear();
+  console.log('[reset] dispatch loop flag cleared + all pending timeouts cancelled');
   res.json({ ok: true });
 });
 
