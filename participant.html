@@ -256,33 +256,21 @@ function doLogin(){
 
     // Check if already registered
     db.ref('/participants/'+val).once('value').then(psnap=>{
-      if(psnap.exists() && psnap.val().whatsappLinked && psnap.val().rolePreference){
-        // Fully set up — go straight to main
+      if(psnap.exists()){
+        // Already registered by nurse — go straight to WhatsApp choice screen
+        // (or main if already fully set up)
         generateQR(val);
-        show('main');
         db.ref('/participants/'+val).on('value', s=>{ if(s.exists()) render(s.val()); });
-      } else {
-        // New or incomplete — register if needed, then show WhatsApp screen
-        if(!psnap.exists()){
-          db.ref('/participants').once('value').then(allSnap=>{
-            const existing = allSnap.val()||{};
-            const num = Object.keys(existing).length + 1;
-            const path = num<=10?'A':num<=20?'B':'C';
-            const t = Date.now();
-            db.ref('/participants/'+val).set({
-              id:val, num, path,
-              status:'role_pending',
-              currentStation:null, stepIndex:0,
-              registeredAt:t, stationStartedAt:null,
-              transitStartedAt:null, transitDur:null,
-              transitTo:null, holdUntil:null, stationCap:null,
-              instruction:'Please take a seat and wait for your appointment.',
-              instructionAt:t, checkedIn:false,
-              rolePreference:null,
-            });
-          });
+        if(psnap.val().whatsappLinked){
+          // Already has WhatsApp — go straight to main
+          show('main');
+        } else {
+          // Show WhatsApp choice screen
+          showWhatsAppScreen(val);
         }
-        showWhatsAppScreen(val);
+      } else {
+        // Not registered by nurse yet — show error
+        errEl.textContent = 'Please see the nurse first to register.';
       }
     });
   }).catch(()=>{ errEl.textContent = 'Connection error — check internet'; });
